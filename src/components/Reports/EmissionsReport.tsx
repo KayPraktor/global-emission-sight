@@ -25,9 +25,102 @@ import {
 import { emissionsData, monthlySummary } from '@/utils/dummyData';
 import { Download, FileSpreadsheet, Filter, Printer } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const EmissionsReport: React.FC = () => {
   const [activeTab, setActiveTab] = useState("table");
+  
+  // Function to handle exporting to CSV
+  const handleExport = () => {
+    // Create headers for CSV
+    const headers = ['Month', 'Category', 'Subcategory', 'Source', 'Amount', 'Unit', 'CO₂e (tonnes)'];
+    
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...emissionsData.map(item => 
+        [
+          item.month,
+          item.category,
+          item.subcategory,
+          item.source,
+          item.amount,
+          item.unit,
+          item.co2e.toFixed(1)
+        ].join(',')
+      )
+    ].join('\n');
+    
+    // Create a blob with the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a download link
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'emissions_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Report exported to CSV successfully");
+  };
+  
+  // Function to handle printing the report
+  const handlePrint = () => {
+    // Store current document title
+    const originalTitle = document.title;
+    // Change document title for the print
+    document.title = 'Emissions Report - BARYON';
+    
+    // Add a print-specific stylesheet
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media print {
+        body * { visibility: hidden; }
+        .print-content, .print-content * { visibility: visible; }
+        .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+        .recharts-wrapper { width: 100% !important; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Print the document
+    window.print();
+    
+    // Remove the print stylesheet
+    document.head.removeChild(style);
+    // Restore original document title
+    document.title = originalTitle;
+    
+    toast.success("Print dialog opened");
+  };
+  
+  // Function to handle downloading as PDF
+  const handleDownloadPDF = () => {
+    // In a real application, we would use a library like jsPDF here
+    // For this demo, we'll just show a success message
+    
+    toast.success("PDF download initiated (demo)");
+    
+    // If in production, we would use code like:
+    /*
+    import { jsPDF } from "jspdf";
+    
+    const doc = new jsPDF();
+    doc.text("Emissions Report", 20, 10);
+    
+    // Add table data
+    let yPos = 30;
+    emissionsData.forEach((item, index) => {
+      doc.text(`${item.month} - ${item.source}: ${item.co2e.toFixed(1)} tCO₂e`, 20, yPos);
+      yPos += 10;
+    });
+    
+    doc.save("emissions_report.pdf");
+    */
+  };
   
   return (
     <Card>
@@ -38,15 +131,15 @@ const EmissionsReport: React.FC = () => {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
@@ -60,7 +153,7 @@ const EmissionsReport: React.FC = () => {
             <TabsTrigger value="line">Line Chart</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="table" className="w-full">
+          <TabsContent value="table" className="w-full print-content">
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -91,7 +184,7 @@ const EmissionsReport: React.FC = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="bar" className="w-full">
+          <TabsContent value="bar" className="w-full print-content">
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -114,7 +207,7 @@ const EmissionsReport: React.FC = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="line" className="w-full">
+          <TabsContent value="line" className="w-full print-content">
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
