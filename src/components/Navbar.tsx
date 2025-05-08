@@ -8,7 +8,8 @@ import {
   Settings,
   FileSpreadsheet,
   HelpCircle,
-  Menu
+  Menu,
+  Atom
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,8 +35,8 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <span className="text-carbon text-xl font-bold flex items-center">
-                <BarChart3 className="h-6 w-6 mr-2" />
-                CarbonTrack
+                <Atom className="h-6 w-6 mr-2" />
+                BARYON
               </span>
             </div>
           </div>
