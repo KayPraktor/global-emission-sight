@@ -10,7 +10,8 @@ import {
   HelpCircle,
   Menu,
   Atom,
-  Monitor
+  Monitor,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,6 +28,7 @@ const Navbar = () => {
     { name: 'Reports', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="mr-2 h-4 w-4" />, path: '/analytics' },
     { name: 'Monitoring', icon: <Monitor className="mr-2 h-4 w-4" />, path: '/monitoring' },
+    { name: 'AI Assistant', icon: <Zap className="mr-2 h-4 w-4" />, path: '/ai-assistant' },
     { name: 'Settings', icon: <Settings className="mr-2 h-4 w-4" />, path: '/settings' },
   ];
 
