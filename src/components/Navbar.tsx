@@ -9,7 +9,8 @@ import {
   FileSpreadsheet,
   HelpCircle,
   Menu,
-  Atom
+  Atom,
+  Monitor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -25,6 +26,7 @@ const Navbar = () => {
     { name: 'Data Entry', icon: <ClipboardList className="mr-2 h-4 w-4" />, path: '/data-entry' },
     { name: 'Reports', icon: <FileSpreadsheet className="mr-2 h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="mr-2 h-4 w-4" />, path: '/analytics' },
+    { name: 'Monitoring', icon: <Monitor className="mr-2 h-4 w-4" />, path: '/monitoring' },
     { name: 'Settings', icon: <Settings className="mr-2 h-4 w-4" />, path: '/settings' },
   ];
 
