@@ -30,96 +30,183 @@ import { toast } from "sonner";
 const EmissionsReport: React.FC = () => {
   const [activeTab, setActiveTab] = useState("table");
   
-  // Function to handle exporting to CSV
+  // Function to handle exporting to CSV - Improved with error handling
   const handleExport = () => {
-    // Create headers for CSV
-    const headers = ['Month', 'Category', 'Subcategory', 'Source', 'Amount', 'Unit', 'CO₂e (tonnes)'];
-    
-    // Create CSV content
-    const csvContent = [
-      headers.join(','),
-      ...emissionsData.map(item => 
-        [
-          item.month,
-          item.category,
-          item.subcategory,
-          item.source,
-          item.amount,
-          item.unit,
-          item.co2e.toFixed(1)
-        ].join(',')
-      )
-    ].join('\n');
-    
-    // Create a blob with the CSV data
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // Create a download link
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'emissions_report.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success("Report exported to CSV successfully");
+    try {
+      // Create headers for CSV
+      const headers = ['Month', 'Category', 'Subcategory', 'Source', 'Amount', 'Unit', 'CO₂e (tonnes)'];
+      
+      // Create CSV content
+      const csvContent = [
+        headers.join(','),
+        ...emissionsData.map(item => 
+          [
+            item.month,
+            item.category,
+            item.subcategory,
+            item.source,
+            item.amount,
+            item.unit,
+            item.co2e.toFixed(1)
+          ].join(',')
+        )
+      ].join('\n');
+      
+      // Create a blob with the CSV data
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // Create a download link
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'emissions_report.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup the URL object
+      URL.revokeObjectURL(url);
+      
+      toast.success("Report exported to CSV successfully");
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      toast.error("Failed to export report. Please try again.");
+    }
   };
   
-  // Function to handle printing the report
+  // Function to handle printing the report - Improved
   const handlePrint = () => {
-    // Store current document title
-    const originalTitle = document.title;
-    // Change document title for the print
-    document.title = 'Emissions Report - BARYON';
-    
-    // Add a print-specific stylesheet
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media print {
-        body * { visibility: hidden; }
-        .print-content, .print-content * { visibility: visible; }
-        .print-content { position: absolute; left: 0; top: 0; width: 100%; }
-        .recharts-wrapper { width: 100% !important; }
+    try {
+      // Store current document title
+      const originalTitle = document.title;
+      // Change document title for the print
+      document.title = 'Emissions Report - BARYON';
+      
+      // Add a print-specific stylesheet for better print formatting
+      const style = document.createElement('style');
+      style.innerHTML = `
+        @media print {
+          body * { visibility: hidden; }
+          .print-content, .print-content * { visibility: visible; }
+          .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+          .print-header { display: block !important; margin-bottom: 20px; }
+          .print-header h1 { font-size: 24px; color: #000; }
+          .print-header p { font-size: 14px; color: #555; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .recharts-wrapper { width: 100% !important; height: 400px !important; }
+          button, .no-print { display: none !important; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Create a print header that will only show in print
+      const header = document.createElement('div');
+      header.className = 'print-header';
+      header.style.display = 'none';
+      header.innerHTML = `
+        <h1>BARYON Emissions Report</h1>
+        <p>Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+      `;
+      
+      // Find the print content element and add the header
+      const printContent = document.querySelector('.print-content');
+      if (printContent) {
+        printContent.insertBefore(header, printContent.firstChild);
       }
-    `;
-    document.head.appendChild(style);
-    
-    // Print the document
-    window.print();
-    
-    // Remove the print stylesheet
-    document.head.removeChild(style);
-    // Restore original document title
-    document.title = originalTitle;
-    
-    toast.success("Print dialog opened");
+      
+      // Print the document
+      window.print();
+      
+      // Cleanup
+      if (printContent && header.parentNode === printContent) {
+        printContent.removeChild(header);
+      }
+      document.head.removeChild(style);
+      // Restore original document title
+      document.title = originalTitle;
+      
+      toast.success("Print dialog opened");
+    } catch (error) {
+      console.error("Error printing:", error);
+      toast.error("Failed to print. Please try again.");
+    }
   };
   
+  // Function to convert SVG charts to canvas data for PDF generation
+  const convertSvgToCanvas = (svgElement, callback) => {
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    
+    // Set canvas dimensions to match the SVG
+    const svgRect = svgElement.getBoundingClientRect();
+    canvas.width = svgRect.width;
+    canvas.height = svgRect.height;
+    
+    const img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0);
+      callback(canvas.toDataURL("image/png"));
+    };
+    
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  };
+
   // Function to handle downloading as PDF
   const handleDownloadPDF = () => {
-    // In a real application, we would use a library like jsPDF here
-    // For this demo, we'll just show a success message
-    
-    toast.success("PDF download initiated (demo)");
-    
-    // If in production, we would use code like:
-    /*
-    import { jsPDF } from "jspdf";
-    
-    const doc = new jsPDF();
-    doc.text("Emissions Report", 20, 10);
-    
-    // Add table data
-    let yPos = 30;
-    emissionsData.forEach((item, index) => {
-      doc.text(`${item.month} - ${item.source}: ${item.co2e.toFixed(1)} tCO₂e`, 20, yPos);
-      yPos += 10;
-    });
-    
-    doc.save("emissions_report.pdf");
-    */
+    try {
+      // For demo purposes, we'll use a simplified approach
+      const contentType = activeTab === "table" ? "table" : "chart";
+      const exportTimestamp = new Date().toLocaleString();
+      
+      toast.success(`PDF download initiated for ${contentType} view`);
+      toast.info("In a production environment, this would generate a full PDF with jsPDF");
+      
+      // In a real application, we would implement PDF generation like this:
+      /*
+      import { jsPDF } from "jspdf";
+      
+      // Create a new PDF document
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("BARYON Emissions Report", 20, 20);
+      doc.setFontSize(10);
+      doc.text(`Generated: ${exportTimestamp}`, 20, 30);
+      
+      // Add content based on active tab
+      if (activeTab === "table") {
+        // Add table data
+        doc.autoTable({
+          head: [['Month', 'Category', 'Subcategory', 'Source', 'Amount', 'Unit', 'CO₂e (tonnes)']],
+          body: emissionsData.map(item => [
+            item.month, 
+            item.category, 
+            item.subcategory,
+            item.source,
+            item.amount,
+            item.unit,
+            item.co2e.toFixed(1)
+          ]),
+          startY: 40
+        });
+      } else {
+        // For charts, we need to convert SVG to image
+        const chartElement = document.querySelector(`.recharts-wrapper svg`);
+        if (chartElement) {
+          convertSvgToCanvas(chartElement, (dataUrl) => {
+            doc.addImage(dataUrl, 'PNG', 15, 40, 180, 100);
+            doc.save("emissions_report.pdf");
+          });
+        }
+      }
+      */
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF. Please try again.");
+    }
   };
   
   return (
