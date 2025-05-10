@@ -19,7 +19,7 @@ import {
   Line, 
   Scatter,
   Brush,
-  ChartTooltip,
+  Tooltip,
   Cell
 } from 'recharts';
 import { ChartContainer, ChartTooltip as ChartTooltipComponent, ChartTooltipContent } from '@/components/ui/chart';
