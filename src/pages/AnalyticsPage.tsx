@@ -2,23 +2,44 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PageHeader from '@/components/Analytics/PageHeader';
 import MetricsCards from '@/components/Analytics/MetricsCards';
 import AnalyticsOverview from '@/components/Analytics/AnalyticsOverview';
 import AnalyticsTrends from '@/components/Analytics/AnalyticsTrends';
 import AnalyticsSources from '@/components/Analytics/AnalyticsSources';
 import AnalyticsAdvanced from '@/components/Analytics/AnalyticsAdvanced';
+import FilterPanel from '@/components/Analytics/FilterPanel';
+import ActiveFilters from '@/components/Analytics/ActiveFilters';
+import EnhancedPageHeader from '@/components/Analytics/EnhancedPageHeader';
+import { AnalyticsFilterProvider, useAnalyticsFilters } from '@/contexts/AnalyticsFilterContext';
 
-const AnalyticsPage = () => {
+const AnalyticsContent: React.FC = () => {
+  const { filters, updateFilters } = useAnalyticsFilters();
+  
+  const handleFilterChange = (newFilters: {
+    facility: string;
+    department: string;
+    project: string;
+  }) => {
+    updateFilters(newFilters);
+  };
+  
+  const handleDateRangeChange = (dateRange: { from: Date; to: Date }) => {
+    updateFilters({ dateRange });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
       
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <PageHeader 
+        <EnhancedPageHeader 
           title="Emissions Analytics" 
-          subtitle="In-depth analysis of your emissions data and trends" 
+          subtitle="In-depth analysis of your emissions data and trends"
+          onDateRangeChange={handleDateRangeChange}
         />
+        
+        <FilterPanel onFilterChange={handleFilterChange} />
+        <ActiveFilters />
         
         <MetricsCards />
         
@@ -59,6 +80,14 @@ const AnalyticsPage = () => {
         </div>
       </footer>
     </div>
+  );
+};
+
+const AnalyticsPage: React.FC = () => {
+  return (
+    <AnalyticsFilterProvider>
+      <AnalyticsContent />
+    </AnalyticsFilterProvider>
   );
 };
 
