@@ -9,6 +9,8 @@ interface FilterState {
     from: Date;
     to: Date;
   };
+  productivityMetric: string; // Added for productivity filtering
+  resourceType: string; // Added for resource utilization filtering
 }
 
 interface AnalyticsFilterContextType {
@@ -24,6 +26,8 @@ const defaultFilters: FilterState = {
     from: new Date(2025, 0, 1), // Jan 1, 2025
     to: new Date(2025, 11, 31), // Dec 31, 2025
   },
+  productivityMetric: 'all', // Default value for productivity metrics
+  resourceType: 'all', // Default value for resource type
 };
 
 const AnalyticsFilterContext = createContext<AnalyticsFilterContextType>({

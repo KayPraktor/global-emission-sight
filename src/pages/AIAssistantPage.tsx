@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, BarChart3, CheckCircle, AlertTriangle, Send, Zap } from "lucide-react";
+import { CalendarIcon, BarChart3, CheckCircle, AlertTriangle, Send, Zap, TrendingUp, LineChart } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import ProductivityTab from "@/components/Productivity/ProductivityTab";
+import { AnalyticsFilterProvider } from '@/contexts/AnalyticsFilterContext';
 
 // Dummy AI conversation data
 type Message = {
@@ -132,348 +133,390 @@ const AIAssistantPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col space-y-4">
-          <h1 className="text-3xl font-bold">AI Assistant</h1>
-          <p className="text-gray-600">Analyze data, get recommendations, and generate reports using our AI assistant.</p>
+    <AnalyticsFilterProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-3xl font-bold">AI Assistant</h1>
+            <p className="text-gray-600">Analyze data, get recommendations, and generate reports using our AI assistant.</p>
 
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full md:w-3/4">
-              <Tabs defaultValue="chat">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="chat">Chat</TabsTrigger>
-                  <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                  <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-                  <TabsTrigger value="reports">Reports</TabsTrigger>
-                </TabsList>
-                
-                {/* Chat Tab */}
-                <TabsContent value="chat">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>AI Assistant Chat</CardTitle>
-                      <CardDescription>Ask questions about your emissions data and get insights.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col space-y-4">
-                        <div className="bg-white rounded-lg shadow p-4 h-[400px] overflow-y-auto flex flex-col space-y-4">
-                          {messages.map((message) => (
-                            <div 
-                              key={message.id} 
-                              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-3/4">
+                <Tabs defaultValue="chat">
+                  <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="chat">Chat</TabsTrigger>
+                    <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                    <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+                    <TabsTrigger value="productivity">Productivity</TabsTrigger>
+                    <TabsTrigger value="reports">Reports</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Chat Tab */}
+                  <TabsContent value="chat">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Assistant Chat</CardTitle>
+                        <CardDescription>Ask questions about your emissions data and get insights.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-col space-y-4">
+                          <div className="bg-white rounded-lg shadow p-4 h-[400px] overflow-y-auto flex flex-col space-y-4">
+                            {messages.map((message) => (
                               <div 
-                                className={`max-w-3/4 rounded-lg p-3 ${
-                                  message.sender === 'user' 
-                                    ? 'bg-primary text-white' 
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}
+                                key={message.id} 
+                                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                               >
-                                <p>{message.content}</p>
-                                <p className="text-xs opacity-70 mt-1">
-                                  {format(message.timestamp, 'h:mm a')}
+                                <div 
+                                  className={`max-w-3/4 rounded-lg p-3 ${
+                                    message.sender === 'user' 
+                                      ? 'bg-primary text-white' 
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  <p>{message.content}</p>
+                                  <p className="text-xs opacity-70 mt-1">
+                                    {format(message.timestamp, 'h:mm a')}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                            {isLoading && (
+                              <div className="flex justify-start">
+                                <div className="max-w-3/4 rounded-lg p-3 bg-gray-100">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Input 
+                              placeholder="Ask a question about your emissions data..." 
+                              value={inputMessage}
+                              onChange={(e) => setInputMessage(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                              className="flex-1"
+                            />
+                            <Button onClick={handleSendMessage} disabled={isLoading}>
+                              <Send className="h-4 w-4 mr-2" />
+                              Send
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* Analysis Tab */}
+                  <TabsContent value="analysis">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Advanced Data Analysis</CardTitle>
+                        <CardDescription>AI-powered analysis of your emissions data.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Time Period Selector */}
+                          <div className="flex flex-wrap gap-4">
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">Start Date</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                    mode="single"
+                                    selected={startDate}
+                                    onSelect={setStartDate}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">End Date</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                    mode="single"
+                                    selected={endDate}
+                                    onSelect={setEndDate}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                            <div className="flex items-end">
+                              <Button>Analyze Data</Button>
+                            </div>
+                          </div>
+
+                          {/* Analysis Cards */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-lg">Emission Trends</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="h-[200px] flex items-center justify-center bg-gray-100 rounded-md">
+                                  <BarChart3 className="h-16 w-16 text-gray-400" />
+                                </div>
+                                <p className="mt-4 text-sm text-gray-600">
+                                  Your emissions have decreased by 8.3% compared to the previous period, primarily due to reduced energy consumption.
                                 </p>
+                              </CardContent>
+                            </Card>
+
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-lg">Anomaly Detection</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                                      <p className="text-sm font-medium">Energy consumption</p>
+                                    </div>
+                                    <Badge variant="outline">Normal</Badge>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
+                                      <p className="text-sm font-medium">Transportation</p>
+                                    </div>
+                                    <Badge variant="outline" className="bg-yellow-50">Anomaly detected</Badge>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                                      <p className="text-sm font-medium">Waste management</p>
+                                    </div>
+                                    <Badge variant="outline">Normal</Badge>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* Recommendations Tab */}
+                  <TabsContent value="recommendations">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Recommendations</CardTitle>
+                        <CardDescription>Personalized suggestions to reduce emissions.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6">
+                          {recommendations.map((rec) => (
+                            <div key={rec.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className="font-medium text-lg">{rec.title}</h3>
+                                  <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
+                                </div>
+                                <Badge className={getImpactColor(rec.impact)}>
+                                  {rec.impact.charAt(0).toUpperCase() + rec.impact.slice(1)} Impact
+                                </Badge>
+                              </div>
+                              <div className="flex items-center mt-4 text-sm text-gray-500">
+                                <Badge variant="outline">{rec.category}</Badge>
                               </div>
                             </div>
                           ))}
-                          {isLoading && (
-                            <div className="flex justify-start">
-                              <div className="max-w-3/4 rounded-lg p-3 bg-gray-100">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Input 
-                            placeholder="Ask a question about your emissions data..." 
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                            className="flex-1"
-                          />
-                          <Button onClick={handleSendMessage} disabled={isLoading}>
-                            <Send className="h-4 w-4 mr-2" />
-                            Send
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                {/* Analysis Tab */}
-                <TabsContent value="analysis">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Advanced Data Analysis</CardTitle>
-                      <CardDescription>AI-powered analysis of your emissions data.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {/* Time Period Selector */}
-                        <div className="flex flex-wrap gap-4">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Start Date</p>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={startDate}
-                                  onSelect={setStartDate}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">End Date</p>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={endDate}
-                                  onSelect={setEndDate}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="flex items-end">
-                            <Button>Analyze Data</Button>
-                          </div>
-                        </div>
 
-                        {/* Analysis Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                          <Card>
-                            <CardHeader className="pb-2">
-                              <CardTitle className="text-lg">Emission Trends</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[200px] flex items-center justify-center bg-gray-100 rounded-md">
-                                <BarChart3 className="h-16 w-16 text-gray-400" />
-                              </div>
-                              <p className="mt-4 text-sm text-gray-600">
-                                Your emissions have decreased by 8.3% compared to the previous period, primarily due to reduced energy consumption.
-                              </p>
-                            </CardContent>
-                          </Card>
-
-                          <Card>
-                            <CardHeader className="pb-2">
-                              <CardTitle className="text-lg">Anomaly Detection</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-                                    <p className="text-sm font-medium">Energy consumption</p>
-                                  </div>
-                                  <Badge variant="outline">Normal</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
-                                    <p className="text-sm font-medium">Transportation</p>
-                                  </div>
-                                  <Badge variant="outline" className="bg-yellow-50">Anomaly detected</Badge>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-                                    <p className="text-sm font-medium">Waste management</p>
-                                  </div>
-                                  <Badge variant="outline">Normal</Badge>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <div className="flex justify-center mt-4">
+                            <Button className="flex items-center">
+                              <Zap className="mr-2 h-4 w-4" />
+                              Generate More Recommendations
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                {/* Recommendations Tab */}
-                <TabsContent value="recommendations">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>AI Recommendations</CardTitle>
-                      <CardDescription>Personalized suggestions to reduce emissions.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-6">
-                        {recommendations.map((rec) => (
-                          <div key={rec.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-medium text-lg">{rec.title}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
-                              </div>
-                              <Badge className={getImpactColor(rec.impact)}>
-                                {rec.impact.charAt(0).toUpperCase() + rec.impact.slice(1)} Impact
-                              </Badge>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* New Productivity Tab */}
+                  <TabsContent value="productivity">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Productivity Analysis</CardTitle>
+                        <CardDescription>Identify opportunities to improve operational efficiency while reducing emissions.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ProductivityTab />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* Reports Tab */}
+                  <TabsContent value="reports">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI-Generated Reports</CardTitle>
+                        <CardDescription>Comprehensive reports generated by our AI.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Time Period Selector (same as in Analysis) */}
+                          <div className="flex flex-wrap gap-4">
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">Start Date</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                    mode="single"
+                                    selected={startDate}
+                                    onSelect={setStartDate}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
                             </div>
-                            <div className="flex items-center mt-4 text-sm text-gray-500">
-                              <Badge variant="outline">{rec.category}</Badge>
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">End Date</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                    mode="single"
+                                    selected={endDate}
+                                    onSelect={setEndDate}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                            <div className="flex items-end">
+                              <Button>Generate Report</Button>
                             </div>
                           </div>
-                        ))}
 
-                        <div className="flex justify-center mt-4">
-                          <Button className="flex items-center">
-                            <Zap className="mr-2 h-4 w-4" />
-                            Generate More Recommendations
-                          </Button>
+                          {/* Report Templates */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                            <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
+                              <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
+                              <h3 className="font-medium">Emissions Summary</h3>
+                              <p className="text-sm text-gray-500 mt-1">Overview of all emissions sources</p>
+                            </div>
+                            <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
+                              <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
+                              <h3 className="font-medium">Trend Analysis</h3>
+                              <p className="text-sm text-gray-500 mt-1">Historical trends and patterns</p>
+                            </div>
+                            <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
+                              <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
+                              <h3 className="font-medium">Reduction Roadmap</h3>
+                              <p className="text-sm text-gray-500 mt-1">Strategic plan to reduce emissions</p>
+                            </div>
+                          </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Sidebar */}
+              <div className="w-full md:w-1/4 space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">AI Insights</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <p className="text-sm">
+                        Based on your recent data, optimizing your assembly process could improve productivity by 22% while reducing emissions by 15%.
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Zap className="mr-2 h-4 w-4" /> Get More Insights
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        Analyze current month
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        Compare to last year
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        Generate productivity report
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        Get efficiency recommendations
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Productivity Metrics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Overall Efficiency:</span>
+                        <Badge className="bg-green-100 text-green-800">84%</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                {/* Reports Tab */}
-                <TabsContent value="reports">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>AI-Generated Reports</CardTitle>
-                      <CardDescription>Comprehensive reports generated by our AI.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {/* Time Period Selector (same as in Analysis) */}
-                        <div className="flex flex-wrap gap-4">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Start Date</p>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={startDate}
-                                  onSelect={setStartDate}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">End Date</p>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={endDate}
-                                  onSelect={setEndDate}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="flex items-end">
-                            <Button>Generate Report</Button>
-                          </div>
-                        </div>
-
-                        {/* Report Templates */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                          <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
-                            <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
-                            <h3 className="font-medium">Emissions Summary</h3>
-                            <p className="text-sm text-gray-500 mt-1">Overview of all emissions sources</p>
-                          </div>
-                          <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
-                            <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
-                            <h3 className="font-medium">Trend Analysis</h3>
-                            <p className="text-sm text-gray-500 mt-1">Historical trends and patterns</p>
-                          </div>
-                          <div className="border rounded-lg p-4 text-center hover:border-primary hover:shadow-sm transition-all cursor-pointer">
-                            <BarChart3 className="h-10 w-10 mx-auto mb-2 text-gray-500" />
-                            <h3 className="font-medium">Reduction Roadmap</h3>
-                            <p className="text-sm text-gray-500 mt-1">Strategic plan to reduce emissions</p>
-                          </div>
-                        </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Resource Utilization:</span>
+                        <Badge className="bg-yellow-100 text-yellow-800">76%</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {/* Sidebar */}
-            <div className="w-full md:w-1/4 space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">AI Insights</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm">
-                      Based on your recent data, your emissions are 8.3% lower than the previous period.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Zap className="mr-2 h-4 w-4" /> Get More Insights
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full justify-start">
-                      Analyze current month
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
-                      Compare to last year
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
-                      Generate summary report
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
-                      Get top recommendations
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Process Optimization:</span>
+                        <Badge className="bg-blue-100 text-blue-800">68%</Badge>
+                      </div>
+                      <div className="flex items-center text-sm text-green-600 mt-2">
+                        <TrendingUp className="h-4 w-4 mr-1" />
+                        <span>+12% improvement this quarter</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </AnalyticsFilterProvider>
   );
 }
 
