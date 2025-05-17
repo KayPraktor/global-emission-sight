@@ -16,31 +16,34 @@ import MonitoringPage from "./pages/MonitoringPage";
 import AIAssistantPage from "./pages/AIAssistantPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const App = () => {
+  // Create a new QueryClient inside the component
+  const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="baryon-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <SidebarProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<DashboardLayout><Index /></DashboardLayout>} />
-              <Route path="/data-entry" element={<DashboardLayout><DataEntryPage /></DashboardLayout>} />
-              <Route path="/reports" element={<DashboardLayout><ReportsPage /></DashboardLayout>} />
-              <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
-              <Route path="/monitoring" element={<DashboardLayout><MonitoringPage /></DashboardLayout>} />
-              <Route path="/ai-assistant" element={<DashboardLayout><AIAssistantPage /></DashboardLayout>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </SidebarProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="baryon-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <SidebarProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<DashboardLayout><Index /></DashboardLayout>} />
+                <Route path="/data-entry" element={<DashboardLayout><DataEntryPage /></DashboardLayout>} />
+                <Route path="/reports" element={<DashboardLayout><ReportsPage /></DashboardLayout>} />
+                <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
+                <Route path="/monitoring" element={<DashboardLayout><MonitoringPage /></DashboardLayout>} />
+                <Route path="/ai-assistant" element={<DashboardLayout><AIAssistantPage /></DashboardLayout>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </SidebarProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
