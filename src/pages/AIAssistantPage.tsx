@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon, BarChart3, CheckCircle, AlertTriangle, Send, Zap, TrendingUp, LineChart } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import ProductivityTab from "@/components/Productivity/ProductivityTab";
 import { AnalyticsFilterProvider } from '@/contexts/AnalyticsFilterContext';
 
@@ -136,7 +134,6 @@ const AIAssistantPage: React.FC = () => {
   return (
     <AnalyticsFilterProvider>
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col space-y-4">
             <h1 className="text-3xl font-bold">AI Assistant</h1>

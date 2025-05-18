@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -65,7 +64,6 @@ const MonitoringPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar />
       
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
