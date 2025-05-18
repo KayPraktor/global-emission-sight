@@ -14,6 +14,7 @@ import ReportsPage from "./pages/ReportsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import AIAssistantPage from "./pages/AIAssistantPage";
+import GoalsPage from "./pages/GoalsPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -33,6 +34,7 @@ const App = () => {
                 <Route path="/data-entry" element={<DashboardLayout><DataEntryPage /></DashboardLayout>} />
                 <Route path="/reports" element={<DashboardLayout><ReportsPage /></DashboardLayout>} />
                 <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
+                <Route path="/goals" element={<DashboardLayout><GoalsPage /></DashboardLayout>} />
                 <Route path="/monitoring" element={<DashboardLayout><MonitoringPage /></DashboardLayout>} />
                 <Route path="/ai-assistant" element={<DashboardLayout><AIAssistantPage /></DashboardLayout>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

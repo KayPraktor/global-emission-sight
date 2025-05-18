@@ -10,7 +10,8 @@ import {
   FileSpreadsheet,
   Settings,
   Zap,
-  HelpCircle
+  HelpCircle,
+  Target
 } from 'lucide-react';
 
 import { 
@@ -32,6 +33,7 @@ export function AppSidebar() {
     { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry' },
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
+    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
     { name: 'Monitoring', icon: <MonitorSmartphone className="h-4 w-4" />, path: '/monitoring' },
     { name: 'AI Assistant', icon: <Zap className="h-4 w-4" />, path: '/ai-assistant' },
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MetricsCards from '@/components/Analytics/MetricsCards';
@@ -9,6 +10,7 @@ import FilterPanel from '@/components/Analytics/FilterPanel';
 import ActiveFilters from '@/components/Analytics/ActiveFilters';
 import EnhancedPageHeader from '@/components/Analytics/EnhancedPageHeader';
 import { AnalyticsFilterProvider, useAnalyticsFilters } from '@/contexts/AnalyticsFilterContext';
+import ProcessFlowMap from '@/components/Productivity/ProcessFlowMap';
 
 const AnalyticsContent: React.FC = () => {
   const { filters, updateFilters } = useAnalyticsFilters();
@@ -46,6 +48,7 @@ const AnalyticsContent: React.FC = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="trends">Emission Trends</TabsTrigger>
             <TabsTrigger value="sources">Emission Sources</TabsTrigger>
+            <TabsTrigger value="process">Process Flow</TabsTrigger>
             <TabsTrigger value="advanced">Advanced Analysis</TabsTrigger>
           </TabsList>
           
@@ -59,6 +62,10 @@ const AnalyticsContent: React.FC = () => {
           
           <TabsContent value="sources">
             <AnalyticsSources />
+          </TabsContent>
+          
+          <TabsContent value="process">
+            <ProcessFlowMap />
           </TabsContent>
           
           <TabsContent value="advanced">

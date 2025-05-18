@@ -1,6 +1,8 @@
 
 import React from 'react';
 import EmissionsReport from '@/components/Reports/EmissionsReport';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReportTemplates from '@/components/Reports/ReportTemplates';
 
 const ReportsPage = () => {
   return (
@@ -11,7 +13,20 @@ const ReportsPage = () => {
           <p className="text-gray-500">View, analyze, and export your emissions data</p>
         </div>
         
-        <EmissionsReport />
+        <Tabs defaultValue="data" className="mb-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="data">Data Reports</TabsTrigger>
+            <TabsTrigger value="templates">Report Templates</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="data">
+            <EmissionsReport />
+          </TabsContent>
+          
+          <TabsContent value="templates">
+            <ReportTemplates />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
