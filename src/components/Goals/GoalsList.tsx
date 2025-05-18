@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // Sample data - in a real app this would come from an API
 const goals = [
@@ -218,8 +219,7 @@ const GoalsList = ({ scope }: GoalsListProps) => {
                       <TooltipTrigger asChild>
                         <Progress 
                           value={goal.progress} 
-                          className="h-2"
-                          indicatorClassName={getProgressColor(goal.progress, goal.status)}
+                          className={cn("h-2", getProgressColor(goal.progress, goal.status))}
                         />
                       </TooltipTrigger>
                       <TooltipContent>
