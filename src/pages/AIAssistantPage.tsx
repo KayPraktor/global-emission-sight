@@ -9,17 +9,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   ArrowUpCircle, 
   BarChart3, 
   CheckCircle, 
   AlertTriangle, 
-  Send, 
   Zap, 
   TrendingUp, 
   LineChart, 
-  Mic, 
-  Volume2, 
   FileText, 
   ArrowRight,
   PlusCircle,
@@ -30,10 +28,28 @@ import {
 } from 'lucide-react';
 import ProductivityTab from "@/components/Productivity/ProductivityTab";
 import AIChat from "@/components/AI/AIChat";
-import AIVoiceInterface from "@/components/AI/AIVoiceInterface";
 import AIDataAnalysis from "@/components/AI/AIDataAnalysis";
 import { AnalyticsFilterProvider } from '@/contexts/AnalyticsFilterContext';
 import { toast } from "sonner";
+
+// Recommendation item type
+interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  category: string;
+  confidence: number;
+  implementation: string;
+  roi: string;
+  details?: {
+    overview: string;
+    steps: string[];
+    timeline: string;
+    costsEstimate: string;
+    expectedResults: string;
+  };
+}
 
 const AIAssistantPage: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(2025, 0, 1));
@@ -42,6 +58,8 @@ const AIAssistantPage: React.FC = () => {
   const [aiModel, setAiModel] = useState('advanced');
   const [isTraining, setIsTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState(0);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
+  const [showRecommendationDetails, setShowRecommendationDetails] = useState(false);
 
   // Simulation of AI training process
   useEffect(() => {
@@ -65,6 +83,40 @@ const AIAssistantPage: React.FC = () => {
     setIsTraining(true);
     setTrainingProgress(0);
     toast.info("Starting AI training process...");
+  };
+
+  const handleQuickAction = (action: string) => {
+    setActiveTab('chat');
+    
+    // Simulate different AI queries based on the action
+    switch(action) {
+      case 'generate-report':
+        toast.info("Generating emission report...");
+        setTimeout(() => {
+          toast.success("Report generated successfully!");
+        }, 2000);
+        break;
+      case 'analyze-month':
+        toast.info("Analyzing current month data...");
+        setTimeout(() => {
+          toast.success("Analysis complete!");
+        }, 2000);
+        break;
+      case 'forecast':
+        toast.info("Forecasting emissions to end of year...");
+        setTimeout(() => {
+          toast.success("Forecast complete!");
+        }, 2000);
+        break;
+      case 'simulate':
+        toast.info("Preparing simulation environment...");
+        setTimeout(() => {
+          toast.success("Simulation ready!");
+        }, 2000);
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -158,12 +210,11 @@ const AIAssistantPage: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="w-full md:w-3/4">
                 <Tabs defaultValue="chat" onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="chat">Chat</TabsTrigger>
                     <TabsTrigger value="analysis">Data Analysis</TabsTrigger>
                     <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
                     <TabsTrigger value="productivity">Productivity</TabsTrigger>
-                    <TabsTrigger value="voiceAssistant">Voice Assistant</TabsTrigger>
                   </TabsList>
                   
                   {/* Chat Tab */}
@@ -193,10 +244,20 @@ const AIAssistantPage: React.FC = () => {
                       <CardContent>
                         <div className="space-y-6">
                           {/* Recommendation items will be rendered here */}
-                          <RecommendationItems startDate={startDate} endDate={endDate} />
+                          <RecommendationItems 
+                            startDate={startDate} 
+                            endDate={endDate} 
+                            onViewDetails={(recommendation) => {
+                              setSelectedRecommendation(recommendation);
+                              setShowRecommendationDetails(true);
+                            }}
+                          />
 
                           <div className="flex justify-center mt-4">
-                            <Button className="flex items-center">
+                            <Button 
+                              className="flex items-center"
+                              onClick={() => toast.success("Generating additional recommendations...")}
+                            >
                               <Zap className="mr-2 h-4 w-4" />
                               Generate More Recommendations
                             </Button>
@@ -217,11 +278,6 @@ const AIAssistantPage: React.FC = () => {
                         <ProductivityTab />
                       </CardContent>
                     </Card>
-                  </TabsContent>
-                  
-                  {/* Voice Assistant Tab */}
-                  <TabsContent value="voiceAssistant">
-                    <AIVoiceInterface />
                   </TabsContent>
                 </Tabs>
               </div>
@@ -250,19 +306,39 @@ const AIAssistantPage: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => handleQuickAction('generate-report')}
+                      >
                         <FileText className="h-4 w-4 mr-2" />
                         Generate emission report
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => handleQuickAction('analyze-month')}
+                      >
                         <BarChart3 className="h-4 w-4 mr-2" />
                         Analyze current month data
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => handleQuickAction('forecast')}
+                      >
                         <TrendingUp className="h-4 w-4 mr-2" />
                         Forecast emissions to EOY
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => handleQuickAction('simulate')}
+                      >
                         <LineChart className="h-4 w-4 mr-2" />
                         Simulate reduction scenarios
                       </Button>
@@ -277,15 +353,39 @@ const AIAssistantPage: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setActiveTab('chat');
+                            toast.info("Query loaded to chat");
+                          }}
+                        >
                           <Info className="h-3 w-3 mr-2 text-muted-foreground" />
                           <span className="truncate text-sm text-muted-foreground">How can we reduce Scope 2 emissions?</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setActiveTab('chat');
+                            toast.info("Query loaded to chat");
+                          }}
+                        >
                           <Info className="h-3 w-3 mr-2 text-muted-foreground" />
                           <span className="truncate text-sm text-muted-foreground">Generate April emissions report</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setActiveTab('chat');
+                            toast.info("Query loaded to chat");
+                          }}
+                        >
                           <Info className="h-3 w-3 mr-2 text-muted-foreground" />
                           <span className="truncate text-sm text-muted-foreground">Compare Q1 vs Q4 last year</span>
                         </Button>
@@ -298,14 +398,107 @@ const AIAssistantPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Recommendation Details Dialog */}
+      <Dialog open={showRecommendationDetails} onOpenChange={setShowRecommendationDetails}>
+        <DialogContent className="max-w-3xl">
+          {selectedRecommendation && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-2">
+                  <span>{selectedRecommendation.title}</span>
+                  <Badge className={getImpactColor(selectedRecommendation.impact)}>
+                    {selectedRecommendation.impact.charAt(0).toUpperCase() + selectedRecommendation.impact.slice(1)} Impact
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedRecommendation.description}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-muted p-4 rounded-md">
+                  <h3 className="text-lg font-medium mb-2">Implementation Overview</h3>
+                  <p>{selectedRecommendation.details?.overview}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Implementation Steps</h3>
+                  <ol className="list-decimal pl-5 space-y-1">
+                    {selectedRecommendation.details?.steps.map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Timeline</h4>
+                    <p>{selectedRecommendation.details?.timeline}</p>
+                  </div>
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Estimated Costs</h4>
+                    <p>{selectedRecommendation.details?.costsEstimate}</p>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                  <h3 className="text-lg font-medium mb-2 text-green-800">Expected Results</h3>
+                  <p className="text-green-700">{selectedRecommendation.details?.expectedResults}</p>
+                </div>
+
+                <div className="flex justify-between items-center border-t pt-4">
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" className="flex items-center">
+                      <ThumbsUp className="h-4 w-4 mr-1" /> Helpful
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex items-center">
+                      <ThumbsDown className="h-4 w-4 mr-1" /> Not Helpful
+                    </Button>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      toast.success("Recommendation saved to action plan");
+                      setShowRecommendationDetails(false);
+                    }}
+                  >
+                    Add to Action Plan
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AnalyticsFilterProvider>
   );
 }
 
+// Helper function for recommendation impact colors
+const getImpactColor = (impact: string) => {
+  switch (impact) {
+    case 'high':
+      return 'bg-green-100 text-green-800';
+    case 'medium':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'low':
+      return 'bg-gray-100 text-gray-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
 // Helper component for recommendations
-const RecommendationItems = ({ startDate, endDate }: { startDate?: Date, endDate?: Date }) => {
-  // Sample recommendations
-  const recommendations = [
+const RecommendationItems = ({ 
+  startDate, 
+  endDate,
+  onViewDetails
+}: { 
+  startDate?: Date, 
+  endDate?: Date,
+  onViewDetails: (recommendation: Recommendation) => void
+}) => {
+  // Sample recommendations with detailed data
+  const recommendations: Recommendation[] = [
     {
       id: '1',
       title: 'Optimize HVAC operating schedules',
@@ -315,6 +508,20 @@ const RecommendationItems = ({ startDate, endDate }: { startDate?: Date, endDate
       confidence: 92,
       implementation: 'medium',
       roi: 'high',
+      details: {
+        overview: 'This recommendation involves implementing smart scheduling for your HVAC systems to reduce unnecessary operation during periods of low or no occupancy.',
+        steps: [
+          'Conduct an audit of current HVAC usage patterns across all facilities',
+          'Identify peak and off-peak usage hours based on occupancy data',
+          'Install smart thermostats with scheduling capabilities',
+          'Program schedules based on facility usage patterns',
+          'Implement gradual temperature adjustments 1-2 hours before closing',
+          'Set up automated monitoring to identify further optimization opportunities'
+        ],
+        timeline: '3-4 months for complete implementation',
+        costsEstimate: '$15,000 - $22,000 for equipment and installation',
+        expectedResults: 'Expected reduction of 15-20% in HVAC-related emissions, with an estimated annual cost saving of $28,000 - $35,000.'
+      }
     },
     {
       id: '2',
@@ -325,6 +532,20 @@ const RecommendationItems = ({ startDate, endDate }: { startDate?: Date, endDate
       confidence: 87,
       implementation: 'low',
       roi: 'medium',
+      details: {
+        overview: 'Implementing occupancy-based lighting control through motion sensors to automatically manage lighting in areas with variable occupancy.',
+        steps: [
+          'Conduct a lighting audit to identify high-impact areas',
+          'Select appropriate sensor technologies for each space type',
+          'Purchase required hardware and schedule installation',
+          'Install sensors with minimal disruption to operations',
+          'Configure sensitivity and timeout settings for optimal performance',
+          'Train facility staff on maintenance and troubleshooting'
+        ],
+        timeline: '6-8 weeks for full implementation',
+        costsEstimate: '$8,000 - $12,000 depending on facility size',
+        expectedResults: '10-12% reduction in lighting electricity consumption, with ROI achieved within 14-18 months.'
+      }
     },
     {
       id: '3',
@@ -335,21 +556,22 @@ const RecommendationItems = ({ startDate, endDate }: { startDate?: Date, endDate
       confidence: 95,
       implementation: 'high',
       roi: 'high',
+      details: {
+        overview: 'Establishing a power purchase agreement (PPA) with a renewable energy provider to cover approximately 30% of your total energy consumption.',
+        steps: [
+          'Analyze current energy consumption and establish baseline',
+          'Research and evaluate potential renewable energy providers',
+          'Request proposals from shortlisted providers',
+          'Negotiate PPA terms including pricing, duration, and delivery',
+          'Finalize contract with selected provider',
+          'Implement transition plan and update emissions reporting methodology'
+        ],
+        timeline: '6-9 months for contract negotiation and implementation',
+        costsEstimate: 'Potentially cost-neutral or slight premium (2-5%) over current rates',
+        expectedResults: 'Immediate 30% reduction in Scope 2 emissions, enhanced sustainability reputation, and protection against future energy price volatility.'
+      }
     },
   ];
-
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'high':
-        return 'bg-green-100 text-green-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <>
@@ -392,7 +614,12 @@ const RecommendationItems = ({ startDate, endDate }: { startDate?: Date, endDate
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
                 <ThumbsDown className="h-4 w-4 text-gray-500" />
               </Button>
-              <Button variant="outline" size="sm" className="h-8 rounded-full px-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 rounded-full px-3"
+                onClick={() => onViewDetails(rec)}
+              >
                 <span className="text-xs">Details</span>
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Button>

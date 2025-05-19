@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Mic, PauseCircle, AlertCircle, CheckCircle, Paperclip, ArrowDown } from 'lucide-react';
+import { Send, AlertCircle, CheckCircle, Paperclip, ArrowDown, User } from 'lucide-react';
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Message types
 type MessageRole = 'user' | 'ai' | 'system';
@@ -50,6 +51,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamProgress, setStreamProgress] = useState(0);
   const [currentStreamedContent, setCurrentStreamedContent] = useState('');
+  const [showScrollButton, setShowScrollButton] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,29 @@ const AIChat: React.FC<AIChatProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Show scroll to bottom button when scrolled up
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Show button when scrolled up more than 100px from bottom
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Simulate streaming AI response
   const simulateStreamResponse = (prompt: string) => {
@@ -175,11 +200,11 @@ const AIChat: React.FC<AIChatProps> = ({
 
   return (
     <Card className="h-[70vh] flex flex-col">
-      <CardHeader>
+      <CardHeader className="border-b pb-3">
         <CardTitle>AI Assistant Chat</CardTitle>
         <CardDescription>Ask questions about your emissions data and get insights</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden flex flex-col h-full">
+      <CardContent className="flex-grow overflow-hidden flex flex-col h-full pt-4">
         <div className="flex flex-col space-y-4 overflow-y-auto flex-grow pr-2" ref={chatContainerRef}>
           {messages.map((message) => (
             <div 
@@ -187,37 +212,61 @@ const AIChat: React.FC<AIChatProps> = ({
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === 'user' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : message.role === 'system' 
-                      ? 'bg-muted text-muted-foreground border border-border' 
-                      : 'bg-card text-card-foreground border border-border'
+                className={`flex items-start max-w-[80%] ${
+                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                {/* Avatar */}
+                <div className={`flex-shrink-0 ${message.role === 'user' ? 'ml-2' : 'mr-2'}`}>
+                  <Avatar className="h-8 w-8">
+                    {message.role === 'user' ? (
+                      <>
+                        <AvatarFallback className="bg-primary text-primary-foreground">U</AvatarFallback>
+                        <AvatarImage src="/placeholder.svg" alt="User" />
+                      </>
+                    ) : (
+                      <>
+                        <AvatarFallback className="bg-blue-600 text-white">AI</AvatarFallback>
+                        <AvatarImage src="/placeholder.svg" alt="AI" />
+                      </>
+                    )}
+                  </Avatar>
+                </div>
                 
-                <div className="flex justify-between items-center mt-2 text-xs opacity-70">
-                  <span>{format(message.timestamp, 'h:mm a')}</span>
+                {/* Message content */}
+                <div 
+                  className={`rounded-lg p-3 ${
+                    message.role === 'user' 
+                      ? 'bg-primary text-primary-foreground rounded-tr-none' 
+                      : message.role === 'system' 
+                        ? 'bg-muted text-muted-foreground border border-border' 
+                        : 'bg-card text-card-foreground border border-border rounded-tl-none'
+                  } ${message.status === 'sending' ? 'animate-pulse' : ''}`}
+                >
+                  <div className="whitespace-pre-wrap">{message.content}</div>
                   
-                  {message.role === 'ai' && message.status === 'sent' && (
-                    <div className="flex space-x-2 items-center">
-                      <button 
-                        onClick={() => handleFeedback(message.id, 'positive')}
-                        className={`opacity-60 hover:opacity-100 ${message.feedback === 'positive' ? 'text-green-500 opacity-100' : ''}`}
-                        aria-label="Helpful"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleFeedback(message.id, 'negative')}
-                        className={`opacity-60 hover:opacity-100 ${message.feedback === 'negative' ? 'text-red-500 opacity-100' : ''}`}
-                        aria-label="Not helpful"
-                      >
-                        <AlertCircle className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center mt-2 text-xs opacity-70">
+                    <span>{format(message.timestamp, 'h:mm a')}</span>
+                    
+                    {message.role === 'ai' && message.status === 'sent' && (
+                      <div className="flex space-x-2 items-center">
+                        <button 
+                          onClick={() => handleFeedback(message.id, 'positive')}
+                          className={`opacity-60 hover:opacity-100 ${message.feedback === 'positive' ? 'text-green-500 opacity-100' : ''}`}
+                          aria-label="Helpful"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleFeedback(message.id, 'negative')}
+                          className={`opacity-60 hover:opacity-100 ${message.feedback === 'negative' ? 'text-red-500 opacity-100' : ''}`}
+                          aria-label="Not helpful"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -231,6 +280,20 @@ const AIChat: React.FC<AIChatProps> = ({
           
           <div ref={messagesEndRef} />
         </div>
+        
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <div className="flex justify-center my-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-full h-8 w-8 p-0 flex items-center justify-center"
+              onClick={scrollToBottom}
+            >
+              <ArrowDown className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="border-t py-3">
         <div className="flex items-center space-x-2 w-full">
@@ -255,19 +318,10 @@ const AIChat: React.FC<AIChatProps> = ({
           <Button 
             onClick={handleSendMessage} 
             disabled={isProcessing || !inputMessage.trim()}
-            className="shrink-0"
+            className="shrink-0 flex items-center"
           >
-            {isProcessing ? <PauseCircle className="h-4 w-4 mr-2 animate-pulse" /> : <Send className="h-4 w-4 mr-2" />}
+            <Send className="h-4 w-4 mr-2" />
             Send
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => toast.info("Voice input feature coming soon")}
-            title="Voice input"
-          >
-            <Mic className="h-4 w-4" />
           </Button>
         </div>
       </CardFooter>
