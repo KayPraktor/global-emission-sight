@@ -125,7 +125,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onPreview }) => {
               size="sm"
               onClick={handleDownload}
               disabled={!template.available || isDownloading || (hasMultipleFormats && !selectedFormat)}
-              loading={isDownloading}
             >
               <Download className="h-3 w-3 mr-1" />
               {isDownloading ? 'Downloading...' : 'Download'}
