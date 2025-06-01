@@ -149,7 +149,7 @@ const EmissionsChart: React.FC = () => {
                   tickLine={false}
                   tick={{ fill: '#666', fontSize: 12 }}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
                 <Legend 
                   wrapperStyle={{ paddingTop: 10 }}
                   iconType="circle"

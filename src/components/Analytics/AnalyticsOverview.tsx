@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Card,
@@ -127,7 +126,7 @@ const AnalyticsOverview = () => {
                   tickLine={false}
                   tick={{ fill: '#666', fontSize: 12 }}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
                 <Legend 
                   verticalAlign="top"
                   height={36}
@@ -180,10 +179,7 @@ const AnalyticsOverview = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip 
-                  content={<CustomTooltip />} 
-                  formatter={(value) => [`${value}%`, 'Contribution']} 
-                />
+                <Tooltip content={CustomTooltip} formatter={(value) => [`${value}%`, 'Contribution']} />
               </PieChart>
             </ChartContainer>
           </CardContent>
@@ -219,7 +215,7 @@ const AnalyticsOverview = () => {
                 tickLine={false} 
                 tick={{ fill: '#666', fontSize: 12 }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={CustomTooltip} />
               <Legend 
                 verticalAlign="top"
                 height={36}

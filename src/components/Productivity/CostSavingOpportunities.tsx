@@ -147,7 +147,7 @@ const CostSavingOpportunities: React.FC = () => {
                     tickLine={false}
                     tick={{ fontSize: 12 }}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={CustomTooltip} />
                   <Legend 
                     verticalAlign="top"
                     height={36}

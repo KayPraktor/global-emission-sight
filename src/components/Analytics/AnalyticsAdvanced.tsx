@@ -144,7 +144,7 @@ const AnalyticsAdvanced = () => {
                   tickLine={false} 
                   tick={{ fill: '#666', fontSize: 12 }}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
                 <Legend 
                   verticalAlign="top"
                   height={36}
