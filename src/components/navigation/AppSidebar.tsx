@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -11,7 +10,8 @@ import {
   Settings,
   Zap,
   HelpCircle,
-  Target
+  Target,
+  Building2
 } from 'lucide-react';
 
 import { 
@@ -30,6 +30,7 @@ export function AppSidebar() {
   
   const navItems = [
     { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/' },
+    { name: 'Enterprise', icon: <Building2 className="h-4 w-4" />, path: '/enterprise' },
     { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry' },
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
