@@ -2,13 +2,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AppSidebar } from '@/components/navigation/AppSidebar';
+import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
+import { EnhancedNavigation } from '@/components/navigation/EnhancedNavigation';
+import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { Sidebar, SidebarContent, SidebarInset, SidebarRail, useSidebar } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Atom, HelpCircle, Menu } from 'lucide-react';
+import { Atom, HelpCircle, Menu, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,6 +27,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
+  const { open, setOpen } = useCommandPalette();
   
   return (
     <div className="flex min-h-screen w-full bg-sidebar">
@@ -25,8 +36,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       
       <SidebarInset>
         <div className="flex h-full flex-col">
-          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-6">
-            <div className="flex items-center">
+          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+            <div className="flex items-center gap-4">
               {isMobile && (
                 <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
                   <Menu className="h-5 w-5" />
@@ -36,8 +47,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Atom className="h-6 w-6 mr-2" />
                 BARYON
               </Link>
+              
+              {!isMobile && (
+                <div className="hidden md:flex">
+                  <EnhancedNavigation />
+                </div>
+              )}
             </div>
+            
             <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setOpen(true)}
+                      className="hidden md:flex"
+                    >
+                      <Command className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Command Palette (⌘K)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               <Button variant="ghost" size="icon" aria-label="Help">
                 <HelpCircle className="h-5 w-5" />
               </Button>
@@ -47,9 +83,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </header>
           
-          <div className="flex-1 overflow-auto p-6">
-            <div className="animate-fade-in">
-              {children}
+          <div className="flex-1 overflow-auto">
+            <div className="p-6">
+              <BreadcrumbNav />
+              <div className="animate-fade-in">
+                {children}
+              </div>
             </div>
           </div>
           
@@ -64,6 +103,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </footer>
         </div>
+        
+        <CommandPalette open={open} onOpenChange={setOpen} />
+        <FloatingActionButton />
       </SidebarInset>
     </div>
   );
