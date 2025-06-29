@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface LazyImageProps {
   src: string;
   alt: string;
   placeholder?: string;
@@ -13,6 +13,10 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   blurDataURL?: string;
   onLoad?: () => void;
   onError?: () => void;
+  // Add common img props without conflicts
+  width?: number | string;
+  height?: number | string;
+  loading?: 'eager' | 'lazy';
 }
 
 export const LazyImage: React.FC<LazyImageProps> = ({
@@ -24,7 +28,9 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   blurDataURL,
   onLoad,
   onError,
-  ...props
+  width,
+  height,
+  loading,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -90,13 +96,16 @@ export const LazyImage: React.FC<LazyImageProps> = ({
               ref={imgRef}
               src={src}
               alt={alt}
+              width={width}
+              height={height}
+              loading={loading}
               className={cn('w-full h-full object-cover', className)}
               initial={{ opacity: 0 }}
               animate={{ opacity: isLoaded ? 1 : 0 }}
               transition={{ duration: 0.3 }}
               onLoad={handleLoad}
               onError={handleError}
-              {...props}
+              style={{ width, height }}
             />
           )}
         </>

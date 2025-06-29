@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Activity, Memory, Zap, Eye, EyeOff } from 'lucide-react';
+import { Activity, HardDrive, Zap, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const PerformanceMonitor: React.FC<{
@@ -87,7 +87,7 @@ export const PerformanceMonitor: React.FC<{
                 {memoryInfo && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Memory className="h-4 w-4 text-purple-500" />
+                      <HardDrive className="h-4 w-4 text-purple-500" />
                       <span className="text-sm font-medium">Memory</span>
                       <Badge variant="outline" className="ml-auto">
                         {memoryInfo.used}MB / {memoryInfo.total}MB
