@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
@@ -9,8 +8,7 @@ import {
   EnhancedCardTitle as CardTitle 
 } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Clock, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, Target, FileSpreadsheet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
@@ -23,6 +21,13 @@ import {
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { InteractiveChart } from '@/components/ui/interactive-chart';
 import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
+
+// Import new Phase 3 components
+import { InteractiveButton, LikeButton, CopyButton } from '@/components/ui/micro-interactions';
+import { SkeletonCard, StatusIndicator, ProgressBar } from '@/components/ui/loading-states';
+import { StaggeredList, SlideIn } from '@/components/ui/page-transitions';
+import { Tooltip, EmptyState } from '@/components/ui/feedback-system';
+import { useAnimatedToast, useOnboarding } from '@/hooks/useMicroInteractions';
 
 // Sample data for the advanced table
 const sampleTableData = [
@@ -75,15 +80,30 @@ const chartYKeys = [
 const Index = () => {
   const [showAll, setShowAll] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
+  const { addToast } = useAnimatedToast();
+  const { startOnboarding } = useOnboarding();
   
-  const handleNewReport = () => {
+  const handleNewReport = async () => {
     setIsLoading(true);
+    addToast("Creating new report...", "info");
+    
+    // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      toast.success("Creating new report...", {
-        description: "Your new emissions report is being prepared."
-      });
+      addToast("Report created successfully!", "success");
     }, 2000);
+  };
+
+  const handleCardLike = (cardId: string, liked: boolean) => {
+    const newLikedCards = new Set(likedCards);
+    if (liked) {
+      newLikedCards.add(cardId);
+    } else {
+      newLikedCards.delete(cardId);
+    }
+    setLikedCards(newLikedCards);
+    addToast(liked ? "Added to favorites" : "Removed from favorites", "info");
   };
   
   return (
@@ -97,101 +117,175 @@ const Index = () => {
               <PageHeaderDateFilter defaultValue="Jan - May 2025" />
               <PageHeaderExport />
               <HoverScale>
-                <Button size="sm" onClick={handleNewReport} disabled={isLoading}>
+                <InteractiveButton 
+                  onClick={handleNewReport} 
+                  loading={isLoading}
+                  className="bg-primary hover:bg-primary/90"
+                >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   {isLoading ? 'Creating...' : 'New Report'}
-                </Button>
+                </InteractiveButton>
               </HoverScale>
+              <Tooltip content="Start interactive tour">
+                <InteractiveButton 
+                  variant="outline"
+                  onClick={startOnboarding}
+                >
+                  Help
+                </InteractiveButton>
+              </Tooltip>
             </>
           }
         />
       </FadeIn>
       
-      <FadeIn delay={0.1}>
+      <SlideIn direction="up" delay={0.1}>
         <EmissionsOverview />
-      </FadeIn>
+      </SlideIn>
       
-      <FadeIn delay={0.2}>
+      <SlideIn direction="up" delay={0.2}>
         <EmissionsChart />
-      </FadeIn>
+      </SlideIn>
 
-      {/* Enhanced Interactive Chart */}
-      <FadeIn delay={0.3}>
-        <InteractiveChart
-          data={chartData}
-          title="Monthly Emissions Breakdown"
-          xKey="month"
-          yKeys={chartYKeys}
-          unit="tCO₂e"
-          showBrush={true}
-          showReference={true}
-          referenceValue={1000}
-          onDataPointClick={(data) => console.log('Chart clicked:', data)}
-          onExport={() => console.log('Export chart')}
-        />
-      </FadeIn>
-
-      {/* Advanced Data Table */}
-      <FadeIn delay={0.4}>
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Recent Emissions Data</h3>
-          <AdvancedDataTable
-            data={sampleTableData}
-            columns={tableColumns}
-            onRowSelect={(rows) => console.log('Selected rows:', rows)}
-            onExport={(data) => console.log('Export data:', data)}
+      {/* Enhanced Interactive Chart with micro-interactions */}
+      <SlideIn direction="up" delay={0.3}>
+        <div className="relative">
+          <InteractiveChart
+            data={chartData}
+            title="Monthly Emissions Breakdown"
+            xKey="month"
+            yKeys={chartYKeys}
+            unit="tCO₂e"
+            showBrush={true}
+            showReference={true}
+            referenceValue={1000}
+            onDataPointClick={(data) => {
+              addToast(`Clicked on ${data.month} data`, "info");
+            }}
+            onExport={() => addToast("Chart exported successfully", "success")}
           />
+          <div className="absolute top-4 right-4 flex gap-2">
+            <LikeButton 
+              initialLiked={likedCards.has('emissions-chart')}
+              onToggle={(liked) => handleCardLike('emissions-chart', liked)}
+            />
+            <CopyButton text="Monthly Emissions Data: Chart exported" />
+          </div>
         </div>
-      </FadeIn>
+      </SlideIn>
+
+      {/* Advanced Data Table with loading states */}
+      <SlideIn direction="up" delay={0.4}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Recent Emissions Data</h3>
+            <div className="flex gap-2">
+              <StatusIndicator status="success" message="Data up to date" />
+              <ProgressBar value={85} max={100} showLabel={false} className="w-24" />
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <SkeletonCard showActions={true} />
+          ) : (
+            <AdvancedDataTable
+              data={sampleTableData}
+              columns={tableColumns}
+              onRowSelect={(rows) => addToast(`Selected ${rows.length} rows`, "info")}
+              onExport={(data) => addToast(`Exported ${data.length} records`, "success")}
+            />
+          )}
+        </div>
+      </SlideIn>
       
-      <StaggeredContainer className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <GlassmorphismCard variant="light" className="p-6 space-y-4">
+      <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
+        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative">
+          <div className="absolute top-4 right-4">
+            <LikeButton 
+              initialLiked={likedCards.has('compliance-card')}
+              onToggle={(liked) => handleCardLike('compliance-card', liked)}
+            />
+          </div>
           <div className="flex items-center">
             <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
             <h4 className="font-medium">Compliance Status</h4>
           </div>
           <div className="space-y-3">
             {[
-              { name: 'GHG Protocol', status: 'Compliant', color: 'green' },
-              { name: 'ISO 14064', status: 'Compliant', color: 'green' },
-              { name: 'CDP Reporting', status: 'In Progress', color: 'yellow' },
-              { name: 'TCFD Alignment', status: 'Partial', color: 'yellow' },
+              { name: 'GHG Protocol', status: 'Compliant', color: 'green', progress: 100 },
+              { name: 'ISO 14064', status: 'Compliant', color: 'green', progress: 100 },
+              { name: 'CDP Reporting', status: 'In Progress', color: 'yellow', progress: 75 },
+              { name: 'TCFD Alignment', status: 'Partial', color: 'yellow', progress: 60 },
             ].map((item, index) => (
-              <HoverScale key={index} className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
-                <span className="text-sm font-medium">{item.name}</span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  item.color === 'green' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {item.status}
-                </span>
-              </HoverScale>
+              <motion.div
+                key={index}
+                whileHover={{ scale: 1.02 }}
+                className="p-3 bg-white/50 rounded-lg space-y-2"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    item.color === 'green' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {item.status}
+                  </span>
+                </div>
+                <ProgressBar 
+                  value={item.progress} 
+                  showLabel={false} 
+                  className="h-1"
+                />
+              </motion.div>
             ))}
           </div>
         </GlassmorphismCard>
         
-        <GlassmorphismCard variant="colored" className="p-6 space-y-4">
+        <GlassmorphismCard variant="colored" className="p-6 space-y-4 relative">
+          <div className="absolute top-4 right-4">
+            <LikeButton 
+              initialLiked={likedCards.has('deadlines-card')}
+              onToggle={(liked) => handleCardLike('deadlines-card', liked)}
+            />
+          </div>
           <div className="flex items-center">
             <Clock className="h-5 w-5 mr-2 text-blue-600" />
             <h4 className="font-medium">Upcoming Deadlines</h4>
           </div>
           <div className="space-y-3">
             {[
-              { task: 'Q2 Data Collection', date: 'June 30, 2025' },
-              { task: 'CDP Submission', date: 'July 15, 2025' },
-              { task: 'Annual Report', date: 'Dec 31, 2025' },
-              { task: 'SBTi Validation', date: 'Mar 1, 2026' },
+              { task: 'Q2 Data Collection', date: 'June 30, 2025', urgency: 'high' },
+              { task: 'CDP Submission', date: 'July 15, 2025', urgency: 'medium' },
+              { task: 'Annual Report', date: 'Dec 31, 2025', urgency: 'low' },
+              { task: 'SBTi Validation', date: 'Mar 1, 2026', urgency: 'low' },
             ].map((item, index) => (
-              <HoverScale key={index} className="flex justify-between items-center p-3 bg-white/30 rounded-lg">
-                <span className="text-sm font-medium">{item.task}</span>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {item.date}
-                </span>
-              </HoverScale>
+              <Tooltip key={index} content={`Priority: ${item.urgency}`}>
+                <motion.div
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  className="flex justify-between items-center p-3 bg-white/30 rounded-lg cursor-pointer"
+                >
+                  <span className="text-sm font-medium">{item.task}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {item.date}
+                    </span>
+                    <div className={`w-2 h-2 rounded-full ${
+                      item.urgency === 'high' ? 'bg-red-500' :
+                      item.urgency === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                    }`} />
+                  </div>
+                </motion.div>
+              </Tooltip>
             ))}
           </div>
         </GlassmorphismCard>
         
-        <GlassmorphismCard variant="dark" className="p-6 space-y-4">
+        <GlassmorphismCard variant="dark" className="p-6 space-y-4 relative">
+          <div className="absolute top-4 right-4">
+            <LikeButton 
+              initialLiked={likedCards.has('hotspots-card')}
+              onToggle={(liked) => handleCardLike('hotspots-card', liked)}
+            />
+          </div>
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
             <h4 className="font-medium text-white">Emission Hotspots</h4>
@@ -203,40 +297,51 @@ const Index = () => {
               { source: 'Natural Gas', intensity: 55, level: 'Medium' },
               { source: 'Waste Generation', intensity: 30, level: 'Low' },
             ].map((item, index) => (
-              <HoverScale key={index} className="flex justify-between items-center p-3 bg-white/10 rounded-lg">
-                <span className="text-sm font-medium text-white">{item.source}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-2 bg-gray-600 rounded-full overflow-hidden">
-                    <motion.div 
-                      className={`h-full ${
-                        item.level === 'High' ? 'bg-red-500' :
-                        item.level === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
-                      }`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${item.intensity}%` }}
-                      transition={{ duration: 1, delay: index * 0.2 }}
-                    />
+              <Tooltip key={index} content={`Impact Level: ${item.level} (${item.intensity}%)`}>
+                <motion.div
+                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.15)' }}
+                  className="flex justify-between items-center p-3 bg-white/10 rounded-lg cursor-pointer"
+                >
+                  <span className="text-sm font-medium text-white">{item.source}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-2 bg-gray-600 rounded-full overflow-hidden">
+                      <motion.div 
+                        className={`h-full ${
+                          item.level === 'High' ? 'bg-red-500' :
+                          item.level === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.intensity}%` }}
+                        transition={{ duration: 1, delay: index * 0.2 }}
+                      />
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      item.level === 'High' ? 'bg-red-100 text-red-800' :
+                      item.level === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {item.level}
+                    </span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    item.level === 'High' ? 'bg-red-100 text-red-800' :
-                    item.level === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {item.level}
-                  </span>
-                </div>
-              </HoverScale>
+                </motion.div>
+              </Tooltip>
             ))}
           </div>
         </GlassmorphismCard>
-      </StaggeredContainer>
+      </StaggeredList>
       
       {showAll && (
-        <FadeIn>
+        <SlideIn direction="up">
           <GlassmorphismCard variant="light" className="p-6 mt-6">
-            <div className="flex items-center mb-4">
-              <Info className="h-5 w-5 mr-2 text-purple-500" />
-              <h4 className="font-medium text-lg">Sustainability Strategy Progress</h4>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Info className="h-5 w-5 mr-2 text-purple-500" />
+                <h4 className="font-medium text-lg">Sustainability Strategy Progress</h4>
+              </div>
+              <LikeButton 
+                initialLiked={likedCards.has('strategy-card')}
+                onToggle={(liked) => handleCardLike('strategy-card', liked)}
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -244,50 +349,64 @@ const Index = () => {
                 { title: 'Carbon Neutrality', current: 28, target: 100, trend: 8 },
                 { title: 'EV Fleet', current: 15, target: 100, trend: 10 },
               ].map((item, index) => (
-                <div key={index} className="bg-white/50 p-4 rounded-lg">
+                <motion.div 
+                  key={index} 
+                  className="bg-white/50 p-4 rounded-lg"
+                  whileHover={{ scale: 1.02 }}
+                >
                   <h5 className="font-medium text-sm text-gray-600 mb-2">{item.title}</h5>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-2xl font-bold text-purple-700">
                       <AnimatedCounter value={item.current} suffix="%" />
                     </span>
-                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                      +{item.trend}% YoY
-                    </span>
+                    <Tooltip content={`Year over year growth: +${item.trend}%`}>
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full cursor-help">
+                        +{item.trend}% YoY
+                      </span>
+                    </Tooltip>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <motion.div 
-                      className="bg-purple-500 h-2 rounded-full" 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${item.current}%` }}
-                      transition={{ duration: 1.5, delay: index * 0.3 }}
-                    />
-                  </div>
+                  <ProgressBar 
+                    value={item.current} 
+                    max={item.target}
+                    showLabel={false}
+                    className="mb-2"
+                  />
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Current: {item.current}%</span>
                     <span>Target: {item.target}%</span>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </GlassmorphismCard>
-        </FadeIn>
+        </SlideIn>
       )}
       
       <div className="flex justify-center mt-6">
-        <HoverScale>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAll(!showAll)}
-            className="flex items-center gap-2"
-          >
-            {showAll ? (
-              <>Show Less <ChevronUp className="h-4 w-4" /></>
-            ) : (
-              <>Show More <ChevronDown className="h-4 w-4" /></>
-            )}
-          </Button>
-        </HoverScale>
+        <InteractiveButton 
+          variant="outline" 
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll ? (
+            <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></>
+          ) : (
+            <>Show More <ChevronDown className="h-4 w-4 ml-2" /></>
+          )}
+        </InteractiveButton>
       </div>
+
+      {/* Empty state example (conditionally shown) */}
+      {sampleTableData.length === 0 && (
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="No emissions data found"
+          description="Start by adding your first emissions record to see analytics and insights."
+          action={{
+            label: "Add Emissions Data",
+            onClick: handleNewReport
+          }}
+        />
+      )}
     </div>
   );
 };
