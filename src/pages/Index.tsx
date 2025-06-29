@@ -28,6 +28,9 @@ import { SkeletonCard, StatusIndicator, ProgressBar } from '@/components/ui/load
 import { StaggeredList, SlideIn } from '@/components/ui/page-transitions';
 import { Tooltip, EmptyState } from '@/components/ui/feedback-system';
 import { useAnimatedToast, useOnboarding } from '@/hooks/useMicroInteractions';
+import { PerformanceMonitor } from '@/components/ui/performance-monitor';
+import { VirtualList } from '@/components/ui/virtual-list';
+import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 
 // Sample data for the advanced table
 const sampleTableData = [
@@ -84,6 +87,9 @@ const Index = () => {
   const { addToast } = useAnimatedToast();
   const { startOnboarding } = useOnboarding();
   
+  // Add performance optimization features
+  const cache = useAdvancedCache<any>({ ttl: 10 * 60 * 1000, enableLogging: true });
+  
   const handleNewReport = async () => {
     setIsLoading(true);
     addToast("Creating new report...", "info");
@@ -108,6 +114,9 @@ const Index = () => {
   
   return (
     <div className="space-y-6">
+      {/* Performance Monitor */}
+      <PerformanceMonitor componentName="Dashboard" />
+      
       <FadeIn>
         <PageHeader 
           title="Carbon Emissions Dashboard" 
@@ -225,7 +234,9 @@ const Index = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{item.name}</span>
                   <span className={`text-xs px-2 py-1 rounded-full ${
-                    item.color === 'green' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    item.color === 'green' ? 'bg-green-100 text-green-800' :
+                    item.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
                   }`}>
                     {item.status}
                   </span>
@@ -378,6 +389,46 @@ const Index = () => {
                 </motion.div>
               ))}
             </div>
+          </GlassmorphismCard>
+        </SlideIn>
+      )}
+
+      {/* Demo Virtual List for large datasets */}
+      {showAll && (
+        <SlideIn direction="up">
+          <GlassmorphismCard variant="light" className="p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-lg">Large Dataset Demo</h4>
+              <LikeButton 
+                initialLiked={likedCards.has('virtual-list-demo')}
+                onToggle={(liked) => handleCardLike('virtual-list-demo', liked)}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground mb-4">
+              Demonstrating virtualization with 10,000 items
+            </div>
+            <VirtualList
+              items={Array.from({ length: 10000 }, (_, i) => ({
+                id: i,
+                name: `Item ${i + 1}`,
+                value: Math.random() * 1000,
+                category: ['Scope 1', 'Scope 2', 'Scope 3'][i % 3]
+              }))}
+              itemHeight={60}
+              height={300}
+              renderItem={(item) => (
+                <div className="flex items-center justify-between p-4 border-b border-border/50 hover:bg-muted/50 transition-colors">
+                  <div>
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-sm text-muted-foreground">{item.category}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono font-medium">{item.value.toFixed(2)} tCO₂e</div>
+                  </div>
+                </div>
+              )}
+              className="border rounded-lg"
+            />
           </GlassmorphismCard>
         </SlideIn>
       )}
