@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 export const InteractiveButton: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
   disabled?: boolean;
   loading?: boolean;
@@ -18,7 +18,7 @@ export const InteractiveButton: React.FC<{
   children, 
   onClick, 
   variant = 'default', 
-  size = 'md', 
+  size = 'default', 
   className = '',
   disabled = false,
   loading = false 
