@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -19,6 +18,7 @@ import { monthlySummary, categoryBreakdown } from '@/utils/dummyData';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
 
 const EmissionsChart: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -202,44 +202,19 @@ const EmissionsChart: React.FC = () => {
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <defs>
-                  {COLORS.map((color, index) => (
-                    <linearGradient id={`colorPie${index}`} key={`grad-${index}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={color} stopOpacity={0.9}/>
-                      <stop offset="100%" stopColor={color} stopOpacity={0.6}/>
-                    </linearGradient>
-                  ))}
-                </defs>
-                <Pie
-                  data={categoryBreakdown}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  paddingAngle={3}
-                  dataKey="value"
-                  labelLine={false}
-                  label={CustomPieLabel}
-                  animationDuration={1500}
-                  animationBegin={300}
-                >
-                  {categoryBreakdown.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={`url(#colorPie${index % COLORS.length})`}
-                      stroke="#fff"
-                      strokeWidth={2}
-                    />
-                  ))}
-                  <LabelList dataKey="category" position="inside" fill="#fff" fontSize={11} />
-                </Pie>
-                <Tooltip formatter={(value) => `${value} tCO₂e`} />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="h-[350px] relative">
+            <EnhancedPieChart
+              data={categoryBreakdown}
+              className="h-full"
+              centerContent={
+                <div className="text-center">
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="text-sm font-bold text-gray-800">
+                    {categoryBreakdown.reduce((sum, item) => sum + item.value, 0)} tCO₂e
+                  </div>
+                </div>
+              }
+            />
           </CardContent>
         </Card>
         
