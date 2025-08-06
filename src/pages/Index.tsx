@@ -24,7 +24,6 @@ import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
 
 // Import new Phase 3 components
 import { InteractiveButton, LikeButton, CopyButton } from '@/components/ui/micro-interactions';
-import { MagicalButton } from '@/components/ui/magical-button';
 import { SkeletonCard, StatusIndicator, ProgressBar } from '@/components/ui/loading-states';
 import { StaggeredList, SlideIn } from '@/components/ui/page-transitions';
 import { Tooltip, EmptyState } from '@/components/ui/feedback-system';
@@ -434,95 +433,18 @@ const Index = () => {
         </SlideIn>
       )}
       
-      {/* Magical Button Showcase - Step 1 of Delightful UI */}
-      <SlideIn direction="up">
-        <GlassmorphismCard variant="light" className="p-6 mt-6">
-          <div className="mb-6">
-            <h4 className="font-medium text-lg mb-2">✨ Magical Button Interactions</h4>
-            <p className="text-sm text-muted-foreground">Experience delightful button interactions that make you smile</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Celebration Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Celebration Effect</h5>
-              <MagicalButton 
-                magicType="celebration"
-                onClick={() => addToast("🎉 Amazing work!", "success")}
-                className="w-full"
-              >
-                <Target className="mr-2 h-4 w-4" />
-                Achievement Unlocked!
-              </MagicalButton>
-            </div>
-
-            {/* Magnetic Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Magnetic Hover</h5>
-              <MagicalButton 
-                magicType="magnetic"
-                onClick={() => addToast("Magnetically attracted! 🧲", "info")}
-                className="w-full"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Magic
-              </MagicalButton>
-            </div>
-
-            {/* Sparkle Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Sparkle Shimmer</h5>
-              <MagicalButton 
-                magicType="sparkle"
-                onClick={() => addToast("✨ Sparkling clean data!", "success")}
-                className="w-full"
-              >
-                Clean Data
-              </MagicalButton>
-            </div>
-
-            {/* Ripple Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Ripple Effect</h5>
-              <MagicalButton 
-                magicType="ripple"
-                onClick={() => addToast("Ripples spreading! 🌊", "info")}
-                className="w-full"
-              >
-                Make Waves
-              </MagicalButton>
-            </div>
-
-            {/* Pulse Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Pulse Glow</h5>
-              <MagicalButton 
-                magicType="pulse"
-                onClick={() => addToast("Pulse detected! 💓", "info")}
-                className="w-full"
-              >
-                Live Updates
-              </MagicalButton>
-            </div>
-
-            {/* Standard Show More Button */}
-            <div className="space-y-3">
-              <h5 className="text-sm font-medium text-gray-600">Enhanced Classic</h5>
-              <MagicalButton 
-                onClick={() => setShowAll(!showAll)}
-                variant="outline"
-                className="w-full"
-              >
-                {showAll ? (
-                  <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></>
-                ) : (
-                  <>Show More <ChevronDown className="h-4 w-4 ml-2" /></>
-                )}
-              </MagicalButton>
-            </div>
-          </div>
-        </GlassmorphismCard>
-      </SlideIn>
+      <div className="flex justify-center mt-6">
+        <InteractiveButton 
+          variant="outline" 
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll ? (
+            <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></>
+          ) : (
+            <>Show More <ChevronDown className="h-4 w-4 ml-2" /></>
+          )}
+        </InteractiveButton>
+      </div>
 
       {/* Empty state example (conditionally shown) */}
       {sampleTableData.length === 0 && (
