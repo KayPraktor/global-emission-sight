@@ -33,6 +33,13 @@ const EmissionsChart: React.FC = () => {
   const previousTotal = previousMonth.scope1 + previousMonth.scope2 + previousMonth.scope3;
   const percentageChange = ((totalEmissions - previousTotal) / previousTotal) * 100;
   const isDecreasing = percentageChange < 0;
+
+  // Transform categoryBreakdown data to match EnhancedPieChart interface
+  const pieChartData = categoryBreakdown.map((item, index) => ({
+    name: item.category,
+    value: item.value,
+    color: COLORS[index % COLORS.length]
+  }));
   
   const CustomBarLabel = (props) => {
     const { x, y, width, height, value } = props;
@@ -204,7 +211,7 @@ const EmissionsChart: React.FC = () => {
           </CardHeader>
           <CardContent className="h-[350px] relative">
             <EnhancedPieChart
-              data={categoryBreakdown}
+              data={pieChartData}
               className="h-full"
               centerContent={
                 <div className="text-center">
