@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts';
 
 interface EnhancedPieChartProps {
   data: Array<{
@@ -17,7 +17,13 @@ const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
   centerContent,
   className = '' 
 }) => {
-  const COLORS = ['#00D4FF', '#0099CC', '#006699', '#003366', '#001A33'];
+  const COLORS = [
+    'hsl(var(--ocean-500))',
+    'hsl(var(--carbon-500))',
+    'hsl(var(--primary))',
+    'hsl(var(--accent))',
+    'hsl(var(--muted-foreground))'
+  ];
   
   // Calculate total for percentages
   const total = data.reduce((sum, entry) => sum + entry.value, 0);
@@ -25,9 +31,33 @@ const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
   // Add percentage to data
   const dataWithPercentages = data.map((entry, index) => ({
     ...entry,
-    percentage: ((entry.value / total) * 100).toFixed(0),
+    percentage: ((entry.value / total) * 100).toFixed(1),
     color: entry.color || COLORS[index % COLORS.length]
   }));
+
+  // Custom label renderer for percentages
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (percent < 0.05) return null; // Don't show labels for very small slices
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        className="text-sm font-semibold"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -37,18 +67,20 @@ const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
             data={dataWithPercentages}
             cx="50%"
             cy="50%"
-            innerRadius={80}
-            outerRadius={140}
-            paddingAngle={2}
+            labelLine={false}
+            label={renderCustomLabel}
+            outerRadius={120}
+            innerRadius={60}
+            fill="#8884d8"
             dataKey="value"
             animationBegin={0}
             animationDuration={800}
+            stroke="none"
           >
             {dataWithPercentages.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.color}
-                stroke="none"
               />
             ))}
           </Pie>
@@ -56,67 +88,23 @@ const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
       </ResponsiveContainer>
       
       {/* Center content */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
-          {centerContent || (
-            <div className="w-8 h-8 bg-primary rounded-full"></div>
-          )}
-        </div>
-      </div>
-      
-      {/* Floating percentage labels */}
-      {dataWithPercentages.map((entry, index) => {
-        const angle = (360 / dataWithPercentages.length) * index - 90;
-        const radius = 160;
-        const x = Math.cos((angle * Math.PI) / 180) * radius + 50;
-        const y = Math.sin((angle * Math.PI) / 180) * radius + 50;
-        
-        return (
-          <div
-            key={`label-${index}`}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-            }}
-          >
-            <div className="bg-white px-3 py-1 rounded-full shadow-md border-2 border-gray-100">
-              <div className="text-sm font-bold text-gray-800">
-                {entry.percentage}%
-              </div>
-            </div>
-            {/* Connection line */}
-            <div 
-              className="absolute w-8 h-0.5 bg-gray-300"
-              style={{
-                top: '50%',
-                left: x > 50 ? '-2rem' : '100%',
-                transform: 'translateY(-50%)',
-              }}
-            />
-            {/* Small dot */}
-            <div 
-              className="absolute w-2 h-2 rounded-full"
-              style={{
-                backgroundColor: entry.color,
-                top: '50%',
-                left: x > 50 ? '-2.5rem' : 'calc(100% + 0.5rem)',
-                transform: 'translateY(-50%)',
-              }}
-            />
+      {centerContent && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            {centerContent}
           </div>
-        );
-      })}
+        </div>
+      )}
       
       {/* Legend */}
-      <div className="absolute bottom-0 left-0 right-0 flex flex-wrap justify-center gap-4 p-4">
+      <div className="flex flex-wrap justify-center gap-4 mt-4">
         {dataWithPercentages.map((entry, index) => (
           <div key={`legend-${index}`} className="flex items-center gap-2">
             <div 
-              className="w-3 h-3 rounded-full"
+              className="w-3 h-3 rounded-sm"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-sm text-gray-600 font-medium">
+            <span className="text-sm text-muted-foreground font-medium">
               {entry.name}
             </span>
           </div>
