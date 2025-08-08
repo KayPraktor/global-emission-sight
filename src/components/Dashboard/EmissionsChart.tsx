@@ -8,17 +8,13 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LabelList
+  ResponsiveContainer
 } from 'recharts';
 import { monthlySummary, categoryBreakdown } from '@/utils/dummyData';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
+import DoughnutChart from '@/components/ui/doughnut-chart';
 
 const EmissionsChart: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -210,13 +206,13 @@ const EmissionsChart: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[350px] relative">
-            <EnhancedPieChart
+            <DoughnutChart
               data={pieChartData}
               className="h-full"
               centerContent={
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">Total</div>
-                  <div className="text-sm font-bold text-gray-800">
+                  <div className="text-xs text-muted-foreground">Total</div>
+                  <div className="text-sm font-semibold text-foreground">
                     {categoryBreakdown.reduce((sum, item) => sum + item.value, 0)} tCO₂e
                   </div>
                 </div>
