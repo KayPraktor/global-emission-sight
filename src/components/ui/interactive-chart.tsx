@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   ResponsiveContainer, 
+  ComposedChart,
   LineChart, 
   Line, 
   XAxis, 
@@ -11,7 +12,8 @@ import {
   Legend,
   Brush,
   ReferenceLine,
-  TooltipProps
+  TooltipProps,
+  Bar
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -146,6 +148,24 @@ export function InteractiveChart({
     }
   };
 
+  // Prepare composed data and utilities
+  const dataWithTotal = data.map((d) => {
+    const total = yKeys.reduce((sum, y) => sum + (d[y.key] ?? 0), 0);
+    return { ...d, __total: total };
+  });
+  const dataLength = dataWithTotal.length;
+
+  const createEndBlinkingDot = (dataLen: number, color: string) => (props: any) => {
+    const { cx, cy, index } = props;
+    if (index !== dataLen - 1) return null;
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={5} fill={color} stroke="white" strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={10} fill={color} className="pulse" opacity={0.35} />
+      </g>
+    );
+  };
+  
   return (
     <Card className={`${className} ${isFullscreen ? 'fixed inset-4 z-50 shadow-2xl' : ''}`}>
       <CardHeader className="pb-2">
@@ -191,11 +211,17 @@ export function InteractiveChart({
       
       <CardContent ref={chartRef}>
         <ResponsiveContainer width="100%" height={isFullscreen ? height * 1.5 : height}>
-          <LineChart
-            data={data}
+          <ComposedChart
+            data={dataWithTotal}
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             onClick={handleDataPointClick}
           >
+            <defs>
+              <linearGradient id="totalBarGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis 
               dataKey={xKey} 
@@ -221,8 +247,17 @@ export function InteractiveChart({
                 label={{ value: `Target: ${referenceValue} ${unit}`, position: "insideTopRight" }}
               />
             )}
+
+            {/* Total bar behind lines */}
+            <Bar
+              dataKey="__total"
+              fill="url(#totalBarGradient)"
+              barSize={16}
+              radius={[6, 6, 0, 0]}
+              opacity={0.35}
+            />
             
-            {/* Data Lines */}
+            {/* Data Lines with blinking end dots */}
             {yKeys.map((yKey) => (
               <Line
                 key={yKey.key}
@@ -230,12 +265,7 @@ export function InteractiveChart({
                 dataKey={yKey.key}
                 stroke={yKey.color}
                 strokeWidth={2}
-                dot={{ 
-                  fill: yKey.color, 
-                  strokeWidth: 2, 
-                  r: 4,
-                  style: { cursor: 'pointer' }
-                }}
+                dot={createEndBlinkingDot(dataLength, yKey.color)}
                 activeDot={{ 
                   r: 6, 
                   fill: yKey.color,
@@ -257,7 +287,7 @@ export function InteractiveChart({
                 fill="#f1f5f9"
               />
             )}
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
         
         {/* Chart Statistics */}
