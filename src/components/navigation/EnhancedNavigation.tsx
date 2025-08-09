@@ -33,6 +33,7 @@ const navigationItems = [
     items: [
       { title: 'Overview', href: '/analytics', description: 'Main analytics dashboard' },
       { title: 'Trends', href: '/analytics/trends', description: 'Emission trends analysis' },
+      { title: 'Map', href: '/map', description: 'Geospatial emissions view' },
       { title: 'Benchmarking', href: '/analytics/benchmarking', description: 'Compare with industry standards' },
     ]
   },

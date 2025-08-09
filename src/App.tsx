@@ -12,6 +12,7 @@ import ReportsPage from '@/pages/ReportsPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import GoalsPage from '@/pages/GoalsPage';
 import MonitoringPage from '@/pages/MonitoringPage';
+import MapPage from '@/pages/MapPage';
 import AIAssistantPage from '@/pages/AIAssistantPage';
 import NotFound from '@/pages/NotFound';
 
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/data-entry" element={<DataEntryPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/map" element={<MapPage />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/monitoring" element={<MonitoringPage />} />
                 <Route path="/ai-assistant" element={<AIAssistantPage />} />
