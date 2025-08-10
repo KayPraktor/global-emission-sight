@@ -20,6 +20,9 @@ import { useAnimatedToast, useOnboarding } from '@/hooks/useMicroInteractions';
 import { PerformanceMonitor } from '@/components/ui/performance-monitor';
 import { VirtualList } from '@/components/ui/virtual-list';
 import { useAdvancedCache } from '@/hooks/useAdvancedCache';
+import TopDrivers from '@/components/Dashboard/TopDrivers';
+import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
+import TargetsWidget from '@/components/Dashboard/TargetsWidget';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -297,6 +300,12 @@ const Index = () => {
         </GlassmorphismCard>
         
         
+      </StaggeredList>
+
+      <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
+        <TopDrivers />
+        <InsightsNextActions />
+        <TargetsWidget />
       </StaggeredList>
       
       {showAll && <SlideIn direction="up">
