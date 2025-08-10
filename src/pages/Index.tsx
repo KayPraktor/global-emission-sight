@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
-import EmissionsChart from '@/components/Dashboard/EmissionsChart';
+
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
 import { CheckCircle2, Clock, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, Target, FileSpreadsheet } from 'lucide-react';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { InteractiveChart } from '@/components/ui/interactive-chart';
-import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
+import DashboardFilters from '@/components/Dashboard/DashboardFilters';
 
 // Import new Phase 3 components
 import { InteractiveButton, LikeButton, CopyButton } from '@/components/ui/micro-interactions';
@@ -18,8 +18,10 @@ import { StaggeredList, SlideIn } from '@/components/ui/page-transitions';
 import { Tooltip, EmptyState } from '@/components/ui/feedback-system';
 import { useAnimatedToast, useOnboarding } from '@/hooks/useMicroInteractions';
 import { PerformanceMonitor } from '@/components/ui/performance-monitor';
-import { VirtualList } from '@/components/ui/virtual-list';
-import { useAdvancedCache } from '@/hooks/useAdvancedCache';
+import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
+import TopDrivers from '@/components/Dashboard/TopDrivers';
+import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
+import TargetsWidget from '@/components/Dashboard/TargetsWidget';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -127,11 +129,7 @@ const Index = () => {
     startOnboarding
   } = useOnboarding();
 
-  // Add performance optimization features
-  const cache = useAdvancedCache<any>({
-    ttl: 10 * 60 * 1000,
-    enableLogging: true
-  });
+  // Performance cache disabled for now to simplify dashboard
   const handleNewReport = async () => {
     setIsLoading(true);
     addToast("Creating new report...", "info");
@@ -174,13 +172,12 @@ const Index = () => {
             </>} />
       </FadeIn>
       
+      <DashboardFilters />
+      
       <SlideIn direction="up" delay={0.1}>
         <EmissionsOverview />
       </SlideIn>
       
-      <SlideIn direction="up" delay={0.2}>
-        <EmissionsChart />
-      </SlideIn>
 
       {/* Enhanced Interactive Chart with micro-interactions */}
       <SlideIn direction="up" delay={0.3}>
@@ -195,7 +192,16 @@ const Index = () => {
         </div>
       </SlideIn>
 
-      {/* Advanced Data Table with loading states */}
+      <SlideIn direction="up" delay={0.35}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2"><TopDrivers /></div>
+          <div><TargetsWidget /></div>
+        </div>
+      </SlideIn>
+
+      <SlideIn direction="up" delay={0.4}>
+        <InsightsNextActions />
+      </SlideIn>
       <SlideIn direction="up" delay={0.4}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -348,34 +354,6 @@ const Index = () => {
           </GlassmorphismCard>
         </SlideIn>}
 
-      {/* Demo Virtual List for large datasets */}
-      {showAll && <SlideIn direction="up">
-          <GlassmorphismCard variant="light" className="p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium text-lg">Large Dataset Demo</h4>
-              <LikeButton initialLiked={likedCards.has('virtual-list-demo')} onToggle={liked => handleCardLike('virtual-list-demo', liked)} />
-            </div>
-            <div className="text-sm text-muted-foreground mb-4">
-              Demonstrating virtualization with 10,000 items
-            </div>
-            <VirtualList items={Array.from({
-          length: 10000
-        }, (_, i) => ({
-          id: i,
-          name: `Item ${i + 1}`,
-          value: Math.random() * 1000,
-          category: ['Scope 1', 'Scope 2', 'Scope 3'][i % 3]
-        }))} itemHeight={60} height={300} renderItem={item => <div className="flex items-center justify-between p-4 border-b border-border/50 hover:bg-muted/50 transition-colors">
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-muted-foreground">{item.category}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono font-medium">{item.value.toFixed(2)} tCO₂e</div>
-                  </div>
-                </div>} className="border rounded-lg" />
-          </GlassmorphismCard>
-        </SlideIn>}
       
       <div className="flex justify-center mt-6">
         <InteractiveButton variant="outline" onClick={() => setShowAll(!showAll)}>

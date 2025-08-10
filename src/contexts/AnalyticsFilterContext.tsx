@@ -11,6 +11,8 @@ interface FilterState {
   };
   productivityMetric: string; // Added for productivity filtering
   resourceType: string; // Added for resource utilization filtering
+  scopes: string[]; // Added for dashboard/global filtering
+  countries: string[]; // Added for dashboard/global filtering (ISO-2)
 }
 
 interface AnalyticsFilterContextType {
@@ -28,6 +30,8 @@ const defaultFilters: FilterState = {
   },
   productivityMetric: 'all', // Default value for productivity metrics
   resourceType: 'all', // Default value for resource type
+  scopes: ['S1', 'S2', 'S3'],
+  countries: [],
 };
 
 const AnalyticsFilterContext = createContext<AnalyticsFilterContextType>({
