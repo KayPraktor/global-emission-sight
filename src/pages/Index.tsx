@@ -23,6 +23,7 @@ import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import TargetsWidget from '@/components/Dashboard/TargetsWidget';
+import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -196,6 +197,10 @@ const Index = () => {
             <CopyButton text="Monthly Emissions Data: Chart exported" />
           </div>
         </div>
+      </SlideIn>
+
+      <SlideIn direction="up" delay={0.35}>
+        <EmissionsTimeline />
       </SlideIn>
 
       {/* Advanced Data Table with loading states */}
