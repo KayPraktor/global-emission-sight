@@ -200,7 +200,7 @@ const Index = () => {
 
       {/* Advanced Data Table with loading states */}
       <SlideIn direction="up" delay={0.4}>
-        
+        <div className="hidden" aria-hidden />
       </SlideIn>
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
