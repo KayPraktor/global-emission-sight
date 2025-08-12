@@ -188,7 +188,7 @@ const Index = () => {
       {/* Enhanced Interactive Chart with micro-interactions */}
       <SlideIn direction="up" delay={0.3}>
         <div className="relative">
-<InteractiveChart data={chartData} title="Monthly Emissions Breakdown" xKey="month" yKeys={chartYKeys} unit="tCO₂e" showBrush={true} showReference={true} referenceValue={1000} variant="consumer" onDataPointClick={data => {
+        <InteractiveChart data={chartData} title="Monthly Emissions Breakdown" xKey="month" yKeys={chartYKeys} unit="tCO₂e" showBrush={true} showReference={true} referenceValue={1000} variant="consumer" onDataPointClick={data => {
           addToast(`Clicked on ${data.month} data`, "info");
         }} onExport={() => addToast("Chart exported successfully", "success")} />
           <div className="absolute top-4 right-4 flex gap-2">
@@ -200,17 +200,7 @@ const Index = () => {
 
       {/* Advanced Data Table with loading states */}
       <SlideIn direction="up" delay={0.4}>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Recent Emissions Data</h3>
-            <div className="flex gap-2">
-              <StatusIndicator status="success" message="Data up to date" />
-              <ProgressBar value={85} max={100} showLabel={false} className="w-24" />
-            </div>
-          </div>
-          
-          {isLoading ? <SkeletonCard showActions={true} /> : <AdvancedDataTable data={sampleTableData} columns={tableColumns} onRowSelect={rows => addToast(`Selected ${rows.length} rows`, "info")} onExport={data => addToast(`Exported ${data.length} records`, "success")} />}
-        </div>
+        
       </SlideIn>
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
