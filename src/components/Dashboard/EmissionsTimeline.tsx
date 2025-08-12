@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/enhanced-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 
 interface MonthDatum {
   month: string; // e.g., "Jan"
@@ -119,7 +120,7 @@ const EmissionsTimeline: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="relative overflow-x-auto py-6">
+          <div className="relative overflow-x-auto py-6 animate-fade-in">
             {/* The horizontal line behind the dots */}
             <div
               className="pointer-events-none absolute left-0 right-0 top-[46px] h-px bg-border"
@@ -130,16 +131,14 @@ const EmissionsTimeline: React.FC = () => {
                 const isCurrent = idx === currentMonthIndex;
                 const monthLabel = normalizeMonth(item.month).toUpperCase();
                 const change = item.change ?? 0;
-                const changeClass = change > 0
-                  ? "text-foreground"
-                  : change < 0
-                  ? "text-destructive"
-                  : "text-muted-foreground";
+                const ChangeIcon = change > 0 ? ArrowUpRight : change < 0 ? ArrowDownRight : Minus;
+                const changeColor = change > 0 ? "text-primary" : change < 0 ? "text-destructive" : "text-muted-foreground";
+                const changeText = `${change > 0 ? "+" : ""}${change}% vs prev`;
 
                 return (
                   <div
                     key={item.month}
-                    className="flex flex-col items-center min-w-[88px]"
+                    className="flex flex-col items-center min-w-[88px] rounded-md transition-transform duration-200 hover:scale-105 hover:bg-muted/30"
                     aria-label={`${monthLabel}: ${item.emissions} tCO2e, ${change}% vs previous`}
                   >
                     <div className="text-[10px] tracking-wide font-medium text-muted-foreground mb-2">
@@ -148,12 +147,18 @@ const EmissionsTimeline: React.FC = () => {
 
                     {/* Dot */}
                     <div className="relative flex items-center justify-center mb-3">
+                      {isCurrent && (
+                        <div
+                          className="absolute -inset-2 rounded-full bg-primary/25 blur-md opacity-70 pulse"
+                          aria-hidden
+                        />
+                      )}
                       <div
                         className={cn(
-                          "rounded-full border border-border shadow-sm",
+                          "rounded-full border border-border shadow-sm transition-all duration-200",
                           isCurrent
-                            ? "w-8 h-8 bg-primary text-primary-foreground ring-4 ring-primary/20"
-                            : "w-6 h-6 bg-secondary"
+                            ? "w-8 h-8 bg-primary text-primary-foreground ring-4 ring-primary/25"
+                            : "w-6 h-6 bg-secondary hover:bg-muted"
                         )}
                       />
                     </div>
@@ -163,8 +168,9 @@ const EmissionsTimeline: React.FC = () => {
                       {item.emissions.toLocaleString()} tCO₂e
                     </div>
                     {/* Change vs previous */}
-                    <div className={cn("text-xs", changeClass)}>
-                      {change > 0 ? `+${change}` : `${change}`}% vs prev
+                    <div className={cn("mt-1 flex items-center gap-1 text-xs", changeColor)}>
+                      <ChangeIcon className="h-3 w-3" aria-hidden />
+                      <span>{changeText}</span>
                     </div>
                   </div>
                 );
