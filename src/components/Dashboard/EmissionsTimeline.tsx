@@ -6,8 +6,14 @@ import {
   EnhancedCardTitle as CardTitle,
 } from "@/components/ui/enhanced-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus, Info, AlertTriangle } from "lucide-react";
 
 interface MonthDatum {
   month: string; // e.g., "Jan"
@@ -94,14 +100,52 @@ const EmissionsTimeline: React.FC = () => {
   }, [data]);
 
   return (
-    <Card variant="gradient" className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">Monthly Carbon Emissions Timeline</CardTitle>
-        {/* We keep description subtle to avoid clutter */}
-        <p className="text-sm text-muted-foreground">
-          Track monthly tCO₂e and change vs previous month
-        </p>
-      </CardHeader>
+    <TooltipProvider>
+      <Card variant="gradient" className="w-full">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">Monthly Carbon Emissions Timeline</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Track monthly tCO₂e and change vs previous month
+              </p>
+            </div>
+            {error && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Using demo data: {error}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          {/* Legend */}
+          <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <span>Current month</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+              <span>Increase vs previous</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ArrowDownRight className="h-3 w-3 text-red-500" />
+              <span>Decrease vs previous</span>
+            </div>
+            <Tooltip>
+              <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                <Info className="h-3 w-3" />
+                <span>tCO₂e</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Tons of carbon dioxide equivalent - a standard unit for measuring greenhouse gas emissions</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-4">
@@ -121,9 +165,9 @@ const EmissionsTimeline: React.FC = () => {
           </div>
         ) : (
           <div className="relative overflow-x-auto py-6 animate-fade-in">
-            {/* The horizontal line behind the dots */}
+            {/* Enhanced connecting line with gradient */}
             <div
-              className="pointer-events-none absolute left-0 right-0 top-[46px] h-px bg-border"
+              className="pointer-events-none absolute left-0 right-0 top-[46px] h-0.5 bg-gradient-to-r from-border via-primary/20 to-border"
               aria-hidden
             />
             <div className="flex gap-8 min-w-max px-1">
@@ -136,14 +180,15 @@ const EmissionsTimeline: React.FC = () => {
                 const changeText = `${change > 0 ? "+" : ""}${change}% vs prev`;
 
                 return (
-                  <div
-                    key={item.month}
-                    className="flex flex-col items-center min-w-[88px] rounded-md transition-transform duration-200 hover:scale-105 hover:bg-muted/30"
-                    aria-label={`${monthLabel}: ${item.emissions} tCO2e, ${change}% vs previous`}
-                  >
-                    <div className="text-[10px] tracking-wide font-medium text-muted-foreground mb-2">
-                      {monthLabel}
-                    </div>
+                  <Tooltip key={item.month}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex flex-col items-center min-w-[88px] rounded-lg p-2 transition-all duration-200 hover:scale-105 hover:bg-muted/30 cursor-pointer"
+                        aria-label={`${monthLabel}: ${item.emissions} tCO2e, ${change}% vs previous`}
+                      >
+                        <div className="text-xs tracking-wide font-semibold text-foreground mb-2">
+                          {monthLabel}
+                        </div>
 
                     {/* Dot */}
                     <div className="relative flex items-center justify-center mb-3">
@@ -163,16 +208,39 @@ const EmissionsTimeline: React.FC = () => {
                       />
                     </div>
 
-                    {/* Emissions value */}
-                    <div className="text-sm font-semibold">
-                      {item.emissions.toLocaleString()} tCO₂e
-                    </div>
-                    {/* Change vs previous */}
-                    <div className={cn("mt-1 flex items-center gap-1 text-xs", changeColor)}>
-                      <ChangeIcon className="h-3 w-3" aria-hidden />
-                      <span>{changeText}</span>
-                    </div>
-                  </div>
+                        {/* Emissions value */}
+                        <div className="text-sm font-bold text-foreground">
+                          {item.emissions.toLocaleString()} tCO₂e
+                        </div>
+                        {/* Change vs previous */}
+                        <div className={cn("mt-1 flex items-center gap-1 text-xs font-medium", changeColor)}>
+                          <ChangeIcon className="h-3 w-3" aria-hidden />
+                          <span>{changeText}</span>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <div className="space-y-2">
+                        <div className="font-semibold">{monthLabel} 2024</div>
+                        <div>
+                          <span className="text-muted-foreground">Emissions: </span>
+                          <span className="font-medium">{item.emissions.toLocaleString()} tCO₂e</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Change: </span>
+                          <span className={cn("font-medium", changeColor)}>
+                            {change > 0 ? "+" : ""}{change}% vs previous month
+                          </span>
+                        </div>
+                        {isCurrent && (
+                          <div className="text-xs text-primary font-medium">Current month</div>
+                        )}
+                        <div className="text-xs text-muted-foreground pt-1 border-t">
+                          Click for detailed breakdown
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>
@@ -180,6 +248,7 @@ const EmissionsTimeline: React.FC = () => {
         )}
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 };
 
