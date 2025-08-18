@@ -94,11 +94,11 @@ const EmissionsTimeline: React.FC = () => {
   }, [data]);
 
   return (
-    <Card variant="glass" className="w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-gray-100 border-gray-800">
+    <Card variant="gradient" className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl text-gray-100">Monthly Carbon Emissions Timeline</CardTitle>
+        <CardTitle className="text-xl">Monthly Carbon Emissions Timeline</CardTitle>
         {/* We keep description subtle to avoid clutter */}
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Track monthly tCO₂e and change vs previous month
         </p>
       </CardHeader>
@@ -132,17 +132,16 @@ const EmissionsTimeline: React.FC = () => {
                 const monthLabel = normalizeMonth(item.month).toUpperCase();
                 const change = item.change ?? 0;
                 const ChangeIcon = change > 0 ? ArrowUpRight : change < 0 ? ArrowDownRight : Minus;
-                const changeColor = change > 0 ? "text-emerald-400" : change < 0 ? "text-rose-400" : "text-slate-400";
+                const changeColor = change > 0 ? "text-primary" : change < 0 ? "text-destructive" : "text-muted-foreground";
                 const changeText = `${change > 0 ? "+" : ""}${change}% vs prev`;
 
                 return (
                   <div
                     key={item.month}
-                    className="flex flex-col items-center min-w-[88px] rounded-lg transition-transform duration-200 hover:scale-105 hover:bg-white/5"
+                    className="flex flex-col items-center min-w-[88px] rounded-md transition-transform duration-200 hover:scale-105 hover:bg-muted/30"
                     aria-label={`${monthLabel}: ${item.emissions} tCO2e, ${change}% vs previous`}
-                    {...(isCurrent && { "aria-current": "date" })}
                   >
-                    <div className="text-[10px] tracking-wide font-medium text-gray-400 mb-2">
+                    <div className="text-[10px] tracking-wide font-medium text-muted-foreground mb-2">
                       {monthLabel}
                     </div>
 
@@ -150,23 +149,22 @@ const EmissionsTimeline: React.FC = () => {
                     <div className="relative flex items-center justify-center mb-3">
                       {isCurrent && (
                         <div
-                          className="absolute -inset-2 rounded-full bg-emerald-500/30 blur-md opacity-70 animate-pulse"
-                          style={{ animationDuration: "2s" }}
+                          className="absolute -inset-2 rounded-full bg-primary/25 blur-md opacity-70 pulse"
                           aria-hidden
                         />
                       )}
                       <div
                         className={cn(
-                          "rounded-full border shadow-lg transition-all duration-200",
+                          "rounded-full border border-border shadow-sm transition-all duration-200",
                           isCurrent
-                            ? "w-8 h-8 bg-emerald-500 text-white ring-4 ring-emerald-400/25 border-emerald-400"
-                            : "w-6 h-6 bg-slate-700 hover:bg-slate-600 border-gray-600"
+                            ? "w-8 h-8 bg-primary text-primary-foreground ring-4 ring-primary/25"
+                            : "w-6 h-6 bg-secondary hover:bg-muted"
                         )}
                       />
                     </div>
 
                     {/* Emissions value */}
-                    <div className="text-sm font-semibold text-gray-100">
+                    <div className="text-sm font-semibold">
                       {item.emissions.toLocaleString()} tCO₂e
                     </div>
                     {/* Change vs previous */}
