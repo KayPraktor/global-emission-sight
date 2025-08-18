@@ -3,7 +3,7 @@ import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Clock, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, Target, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
@@ -24,6 +24,9 @@ import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import TargetsWidget from '@/components/Dashboard/TargetsWidget';
 import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
+import { SectionHeader } from '@/components/ui/section-header';
+import { StrategyMetrics } from '@/components/Dashboard/StrategyMetrics';
+import { BarChart3, Target as TargetIcon, Shield, Clock } from 'lucide-react';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -208,7 +211,16 @@ const Index = () => {
         <div className="hidden" aria-hidden />
       </SlideIn>
       
-      <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
+      {/* Primary Actions Section */}
+      <SectionHeader
+        icon={Shield}
+        title="Primary Actions"
+        subtitle="Critical compliance and deadline management"
+        helpText="Monitor your organization's compliance status and upcoming regulatory deadlines to ensure continuous adherence to carbon reporting standards."
+        lastUpdated="2025-01-15T14:30:00Z"
+      />
+      
+      <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
         <GlassmorphismCard variant="light" className="p-6 space-y-4 relative">
           <div className="absolute top-4 right-4">
             <LikeButton initialLiked={likedCards.has('compliance-card')} onToggle={liked => handleCardLike('compliance-card', liked)} />
@@ -293,9 +305,16 @@ const Index = () => {
               </Tooltip>)}
           </div>
         </GlassmorphismCard>
-        
-        
       </StaggeredList>
+
+      {/* Performance Analysis Section */}
+      <SectionHeader
+        icon={BarChart3}
+        title="Performance Analysis"
+        subtitle="Analyze emission drivers and track progress against targets"
+        helpText="Identify your top emission sources and monitor performance against your carbon reduction targets to optimize your sustainability strategy."
+        lastUpdated="2025-01-15T12:15:00Z"
+      />
 
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
         <TopDrivers />
@@ -303,87 +322,25 @@ const Index = () => {
         <TargetsWidget />
       </StaggeredList>
       
+      {/* Strategic Insights Section */}
+      <SectionHeader
+        icon={TargetIcon}
+        title="Strategic Insights"
+        subtitle="Long-term sustainability planning and progress tracking"
+        helpText="Monitor progress toward your strategic sustainability goals and get actionable insights to accelerate your carbon reduction journey."
+        lastUpdated="2025-01-15T11:45:00Z"
+      />
+      
       {showAll && <SlideIn direction="up">
-          <GlassmorphismCard variant="light" className="p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Info className="h-5 w-5 mr-2 text-purple-500" />
-                <h4 className="font-medium text-lg">Sustainability Strategy Progress</h4>
-              </div>
-              <LikeButton initialLiked={likedCards.has('strategy-card')} onToggle={liked => handleCardLike('strategy-card', liked)} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[{
-            title: 'Renewable Energy',
-            current: 42,
-            target: 75,
-            trend: 12
-          }, {
-            title: 'Carbon Neutrality',
-            current: 28,
-            target: 100,
-            trend: 8
-          }, {
-            title: 'EV Fleet',
-            current: 15,
-            target: 100,
-            trend: 10
-          }].map((item, index) => <motion.div key={index} className="bg-white/50 p-4 rounded-lg" whileHover={{
-            scale: 1.02
-          }}>
-                  <h5 className="font-medium text-sm text-gray-600 mb-2">{item.title}</h5>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-bold text-purple-700">
-                      <AnimatedCounter value={item.current} suffix="%" />
-                    </span>
-                    <Tooltip content={`Year over year growth: +${item.trend}%`}>
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full cursor-help">
-                        +{item.trend}% YoY
-                      </span>
-                    </Tooltip>
-                  </div>
-                  <ProgressBar value={item.current} max={item.target} showLabel={false} className="mb-2" />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Current: {item.current}%</span>
-                    <span>Target: {item.target}%</span>
-                  </div>
-                </motion.div>)}
-            </div>
-          </GlassmorphismCard>
+          <StrategyMetrics 
+            onCardLike={handleCardLike}
+            likedCards={likedCards}
+          />
         </SlideIn>}
 
-      {/* Demo Virtual List for large datasets */}
-      {showAll && <SlideIn direction="up">
-          <GlassmorphismCard variant="light" className="p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium text-lg">Large Dataset Demo</h4>
-              <LikeButton initialLiked={likedCards.has('virtual-list-demo')} onToggle={liked => handleCardLike('virtual-list-demo', liked)} />
-            </div>
-            <div className="text-sm text-muted-foreground mb-4">
-              Demonstrating virtualization with 10,000 items
-            </div>
-            <VirtualList items={Array.from({
-          length: 10000
-        }, (_, i) => ({
-          id: i,
-          name: `Item ${i + 1}`,
-          value: Math.random() * 1000,
-          category: ['Scope 1', 'Scope 2', 'Scope 3'][i % 3]
-        }))} itemHeight={60} height={300} renderItem={item => <div className="flex items-center justify-between p-4 border-b border-border/50 hover:bg-muted/50 transition-colors">
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-muted-foreground">{item.category}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono font-medium">{item.value.toFixed(2)} tCO₂e</div>
-                  </div>
-                </div>} className="border rounded-lg" />
-          </GlassmorphismCard>
-        </SlideIn>}
-      
       <div className="flex justify-center mt-6">
         <InteractiveButton variant="outline" onClick={() => setShowAll(!showAll)}>
-          {showAll ? <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></> : <>Show More <ChevronDown className="h-4 w-4 ml-2" /></>}
+          {showAll ? <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></> : <>Show Strategic Insights <ChevronDown className="h-4 w-4 ml-2" /></>}
         </InteractiveButton>
       </div>
 
