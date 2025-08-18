@@ -221,85 +221,124 @@ const Index = () => {
       />
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative">
+        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group">
           <div className="absolute top-4 right-4">
             <LikeButton initialLiked={likedCards.has('compliance-card')} onToggle={liked => handleCardLike('compliance-card', liked)} />
           </div>
-          <div className="flex items-center">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
-            <h4 className="font-medium">Compliance Status</h4>
+          <div className="flex items-center pb-2 border-b border-border/30">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground">Compliance Status</h4>
+              <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
+            </div>
           </div>
           <div className="space-y-3">
             {[{
             name: 'GHG Protocol',
             status: 'Compliant',
             color: 'green',
-            progress: 100
+            progress: 100,
+            icon: CheckCircle2
           }, {
             name: 'ISO 14064',
             status: 'Compliant',
             color: 'green',
-            progress: 100
+            progress: 100,
+            icon: CheckCircle2
           }, {
             name: 'CDP Reporting',
             status: 'In Progress',
-            color: 'yellow',
-            progress: 75
+            color: 'amber',
+            progress: 75,
+            icon: Clock
           }, {
             name: 'TCFD Alignment',
             status: 'Partial',
-            color: 'yellow',
-            progress: 60
+            color: 'amber',
+            progress: 60,
+            icon: AlertTriangle
           }].map((item, index) => <motion.div key={index} whileHover={{
-            scale: 1.02
-          }} className="p-3 bg-white/50 rounded-lg space-y-2">
+            scale: 1.02,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)'
+          }} className="p-3 bg-white/50 rounded-lg space-y-2 transition-all duration-200 hover:shadow-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{item.name}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${item.color === 'green' ? 'bg-green-100 text-green-800' : item.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                  <div className="flex items-center gap-2">
+                    <item.icon className={`h-3.5 w-3.5 ${
+                      item.color === 'green' ? 'text-green-500' : 
+                      item.color === 'amber' ? 'text-amber-500' : 
+                      'text-gray-500'
+                    }`} />
+                    <span className="text-sm font-medium">{item.name}</span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    item.color === 'green' ? 'bg-green-100 text-green-700 border border-green-200' : 
+                    item.color === 'amber' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 
+                    'bg-gray-100 text-gray-700 border border-gray-200'
+                  }`}>
                     {item.status}
                   </span>
                 </div>
-                <ProgressBar value={item.progress} showLabel={false} className="h-1" />
+                <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
               </motion.div>)}
           </div>
         </GlassmorphismCard>
         
-        <GlassmorphismCard variant="colored" className="p-6 space-y-4 relative">
+        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group">
           <div className="absolute top-4 right-4">
             <LikeButton initialLiked={likedCards.has('deadlines-card')} onToggle={liked => handleCardLike('deadlines-card', liked)} />
           </div>
-          <div className="flex items-center">
-            <Clock className="h-5 w-5 mr-2 text-blue-600" />
-            <h4 className="font-medium">Upcoming Deadlines</h4>
+          <div className="flex items-center pb-2 border-b border-border/30">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mr-3">
+              <Clock className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
+              <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
+            </div>
           </div>
           <div className="space-y-3">
             {[{
             task: 'Q2 Data Collection',
             date: 'June 30, 2025',
-            urgency: 'high'
+            urgency: 'high',
+            days: 42
           }, {
             task: 'CDP Submission',
             date: 'July 15, 2025',
-            urgency: 'medium'
+            urgency: 'medium',
+            days: 57
           }, {
             task: 'Annual Report',
             date: 'Dec 31, 2025',
-            urgency: 'low'
+            urgency: 'low',
+            days: 226
           }, {
             task: 'SBTi Validation',
             date: 'Mar 1, 2026',
-            urgency: 'low'
-          }].map((item, index) => <Tooltip key={index} content={`Priority: ${item.urgency}`}>
+            urgency: 'low',
+            days: 287
+          }].map((item, index) => <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining`}>
                 <motion.div whileHover={{
               scale: 1.02,
-              x: 5
-            }} className="flex justify-between items-center p-3 bg-white/30 rounded-lg cursor-pointer">
-                  <span className="text-sm font-medium">{item.task}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              backgroundColor: 'rgba(255, 255, 255, 0.8)'
+            }} className="flex justify-between items-center p-3 bg-white/50 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      item.urgency === 'high' ? 'bg-red-500 shadow-red-500/50 shadow-sm' : 
+                      item.urgency === 'medium' ? 'bg-amber-500 shadow-amber-500/50 shadow-sm' : 
+                      'bg-green-500 shadow-green-500/50 shadow-sm'
+                    }`} />
+                    <div>
+                      <span className="text-sm font-medium text-foreground">{item.task}</span>
+                      <div className="text-xs text-muted-foreground">{item.days} days left</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">
                       {item.date}
                     </span>
-                    <div className={`w-2 h-2 rounded-full ${item.urgency === 'high' ? 'bg-red-500' : item.urgency === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />
                   </div>
                 </motion.div>
               </Tooltip>)}
