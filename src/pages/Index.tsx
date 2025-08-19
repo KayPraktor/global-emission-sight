@@ -350,16 +350,27 @@ const Index = () => {
       <SectionHeader
         icon={BarChart3}
         title="Performance Analysis"
-        subtitle="Analyze emission drivers and track progress against targets"
-        helpText="Identify your top emission sources and monitor performance against your carbon reduction targets to optimize your sustainability strategy."
+        subtitle="Comprehensive view of emission trends, targets, and key performance indicators"
+        helpText="Analyze your emission patterns, identify top contributors, and track progress toward your sustainability targets."
         lastUpdated="2025-01-15T12:15:00Z"
       />
 
-      <StaggeredList className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" staggerDelay={0.1}>
-        <TopDrivers />
-        <InsightsNextActions />
-        <TargetsWidget />
-      </StaggeredList>
+      <div className="space-y-6 mt-6">
+        {/* Top row: Drivers and Insights */}
+        <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
+          <TopDrivers />
+          <InsightsNextActions />
+        </StaggeredList>
+        
+        {/* Bottom row: Targets chart full width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <TargetsWidget />
+        </motion.div>
+      </div>
       
       {/* Strategic Insights Section */}
       <SectionHeader

@@ -1,7 +1,9 @@
 import React from 'react';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { ProgressBar } from '@/components/ui/loading-states';
-import { PieChart } from 'lucide-react';
+import { PieChart, ExternalLink } from 'lucide-react';
+import { DataFreshness } from '@/components/ui/data-freshness';
+import { Button } from '@/components/ui/button';
 
 interface Driver {
   category: string;
@@ -20,9 +22,15 @@ const TopDrivers: React.FC = () => {
 
   return (
     <GlassmorphismCard variant="light" className="p-6 space-y-4">
-      <div className="flex items-center">
-        <PieChart className="h-5 w-5 mr-2 text-primary" />
-        <h4 className="font-medium">Top Emission Drivers (Categories)</h4>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <PieChart className="h-5 w-5 text-primary" />
+          <div>
+            <h4 className="font-medium">Top Emission Drivers</h4>
+            <p className="text-sm text-muted-foreground">By category breakdown</p>
+          </div>
+        </div>
+        <DataFreshness lastUpdated={new Date()} />
       </div>
 
       <div className="space-y-4">
@@ -35,6 +43,13 @@ const TopDrivers: React.FC = () => {
             <ProgressBar value={d.value} max={max} showLabel={false} />
           </div>
         ))}
+      </div>
+
+      <div className="pt-2 border-t">
+        <Button variant="ghost" size="sm" className="w-full justify-between">
+          View detailed breakdown
+          <ExternalLink className="h-4 w-4" />
+        </Button>
       </div>
     </GlassmorphismCard>
   );
