@@ -189,19 +189,6 @@ const Index = () => {
         <EmissionsChart />
       </SlideIn>
 
-      {/* Enhanced Interactive Chart with micro-interactions */}
-      <SlideIn direction="up" delay={0.3}>
-        <div className="relative">
-        <InteractiveChart data={chartData} title="Monthly Emissions Breakdown" xKey="month" yKeys={chartYKeys} unit="tCO₂e" showBrush={true} showReference={true} referenceValue={1000} variant="consumer" onDataPointClick={data => {
-          addToast(`Clicked on ${data.month} data`, "info");
-        }} onExport={() => addToast("Chart exported successfully", "success")} />
-          <div className="absolute top-4 right-4 flex gap-2">
-            <LikeButton initialLiked={likedCards.has('emissions-chart')} onToggle={liked => handleCardLike('emissions-chart', liked)} />
-            <CopyButton text="Monthly Emissions Data: Chart exported" />
-          </div>
-        </div>
-      </SlideIn>
-
       <SlideIn direction="up" delay={0.35}>
         <EmissionsTimeline />
       </SlideIn>

@@ -1,290 +1,469 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useMemo } from 'react';
+import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { 
-  BarChart, 
-  Bar, 
+  LineChart, 
+  Line, 
+  AreaChart,
+  Area,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceLine
 } from 'recharts';
 import { monthlySummary, categoryBreakdown } from '@/utils/dummyData';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Calendar, Download, BarChart3, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DataFreshness } from '@/components/ui/data-freshness';
 import DoughnutChart from '@/components/ui/doughnut-chart';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const EmissionsChart: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const COLORS = ['#159947', '#2c7da0', '#61a5c2', '#7e69ab', '#a389d9', '#c1b8e3'];
+  const [timePeriod, setTimePeriod] = useState('6months');
+  const [visibleScopes, setVisibleScopes] = useState({
+    scope1: true,
+    scope2: true,
+    scope3: true
+  });
   
-  // Calculate total emissions for the most recent month
-  const latestMonth = monthlySummary[monthlySummary.length - 1];
-  const totalEmissions = latestMonth.scope1 + latestMonth.scope2 + latestMonth.scope3;
-  
-  // Calculate trend compared to previous month
-  const previousMonth = monthlySummary[monthlySummary.length - 2];
-  const previousTotal = previousMonth.scope1 + previousMonth.scope2 + previousMonth.scope3;
-  const percentageChange = ((totalEmissions - previousTotal) / previousTotal) * 100;
-  const isDecreasing = percentageChange < 0;
+  const COLORS = {
+    scope1: 'hsl(var(--destructive))',
+    scope2: 'hsl(var(--primary))', 
+    scope3: 'hsl(var(--chart-3))',
+    background: 'hsl(var(--muted))'
+  };
 
-  // Transform categoryBreakdown data to match EnhancedPieChart interface
+  // Filter data based on time period
+  const filteredData = useMemo(() => {
+    const periodMap = {
+      '3months': 3,
+      '6months': 6,
+      '12months': 12,
+      'all': monthlySummary.length
+    };
+    const monthsToShow = periodMap[timePeriod as keyof typeof periodMap] || 6;
+    return monthlySummary.slice(-monthsToShow);
+  }, [timePeriod]);
+
+  // Calculate insights based on actual data
+  const insights = useMemo(() => {
+    const latestMonth = filteredData[filteredData.length - 1];
+    const previousMonth = filteredData[filteredData.length - 2];
+    const totalEmissions = latestMonth.scope1 + latestMonth.scope2 + latestMonth.scope3;
+    const previousTotal = previousMonth?.scope1 + previousMonth?.scope2 + previousMonth?.scope3 || totalEmissions;
+    const percentageChange = previousMonth ? ((totalEmissions - previousTotal) / previousTotal) * 100 : 0;
+    
+    const averageTotal = filteredData.reduce((sum, month) => sum + month.scope1 + month.scope2 + month.scope3, 0) / filteredData.length;
+    const trend = percentageChange < -5 ? 'improving' : percentageChange > 5 ? 'worsening' : 'stable';
+    
+    // Find dominant scope
+    const dominantScope = latestMonth.scope1 > latestMonth.scope2 && latestMonth.scope1 > latestMonth.scope3 ? 'Scope 1' :
+                         latestMonth.scope2 > latestMonth.scope3 ? 'Scope 2' : 'Scope 3';
+    
+    return {
+      totalEmissions: totalEmissions.toFixed(1),
+      percentageChange: percentageChange.toFixed(1),
+      isDecreasing: percentageChange < 0,
+      trend,
+      averageTotal: averageTotal.toFixed(1),
+      dominantScope,
+      dominantValue: Math.max(latestMonth.scope1, latestMonth.scope2, latestMonth.scope3).toFixed(1)
+    };
+  }, [filteredData]);
+
+  // Transform categoryBreakdown data to match DoughnutChart interface
   const pieChartData = categoryBreakdown.map((item, index) => ({
     name: item.category,
     value: item.value,
-    color: COLORS[index % COLORS.length]
+    color: `hsl(var(--chart-${(index % 5) + 1}))`
   }));
-  
-  const CustomBarLabel = (props) => {
-    const { x, y, width, height, value } = props;
-    return (
-      <text 
-        x={x + width / 2} 
-        y={y - 8} 
-        fill="#666" 
-        textAnchor="middle"
-        fontSize={12}
-      >
-        {value}
-      </text>
-    );
-  };
-  
-  const CustomPieLabel = (props) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, category } = props;
-    const radius = innerRadius + (outerRadius - innerRadius) * 1.2;
-    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-    
-    return (
-      <text 
-        x={x} 
-        y={y} 
-        fill={COLORS[index % COLORS.length]} 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
   
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0);
+      const prevMonthIndex = filteredData.findIndex(d => d.month === label) - 1;
+      const prevMonthData = prevMonthIndex >= 0 ? filteredData[prevMonthIndex] : null;
+      const prevTotal = prevMonthData ? prevMonthData.scope1 + prevMonthData.scope2 + prevMonthData.scope3 : null;
+      const monthChange = prevTotal ? ((total - prevTotal) / prevTotal) * 100 : null;
+
       return (
-        <div className="bg-white p-4 border border-gray-200 rounded-md shadow-lg">
-          <p className="font-medium text-gray-700">{`Month: ${label}`}</p>
+        <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
+          <p className="font-semibold text-foreground mb-2">{label}</p>
           {payload.map((entry, index) => (
-            <p key={`item-${index}`} style={{ color: entry.color }} className="text-sm">
-              {`${entry.name}: ${entry.value} tCO₂e`}
-            </p>
+            <div key={`item-${index}`} className="flex justify-between items-center text-sm mb-1">
+              <span style={{ color: entry.color }}>{entry.name}:</span>
+              <span className="font-mono">{entry.value} tCO₂e</span>
+            </div>
           ))}
-          <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
-            Click for more detailed analysis
+          <div className="mt-2 pt-2 border-t border-border">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Total:</span>
+              <span className="font-semibold">{total.toFixed(1)} tCO₂e</span>
+            </div>
+            {monthChange !== null && (
+              <div className="flex items-center gap-1 text-xs mt-1">
+                {monthChange < 0 ? (
+                  <TrendingDown className="h-3 w-3 text-green-500" />
+                ) : (
+                  <TrendingUp className="h-3 w-3 text-red-500" />
+                )}
+                <span className={monthChange < 0 ? 'text-green-600' : 'text-red-600'}>
+                  {Math.abs(monthChange).toFixed(1)}% vs prev month
+                </span>
+              </div>
+            )}
           </div>
         </div>
       );
     }
     return null;
   };
+
+  const toggleScope = (scope: keyof typeof visibleScopes) => {
+    setVisibleScopes(prev => ({ ...prev, [scope]: !prev[scope] }));
+  };
+
+  const handleExport = () => {
+    toast.success("Chart data exported successfully");
+  };
   
   return (
     <div className="space-y-6 mt-6 animate-fade-in">
-      <div className="flex flex-col gap-2 mb-4">
-        <h2 className="text-2xl font-bold">Emissions Breakdown</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Latest monthly total: {totalEmissions.toFixed(1)} tCO₂e</span>
-          <Badge className={isDecreasing ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-            {isDecreasing ? '▼' : '▲'} {Math.abs(percentageChange).toFixed(1)}%
-          </Badge>
+      {/* Header with controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-sm text-muted-foreground">
+              Latest total: {insights.totalEmissions} tCO₂e
+            </span>
+            <Badge variant={insights.isDecreasing ? "default" : "destructive"} className="gap-1">
+              {insights.isDecreasing ? (
+                <TrendingDown className="h-3 w-3" />
+              ) : (
+                <TrendingUp className="h-3 w-3" />
+              )}
+              {Math.abs(parseFloat(insights.percentageChange)).toFixed(1)}%
+            </Badge>
+            <DataFreshness lastUpdated="2025-01-15T14:30:00Z" />
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={timePeriod} onValueChange={setTimePeriod}>
+            <SelectTrigger className="w-36">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3months">Last 3 months</SelectItem>
+              <SelectItem value="6months">Last 6 months</SelectItem>
+              <SelectItem value="12months">Last year</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
-      
-      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all duration-500 ${isExpanded ? 'max-h-[1500px]' : 'max-h-[450px] overflow-hidden'}`}>
-        <Card className="col-span-1 lg:col-span-2 hover:shadow-lg transition-shadow border-t-4 border-t-primary">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between">
-              <span>Monthly Emissions by Scope</span>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <span className="sr-only">View details</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[350px]">
+
+      {/* Main Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Trends Chart - Takes 2 columns */}
+        <GlassmorphismCard className="xl:col-span-2 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Emission Trends</h3>
+              <p className="text-sm text-muted-foreground">Monthly emissions by scope over time</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {(['scope1', 'scope2', 'scope3'] as const).map((scope) => (
+                <Button
+                  key={scope}
+                  variant={visibleScopes[scope] ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleScope(scope)}
+                  className="text-xs h-7"
+                >
+                  {scope.replace('scope', 'Scope ')}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={monthlySummary}
-                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
-                className="[&_.recharts-cartesian-grid-horizontal_line]:stroke-muted [&_.recharts-cartesian-grid-vertical_line]:stroke-muted"
-              >
+              <AreaChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="colorScope1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#159947" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#159947" stopOpacity={0.2}/>
+                  <linearGradient id="scope1Area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.scope1} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={COLORS.scope1} stopOpacity={0.05}/>
                   </linearGradient>
-                  <linearGradient id="colorScope2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2c7da0" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#2c7da0" stopOpacity={0.2}/>
+                  <linearGradient id="scope2Area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.scope2} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={COLORS.scope2} stopOpacity={0.05}/>
                   </linearGradient>
-                  <linearGradient id="colorScope3" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#61a5c2" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#61a5c2" stopOpacity={0.2}/>
+                  <linearGradient id="scope3Area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.scope3} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={COLORS.scope3} stopOpacity={0.05}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="month" 
                   axisLine={false} 
                   tickLine={false}
-                  tick={{ fill: '#666', fontSize: 12 }}
+                  className="text-muted-foreground text-xs"
                 />
                 <YAxis 
-                  unit=" tCO₂e" 
                   axisLine={false} 
                   tickLine={false}
-                  tick={{ fill: '#666', fontSize: 12 }}
+                  className="text-muted-foreground text-xs"
                 />
                 <Tooltip content={CustomTooltip} />
-                <Legend 
-                  wrapperStyle={{ paddingTop: 10 }}
-                  iconType="circle"
-                  iconSize={8}
+                <Legend />
+                <ReferenceLine 
+                  y={parseFloat(insights.averageTotal)} 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeDasharray="5 5"
+                  label="Average"
                 />
-                <Bar 
-                  dataKey="scope1" 
-                  name="Scope 1" 
-                  fill="url(#colorScope1)" 
-                  stackId="a" 
-                  barSize={36}
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={1500}
-                />
-                <Bar 
-                  dataKey="scope2" 
-                  name="Scope 2" 
-                  fill="url(#colorScope2)" 
-                  stackId="a" 
-                  barSize={36}
-                  radius={[0, 0, 0, 0]}
-                  animationDuration={1500}
-                  animationBegin={300}
-                />
-                <Bar 
-                  dataKey="scope3" 
-                  name="Scope 3" 
-                  fill="url(#colorScope3)" 
-                  stackId="a" 
-                  barSize={36}
-                  radius={[0, 0, 4, 4]}
-                  animationDuration={1500}
-                  animationBegin={600}
-                />
-              </BarChart>
+                {visibleScopes.scope1 && (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="scope1"
+                      name="Scope 1"
+                      stroke={COLORS.scope1}
+                      fill="url(#scope1Area)"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="scope1"
+                      stroke={COLORS.scope1}
+                      strokeWidth={2}
+                      dot={{ fill: COLORS.scope1, strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </>
+                )}
+                {visibleScopes.scope2 && (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="scope2"
+                      name="Scope 2"
+                      stroke={COLORS.scope2}
+                      fill="url(#scope2Area)"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="scope2"
+                      stroke={COLORS.scope2}
+                      strokeWidth={2}
+                      dot={{ fill: COLORS.scope2, strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </>
+                )}
+                {visibleScopes.scope3 && (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="scope3"
+                      name="Scope 3"
+                      stroke={COLORS.scope3}
+                      fill="url(#scope3Area)"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="scope3"
+                      stroke={COLORS.scope3}
+                      strokeWidth={2}
+                      dot={{ fill: COLORS.scope3, strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </>
+                )}
+              </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1 hover:shadow-lg transition-shadow border-t-4 border-t-primary">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center justify-between">
-              <span>Emission Sources</span>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <span className="sr-only">View details</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[350px] relative">
+          </div>
+        </GlassmorphismCard>
+
+        {/* Sources Breakdown */}
+        <GlassmorphismCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Emission Sources</h3>
+              <p className="text-sm text-muted-foreground">Category breakdown</p>
+            </div>
+            <Button variant="ghost" size="sm">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="h-[320px]">
             <DoughnutChart
               data={pieChartData}
               className="h-full"
               centerContent={
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground">Total</div>
-                  <div className="text-sm font-semibold text-foreground">
-                    {categoryBreakdown.reduce((sum, item) => sum + item.value, 0)} tCO₂e
+                  <div className="text-xs text-muted-foreground">Total Sources</div>
+                  <div className="text-lg font-bold text-foreground">
+                    {categoryBreakdown.reduce((sum, item) => sum + item.value, 0).toFixed(0)}
                   </div>
+                  <div className="text-xs text-muted-foreground">tCO₂e</div>
                 </div>
               }
             />
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1 lg:col-span-3 hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle>Emission Trends Analysis</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-                <h3 className="text-lg font-medium text-green-800 mb-2">Key Insights</h3>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 mr-2"></span>
-                    <span>Scope 1 emissions decreased by 15% compared to previous quarter</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2"></span>
-                    <span>Energy efficiency measures yielded 8.3% reduction in electricity usage</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 mr-2"></span>
-                    <span>Transportation emissions increased slightly due to expanded operations</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">Recommendations</h3>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2"></span>
-                    <span>Implement renewable energy sourcing for manufacturing facilities</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2"></span>
-                    <span>Optimize logistics routes to minimize transportation emissions</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2"></span>
-                    <span>Audit heating systems for efficiency improvements</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-                <h3 className="text-lg font-medium text-purple-800 mb-2">Projections</h3>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 mr-2"></span>
-                    <span>On track to meet 2025 reduction targets if current trends continue</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 mr-2"></span>
-                    <span>Projected 12% overall reduction by end of fiscal year</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 mr-2"></span>
-                    <span>Manufacturing emissions expected to decrease further with new equipment</span>
-                  </li>
-                </ul>
+          </div>
+        </GlassmorphismCard>
+      </div>
+
+      {/* Insights Panel */}
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ 
+          opacity: isExpanded ? 1 : 0, 
+          height: isExpanded ? 'auto' : 0 
+        }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden"
+      >
+        <GlassmorphismCard className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Smart Analysis</h3>
+            <DataFreshness lastUpdated="2025-01-15T14:25:00Z" className="ml-auto" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Dynamic Insights */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-foreground border-b border-border pb-2">Key Insights</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                  {insights.isDecreasing ? (
+                    <TrendingDown className="h-4 w-4 text-green-500 mt-0.5" />
+                  ) : (
+                    <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" />
+                  )}
+                  <div className="text-sm">
+                    <p className="font-medium">Emissions {insights.trend}</p>
+                    <p className="text-muted-foreground">
+                      {Math.abs(parseFloat(insights.percentageChange))}% change from previous month
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                  <BarChart3 className="h-4 w-4 text-primary mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium">{insights.dominantScope} is dominant</p>
+                    <p className="text-muted-foreground">
+                      Contributing {insights.dominantValue} tCO₂e this month
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                  <Calendar className="h-4 w-4 text-blue-500 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium">Period average</p>
+                    <p className="text-muted-foreground">
+                      {insights.averageTotal} tCO₂e per month
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-      
+
+            {/* Recommendations */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-foreground border-b border-border pb-2">Recommendations</h4>
+              <div className="space-y-3">
+                {insights.dominantScope === 'Scope 2' && (
+                  <div className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                    <div className="text-sm">
+                      <p className="font-medium">Focus on renewable energy</p>
+                      <p className="text-muted-foreground">
+                        Scope 2 dominance suggests prioritizing clean electricity
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {insights.trend === 'worsening' && (
+                  <div className="flex items-start gap-3 p-3 bg-amber-50/50 rounded-lg border border-amber-100">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 mt-2"></div>
+                    <div className="text-sm">
+                      <p className="font-medium">Investigate recent increases</p>
+                      <p className="text-muted-foreground">
+                        Recent trend requires immediate attention
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-start gap-3 p-3 bg-green-50/50 rounded-lg border border-green-100">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                  <div className="text-sm">
+                    <p className="font-medium">Optimize data collection</p>
+                    <p className="text-muted-foreground">
+                      Ensure comprehensive scope 3 tracking
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Projections */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-foreground border-b border-border pb-2">Projections</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mt-2"></div>
+                  <div className="text-sm">
+                    <p className="font-medium">
+                      {insights.trend === 'improving' ? 'Positive' : 'Challenging'} trajectory
+                    </p>
+                    <p className="text-muted-foreground">
+                      Based on current {timePeriod.replace('months', '-month')} trend
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2"></div>
+                  <div className="text-sm">
+                    <p className="font-medium">Target alignment</p>
+                    <p className="text-muted-foreground">
+                      {insights.isDecreasing ? 'On track' : 'Requires action'} for annual goals
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-teal-50/50 rounded-lg border border-teal-100">
+                  <div className="w-2 h-2 rounded-full bg-teal-500 mt-2"></div>
+                  <div className="text-sm">
+                    <p className="font-medium">Next review</p>
+                    <p className="text-muted-foreground">
+                      Monitor progress in next reporting cycle
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GlassmorphismCard>
+      </motion.div>
+
+      {/* Toggle Button */}
       <div className="flex justify-center">
         <Button 
           variant="outline"
@@ -292,9 +471,9 @@ const EmissionsChart: React.FC = () => {
           className="flex items-center gap-2"
         >
           {isExpanded ? (
-            <>Show Less <ChevronUp className="h-4 w-4" /></>
+            <>Hide Analysis <ChevronUp className="h-4 w-4" /></>
           ) : (
-            <>Show More <ChevronDown className="h-4 w-4" /></>
+            <>Show Smart Analysis <ChevronDown className="h-4 w-4" /></>
           )}
         </Button>
       </div>
