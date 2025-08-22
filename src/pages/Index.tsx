@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, FileSpreadsheet, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
@@ -123,7 +124,44 @@ const chartYKeys = [{
   label: 'Scope 3',
   color: '#10b981'
 }];
+
+// Deadline navigation mapping
+const DEADLINE_ROUTES = {
+  'Q2 Data Collection': '/data-entry',
+  'CDP Submission': '/enterprise', 
+  'Annual Report': '/reports',
+  'SBTi Validation': '/goals'
+} as const;
+
+// Sample deadlines data
+const UPCOMING_DEADLINES = [
+  {
+    task: 'Q2 Data Collection',
+    date: 'June 30, 2025',
+    urgency: 'high' as const,
+    days: 42
+  }, 
+  {
+    task: 'CDP Submission',
+    date: 'July 15, 2025',
+    urgency: 'medium' as const,
+    days: 57
+  }, 
+  {
+    task: 'Annual Report',
+    date: 'Dec 31, 2025',
+    urgency: 'low' as const,
+    days: 226
+  }, 
+  {
+    task: 'SBTi Validation',
+    date: 'Mar 1, 2026',
+    urgency: 'low' as const,
+    days: 287
+  }
+];
 const Index = () => {
+  const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
@@ -158,6 +196,16 @@ const Index = () => {
     }
     setLikedCards(newLikedCards);
     addToast(liked ? "Added to favorites" : "Removed from favorites", "info");
+  };
+
+  const handleDeadlineClick = (deadline: typeof UPCOMING_DEADLINES[0]) => {
+    const route = DEADLINE_ROUTES[deadline.task as keyof typeof DEADLINE_ROUTES];
+    if (route) {
+      toast.success(`Navigating to ${deadline.task}`, {
+        description: "Opening the relevant section for this deadline.",
+      });
+      navigate(route);
+    }
   };
   return <div className="space-y-6">
       {/* Performance Monitor */}
@@ -208,7 +256,7 @@ const Index = () => {
       />
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group">
+        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group h-full flex flex-col">
           <div className="absolute top-4 right-4">
             <LikeButton initialLiked={likedCards.has('compliance-card')} onToggle={liked => handleCardLike('compliance-card', liked)} />
           </div>
@@ -221,7 +269,7 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1">
             {[{
             name: 'GHG Protocol',
             status: 'Compliant',
@@ -272,7 +320,7 @@ const Index = () => {
           </div>
         </GlassmorphismCard>
         
-        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group">
+        <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group h-full flex flex-col">
           <div className="absolute top-4 right-4">
             <LikeButton initialLiked={likedCards.has('deadlines-card')} onToggle={liked => handleCardLike('deadlines-card', liked)} />
           </div>
@@ -285,32 +333,26 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
             </div>
           </div>
-          <div className="space-y-3">
-            {[{
-            task: 'Q2 Data Collection',
-            date: 'June 30, 2025',
-            urgency: 'high',
-            days: 42
-          }, {
-            task: 'CDP Submission',
-            date: 'July 15, 2025',
-            urgency: 'medium',
-            days: 57
-          }, {
-            task: 'Annual Report',
-            date: 'Dec 31, 2025',
-            urgency: 'low',
-            days: 226
-          }, {
-            task: 'SBTi Validation',
-            date: 'Mar 1, 2026',
-            urgency: 'low',
-            days: 287
-          }].map((item, index) => <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining`}>
-                <motion.div whileHover={{
-              scale: 1.02,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)'
-            }} className="flex justify-between items-center p-3 bg-white/50 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm">
+          <div className="space-y-3 flex-1">
+            {UPCOMING_DEADLINES.map((item, index) => (
+              <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining • Click to navigate`}>
+                <motion.div 
+                  whileHover={{
+                    scale: 1.02,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                  }} 
+                  className="flex justify-between items-center p-3 bg-white/50 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm group/deadline"
+                  onClick={() => handleDeadlineClick(item)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Navigate to ${item.task} deadline details`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDeadlineClick(item);
+                    }
+                  }}
+                >
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${
                       item.urgency === 'high' ? 'bg-red-500 shadow-red-500/50 shadow-sm' : 
@@ -318,17 +360,21 @@ const Index = () => {
                       'bg-green-500 shadow-green-500/50 shadow-sm'
                     }`} />
                     <div>
-                      <span className="text-sm font-medium text-foreground">{item.task}</span>
+                      <span className="text-sm font-medium text-foreground group-hover/deadline:text-primary transition-colors">
+                        {item.task}
+                      </span>
                       <div className="text-xs text-muted-foreground">{item.days} days left</div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">
                       {item.date}
                     </span>
+                    <ChevronRight className="h-3 w-3 text-muted-foreground group-hover/deadline:text-primary transition-colors" />
                   </div>
                 </motion.div>
-              </Tooltip>)}
+              </Tooltip>
+            ))}
           </div>
         </GlassmorphismCard>
       </StaggeredList>
