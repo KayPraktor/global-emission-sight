@@ -35,9 +35,17 @@ const EmissionsChart: React.FC = () => {
   const COLORS = {
     scope1: 'hsl(var(--destructive))',
     scope2: 'hsl(var(--primary))', 
-    scope3: 'hsl(var(--chart-3))',
+    scope3: 'hsl(var(--secondary))',
     background: 'hsl(var(--muted))'
   };
+
+  const CHART_COLORS = [
+    'hsl(var(--primary))',
+    'hsl(var(--secondary))',
+    'hsl(var(--accent))',
+    'hsl(var(--destructive))',
+    'hsl(var(--ring))',
+  ];
 
   // Filter data based on time period
   const filteredData = useMemo(() => {
@@ -81,7 +89,7 @@ const EmissionsChart: React.FC = () => {
   const pieChartData = categoryBreakdown.map((item, index) => ({
     name: item.category,
     value: item.value,
-    color: `hsl(var(--chart-${(index % 5) + 1}))`
+    color: CHART_COLORS[index % CHART_COLORS.length],
   }));
   
   const CustomTooltip = ({ active, payload, label }) => {

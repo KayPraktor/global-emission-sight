@@ -168,7 +168,7 @@ const AnalyticsSources = () => {
                         <div className="flex items-center gap-3">
                           <div 
                             className="p-2 rounded-lg"
-                            style={{ backgroundColor: `${source.color}20` }}
+                            style={{ backgroundColor: source.color.replace('))', ' / 0.12)') }}
                           >
                             <Icon className="h-4 w-4" style={{ color: source.color }} />
                           </div>
