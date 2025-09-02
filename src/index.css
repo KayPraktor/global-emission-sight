@@ -131,6 +131,22 @@
   .glass-panel {
     @apply bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border border-gray-100 dark:border-gray-800;
   }
+  
+  .glass-card {
+    @apply bg-white/10 dark:bg-gray-950/20 backdrop-blur-lg border border-white/20 dark:border-gray-800/50 shadow-xl;
+  }
+  
+  .glass-overlay {
+    @apply bg-gradient-to-br from-white/30 to-transparent dark:from-gray-900/30 backdrop-blur-md;
+  }
+  
+  .floating-panel {
+    @apply glass-card rounded-2xl p-6 shadow-2xl transition-all duration-300 hover:shadow-3xl hover:-translate-y-1;
+  }
+  
+  .map-tooltip {
+    @apply glass-card rounded-lg p-4 text-sm shadow-xl border border-white/30 dark:border-gray-700/50;
+  }
 }
 
 .stat-card {

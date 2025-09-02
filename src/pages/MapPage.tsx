@@ -1,14 +1,30 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { format, subMonths } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { GlobeMap } from '@/components/Map/GlobeMap';
-import { countryCoords, filterData, generateSampleEmissions, groupByMonthScope, periodOverPeriod, sumByCountry, topCountries, totalTco2e } from '@/utils/emissionsSample';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedGlobeMap } from '@/components/Map/EnhancedGlobeMap';
+import { AnalyticsPanel } from '@/components/Map/AnalyticsPanel';
+import { generateEnhancedEmissions, countryCoords, generateFacilities, industries, facilityTypes } from '@/utils/facilityData';
+import { filterData, groupByMonthScope, periodOverPeriod, sumByCountry, topCountries, totalTco2e, computeTCO2e } from '@/utils/emissionsSample';
 import type { EmissionRecord, Scope } from '@/types/emissions';
-import { TrendingDown, TrendingUp } from 'lucide-react';
+import type { Facility } from '@/utils/facilityData';
+import { 
+  TrendingDown, 
+  TrendingUp, 
+  MapPin, 
+  Filter, 
+  Search, 
+  Eye,
+  BarChart3,
+  Settings,
+  Globe,
+  Layers
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -33,17 +49,53 @@ export default function MapPage() {
     if (meta) meta.setAttribute('content', 'Explore carbon emissions by country and scope on an interactive world map, with KPIs, trends, and top emitters.');
   }, []);
 
-  const [allData] = useState<EmissionRecord[]>(() => generateSampleEmissions(18));
+  // Enhanced data with facilities
+  const [allData] = useState<EmissionRecord[]>(() => generateEnhancedEmissions(18));
+  const [facilities] = useState<Facility[]>(() => generateFacilities());
+  
+  // Filters
   const [rangeKey, setRangeKey] = useState<'3M'|'6M'|'12M'|'24M'>('12M');
   const [scopes, setScopes] = useState<Scope[]>(['S1','S2','S3']);
-  const [countries, setCountries] = useState<string[]>([]); // empty = all
+  const [countries, setCountries] = useState<string[]>([]);
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [mapToken, setMapToken] = useState<string>(() => localStorage.getItem('mapbox_public_token') || '');
+  
+  // UI State
+  const [visualMode, setVisualMode] = useState<'markers' | 'heatmap' | 'choropleth' | 'facilities'>('facilities');
+  const [selectedFacility, setSelectedFacility] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'facilities'>('overview');
 
   const dateEnd = new Date();
   const monthsMap: Record<typeof rangeKey, number> = { '3M': 3, '6M': 6, '12M': 12, '24M': 24 } as const;
   const dateStart = subMonths(dateEnd, monthsMap[rangeKey]);
 
-  const filtered = useMemo(() => filterData(allData, { dateStart, dateEnd, scopes, countries }), [allData, dateStart, dateEnd, scopes, countries]);
+  // Enhanced filtering with facilities and industries
+  const filtered = useMemo(() => {
+    let result = filterData(allData, { dateStart, dateEnd, scopes, countries });
+    
+    if (selectedIndustries.length > 0) {
+      result = result.filter(r => (r as any).industry && selectedIndustries.includes((r as any).industry));
+    }
+    
+    if (selectedFacilityTypes.length > 0) {
+      result = result.filter(r => (r as any).facility_type && selectedFacilityTypes.includes((r as any).facility_type));
+    }
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(r => 
+        countryCoords[r.country]?.name.toLowerCase().includes(term) ||
+        r.category.toLowerCase().includes(term) ||
+        ((r as any).facility_name && (r as any).facility_name.toLowerCase().includes(term))
+      );
+    }
+    
+    return result;
+  }, [allData, dateStart, dateEnd, scopes, countries, selectedIndustries, selectedFacilityTypes, searchTerm]);
+
+  // Enhanced KPIs
   const kpiTotal = useMemo(() => totalTco2e(filtered), [filtered]);
   const kpiScopes = useMemo(() => {
     const s1 = totalTco2e(filtered.filter(r => r.scope === 'S1'));
@@ -57,6 +109,34 @@ export default function MapPage() {
   const byCountryTotals = useMemo(() => sumByCountry(filtered), [filtered]);
   const topCountryRows = useMemo(() => topCountries(filtered, 8), [filtered]);
 
+  // Filtered facilities
+  const filteredFacilities = useMemo(() => {
+    let result = facilities;
+    
+    if (countries.length > 0) {
+      result = result.filter(f => countries.includes(f.country));
+    }
+    
+    if (selectedIndustries.length > 0) {
+      result = result.filter(f => selectedIndustries.includes(f.industry));
+    }
+    
+    if (selectedFacilityTypes.length > 0) {
+      result = result.filter(f => selectedFacilityTypes.includes(f.type));
+    }
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(f => 
+        f.name.toLowerCase().includes(term) ||
+        f.city.toLowerCase().includes(term) ||
+        countryCoords[f.country]?.name.toLowerCase().includes(term)
+      );
+    }
+    
+    return result;
+  }, [facilities, countries, selectedIndustries, selectedFacilityTypes, searchTerm]);
+
   useEffect(() => {
     if (mapToken) localStorage.setItem('mapbox_public_token', mapToken);
   }, [mapToken]);
@@ -68,219 +148,316 @@ export default function MapPage() {
   const allCountryCodes = Object.keys(countryCoords);
 
   return (
-    <main className="space-y-6 p-4 md:p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl md:text-3xl font-semibold">Carbon Emissions Map (tCO2e)</h1>
-        <p className="text-muted-foreground">Interactive world map with KPIs, trends and top emitters.</p>
+    <main className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 md:p-6 space-y-6">
+      {/* Enhanced Header with Glassmorphism */}
+      <div className="floating-panel">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold gradient-heading">Carbon Intelligence Map</h1>
+            <p className="text-muted-foreground mt-1">
+              Advanced emissions visualization with facility-level insights and AI-powered analytics
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              <Globe className="h-3 w-3 mr-1" />
+              {Object.keys(countryCoords).length} Countries
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              <BarChart3 className="h-3 w-3 mr-1" />
+              {facilities.length} Facilities
+            </Badge>
+          </div>
+        </div>
         <link rel="canonical" href="/map" />
-      </header>
+      </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4 items-end">
+      {/* Advanced Filter Panel */}
+      <GlassmorphismCard className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Advanced Filters</h2>
+        </div>
+        
+        <div className="grid gap-6 lg:grid-cols-6">
+          {/* Search */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Search
+            </label>
+            <Input 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Countries, facilities..." 
+              className="glass-panel"
+            />
+          </div>
+
           {/* Date Range */}
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Date range</label>
-            <div className="flex gap-2 flex-wrap">
+            <label className="text-sm font-medium text-muted-foreground">Time Period</label>
+            <div className="flex gap-1">
               {(['3M','6M','12M','24M'] as const).map((k) => (
                 <Button key={k} size="sm" variant={rangeKey===k? 'default':'outline'} onClick={() => setRangeKey(k)}>
                   {k}
                 </Button>
               ))}
             </div>
-            <div className="text-xs text-muted-foreground">{format(dateStart, 'MMM d, yyyy')} – {format(dateEnd, 'MMM d, yyyy')}</div>
+            <div className="text-xs text-muted-foreground">{format(dateStart, 'MMM d')} – {format(dateEnd, 'MMM d, yyyy')}</div>
           </div>
 
           {/* Scope */}
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Scope</label>
-            <div className="flex gap-3">
+            <label className="text-sm font-medium text-muted-foreground">Emission Scopes</label>
+            <div className="space-y-2">
               {scopeOptions.map((s) => (
-                <label key={s} className="flex items-center gap-2">
+                <label key={s} className="flex items-center gap-2 text-sm">
                   <Checkbox checked={scopes.includes(s)} onCheckedChange={() => toggleScope(s)} />
-                  <span className="text-sm">{s}</span>
+                  <span>{s}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Country */}
+          {/* Industries */}
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Countries</label>
-            <div className="grid grid-cols-2 gap-2 max-h-28 overflow-auto border rounded-md p-2">
-              {allCountryCodes.map((code) => (
-                <label key={code} className="flex items-center gap-2 text-sm">
+            <label className="text-sm font-medium text-muted-foreground">Industries</label>
+            <div className="space-y-1 max-h-24 overflow-y-auto">
+              {Object.entries(industries).map(([key, info]) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
                   <Checkbox
-                    checked={countries.includes(code)}
-                    onCheckedChange={() => setCountries((prev) => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])}
+                    checked={selectedIndustries.includes(key)}
+                    onCheckedChange={() => setSelectedIndustries(prev => 
+                      prev.includes(key) ? prev.filter(i => i !== key) : [...prev, key]
+                    )}
                   />
-                  <span>{countryCoords[code].name}</span>
+                  <span>{info.icon}</span>
+                  <span className="capitalize">{key}</span>
                 </label>
               ))}
             </div>
-            <div className="text-xs text-muted-foreground">Selected: {countries.length ? countries.length : 'All'}</div>
           </div>
 
-          {/* Mapbox token */}
+          {/* Facility Types */}
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Mapbox public token</label>
-            <Input value={mapToken} onChange={(e) => setMapToken(e.target.value)} placeholder="pk.eyJ..." />
-            <p className="text-xs text-muted-foreground">Paste your Mapbox public token to render the map.</p>
+            <label className="text-sm font-medium text-muted-foreground">Facility Types</label>
+            <div className="space-y-1 max-h-24 overflow-y-auto">
+              {Object.entries(facilityTypes).map(([key, info]) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={selectedFacilityTypes.includes(key)}
+                    onCheckedChange={() => setSelectedFacilityTypes(prev => 
+                      prev.includes(key) ? prev.filter(t => t !== key) : [...prev, key]
+                    )}
+                  />
+                  <span>{info.icon}</span>
+                  <span className="capitalize">{key.replace('_', ' ')}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* KPIs */}
-      <section className="grid gap-4 md:grid-cols-4">
-        <Card className="bg-gradient-to-br from-muted/40 to-muted">
-          <CardHeader>
-            <CardTitle>Total tCO2e</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{numberFmt(kpiTotal)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Scope Share</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center gap-4">
-            <div className="text-sm">S1 <span className="font-medium">{numberFmt(kpiScopes.p1)}%</span></div>
-            <div className="text-sm">S2 <span className="font-medium">{numberFmt(kpiScopes.p2)}%</span></div>
-            <div className="text-sm">S3 <span className="font-medium">{numberFmt(kpiScopes.p3)}%</span></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Period-over-period</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center gap-2">
-            {pop.delta >= 0 ? <TrendingUp className="h-4 w-4 text-destructive" /> : <TrendingDown className="h-4 w-4 text-green-600" />}
-            <div className="text-2xl font-semibold">{numberFmt(Math.abs(pop.delta))}%</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Country</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topCountryRows[0] ? (
-              <div className="text-sm">
-                <div className="font-medium">{topCountryRows[0].country}</div>
-                <div className="text-muted-foreground">{numberFmt(topCountryRows[0].total)} tCO2e</div>
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-sm">No data</div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+          {/* Mapbox Token */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Map Token</label>
+            <Input 
+              value={mapToken} 
+              onChange={(e) => setMapToken(e.target.value)} 
+              placeholder="pk.eyJ..." 
+              className="glass-panel"
+            />
+            <p className="text-xs text-muted-foreground">
+              Get your token at <a href="https://mapbox.com" target="_blank" className="text-primary underline">mapbox.com</a>
+            </p>
+          </div>
+        </div>
+      </GlassmorphismCard>
 
-      {/* Map */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>World Map</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <GlobeMap token={mapToken} countryTotals={byCountryTotals} coords={countryCoords} />
-          </CardContent>
-        </Card>
-      </section>
+      {/* Enhanced KPI Dashboard */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <GlassmorphismCard className="p-6 bg-gradient-to-br from-primary/10 to-primary/5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <Badge variant="secondary" className="text-xs">{filteredFacilities.length} facilities</Badge>
+          </div>
+          <div className="text-3xl font-bold mb-1">{numberFmt(kpiTotal)}</div>
+          <div className="text-sm text-muted-foreground">Total tCO2e</div>
+        </GlassmorphismCard>
 
-      {/* Charts */}
-      <section className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Stacked Trend by Scope</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthly} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradS1" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-                  </linearGradient>
-                  <linearGradient id="gradS2" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.05} />
-                  </linearGradient>
-                  <linearGradient id="gradS3" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: any) => numberFmt(v as number)} />
-                <Area type="monotone" dataKey="S1" stackId="1" stroke="hsl(var(--primary))" fill="url(#gradS1)" />
-                <Area type="monotone" dataKey="S2" stackId="1" stroke="hsl(var(--secondary))" fill="url(#gradS2)" />
-                <Area type="monotone" dataKey="S3" stackId="1" stroke="hsl(var(--accent))" fill="url(#gradS3)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <GlassmorphismCard className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Layers className="h-5 w-5 text-secondary" />
+            <span className="text-sm font-medium">Scope Distribution</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>S1 (Direct)</span>
+              <span className="font-medium">{numberFmt(kpiScopes.p1)}%</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>S2 (Electricity)</span>
+              <span className="font-medium">{numberFmt(kpiScopes.p2)}%</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>S3 (Indirect)</span>
+              <span className="font-medium">{numberFmt(kpiScopes.p3)}%</span>
+            </div>
+          </div>
+        </GlassmorphismCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Countries</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topCountryRows} layout="vertical" margin={{ left: 16, right: 16, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="country" width={120} />
-                <Tooltip formatter={(v: any) => numberFmt(v as number)} />
-                <Bar dataKey="total" radius={[4,4,4,4]} fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </section>
+        <GlassmorphismCard className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            {pop.delta >= 0 ? 
+              <TrendingUp className="h-5 w-5 text-destructive" /> : 
+              <TrendingDown className="h-5 w-5 text-green-500" />
+            }
+            <span className="text-sm font-medium">Period Change</span>
+          </div>
+          <div className="text-2xl font-bold mb-1">
+            {pop.delta >= 0 ? '+' : ''}{numberFmt(pop.delta)}%
+          </div>
+          <div className="text-sm text-muted-foreground">vs. previous period</div>
+        </GlassmorphismCard>
 
-      {/* Data Table */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Sample Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableCaption>First 10 rows after filters.</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Scope</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead className="text-right">EF</TableHead>
-                  <TableHead className="text-right">tCO2e</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.slice(0, 10).map((r, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="whitespace-nowrap">{r.date}</TableCell>
-                    <TableCell>{countryCoords[r.country]?.name || r.country}</TableCell>
-                    <TableCell>{r.scope}</TableCell>
-                    <TableCell>{r.category}</TableCell>
-                    <TableCell className="text-right">{numberFmt(r.quantity)}</TableCell>
-                    <TableCell>{r.unit}</TableCell>
-                    <TableCell className="text-right">{r.emission_factor.value} {r.emission_factor.unit}</TableCell>
-                    <TableCell className="text-right">{numberFmt((r.quantity * r.emission_factor.value)/1000)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </section>
+        <GlassmorphismCard className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="h-5 w-5 text-accent" />
+            <span className="text-sm font-medium">Top Emitter</span>
+          </div>
+          {topCountryRows[0] ? (
+            <div>
+              <div className="text-lg font-semibold">{topCountryRows[0].country}</div>
+              <div className="text-sm text-muted-foreground">{numberFmt(topCountryRows[0].total)} tCO2e</div>
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-sm">No data available</div>
+          )}
+        </GlassmorphismCard>
+      </div>
+
+      {/* Enhanced Interactive Map */}
+      <GlassmorphismCard className="overflow-hidden">
+        <EnhancedGlobeMap
+          token={mapToken}
+          countryTotals={byCountryTotals}
+          coords={countryCoords}
+          facilities={filteredFacilities}
+          height={600}
+          visualMode={visualMode}
+          onVisualizationChange={setVisualMode}
+          selectedFacility={selectedFacility}
+          onFacilitySelect={setSelectedFacility}
+        />
+      </GlassmorphismCard>
+
+      {/* Advanced Analytics Tabs */}
+      <GlassmorphismCard className="p-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 glass-panel">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="facilities" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Facilities
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Charts */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <GlassmorphismCard className="p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Emission Trends by Scope
+                </h3>
+                <div className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthly} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="gradS1" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="gradS2" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="gradS3" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                      <XAxis dataKey="month" tickLine={false} axisLine={false} className="text-xs" />
+                      <YAxis tickLine={false} axisLine={false} className="text-xs" />
+                      <Tooltip 
+                        formatter={(v: any) => [numberFmt(v as number) + ' tCO2e', '']} 
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area type="monotone" dataKey="S1" stackId="1" stroke="hsl(var(--primary))" fill="url(#gradS1)" />
+                      <Area type="monotone" dataKey="S2" stackId="1" stroke="hsl(var(--secondary))" fill="url(#gradS2)" />
+                      <Area type="monotone" dataKey="S3" stackId="1" stroke="hsl(var(--accent))" fill="url(#gradS3)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </GlassmorphismCard>
+
+              <GlassmorphismCard className="p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Top Emitting Countries
+                </h3>
+                <div className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topCountryRows} layout="vertical" margin={{ left: 20, right: 20, top: 8, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                      <XAxis type="number" hide />
+                      <YAxis type="category" dataKey="country" width={120} className="text-xs" />
+                      <Tooltip 
+                        formatter={(v: any) => [numberFmt(v as number) + ' tCO2e', 'Total Emissions']}
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="total" radius={[0, 6, 6, 0]} fill="hsl(var(--primary))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </GlassmorphismCard>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsPanel 
+              facilities={filteredFacilities}
+              selectedCountries={countries}
+              selectedIndustries={selectedIndustries}
+              totalEmissions={kpiTotal}
+              periodChange={pop.delta}
+            />
+          </TabsContent>
+
+          <TabsContent value="facilities" className="space-y-4">
+            {/* ... keep existing code ... */}
+          </TabsContent>
+        </Tabs>
+      </GlassmorphismCard>
+
     </main>
   );
 }
