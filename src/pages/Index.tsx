@@ -4,7 +4,7 @@ import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronDown, ChevronUp, FileSpreadsheet, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
@@ -23,11 +23,11 @@ import { VirtualList } from '@/components/ui/virtual-list';
 import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
-import TargetsWidget from '@/components/Dashboard/TargetsWidget';
+import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
+import StrategicIntelligencePanel from '@/components/Dashboard/StrategicIntelligencePanel';
 import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 import { SectionHeader } from '@/components/ui/section-header';
-import { StrategyMetrics } from '@/components/Dashboard/StrategyMetrics';
-import { BarChart3, Target as TargetIcon, Shield, Clock } from 'lucide-react';
+import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -162,15 +162,10 @@ const UPCOMING_DEADLINES = [
 ];
 const Index = () => {
   const navigate = useNavigate();
-  const [showAll, setShowAll] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
-  const {
-    addToast
-  } = useAnimatedToast();
-  const {
-    startOnboarding
-  } = useOnboarding();
+  const { addToast } = useAnimatedToast();
+  const { startOnboarding } = useOnboarding();
 
   // Add performance optimization features
   const cache = useAdvancedCache<any>({
@@ -379,52 +374,39 @@ const Index = () => {
         </GlassmorphismCard>
       </StaggeredList>
 
-      {/* Performance Analysis Section */}
+      {/* Performance Intelligence Section */}
       <SectionHeader
         icon={BarChart3}
-        title="Performance Analysis"
-        subtitle="Comprehensive view of emission trends, targets, and key performance indicators"
-        helpText="Analyze your emission patterns, identify top contributors, and track progress toward your sustainability targets."
+        title="Performance Intelligence"
+        subtitle="Advanced analytics and strategic insights for carbon management excellence"
+        helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
         lastUpdated="2025-01-15T12:15:00Z"
       />
 
       <div className="space-y-6 mt-6">
-        {/* Top row: Drivers and Insights */}
+        {/* Top row: Key Drivers Analysis */}
         <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
           <TopDrivers />
           <InsightsNextActions />
         </StaggeredList>
         
-        {/* Bottom row: Targets chart full width */}
+        {/* Enhanced Targets Widget */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <TargetsWidget />
+          <EnhancedTargetsWidget />
         </motion.div>
-      </div>
-      
-      {/* Strategic Insights Section */}
-      <SectionHeader
-        icon={TargetIcon}
-        title="Strategic Insights"
-        subtitle="Long-term sustainability planning and progress tracking"
-        helpText="Monitor progress toward your strategic sustainability goals and get actionable insights to accelerate your carbon reduction journey."
-        lastUpdated="2025-01-15T11:45:00Z"
-      />
-      
-      {showAll && <SlideIn direction="up">
-          <StrategyMetrics 
-            onCardLike={handleCardLike}
-            likedCards={likedCards}
-          />
-        </SlideIn>}
 
-      <div className="flex justify-center mt-6">
-        <InteractiveButton variant="outline" onClick={() => setShowAll(!showAll)}>
-          {showAll ? <>Show Less <ChevronUp className="h-4 w-4 ml-2" /></> : <>Show Strategic Insights <ChevronDown className="h-4 w-4 ml-2" /></>}
-        </InteractiveButton>
+        {/* Strategic Intelligence Panel - Always Visible */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <StrategicIntelligencePanel />
+        </motion.div>
       </div>
 
       {/* Empty state example (conditionally shown) */}
