@@ -70,29 +70,6 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
       variants={stagger}
       className="space-y-6"
     >
-      {/* AI Insights Header */}
-      <motion.div variants={fadeInUp}>
-        <GlassmorphismCard variant="colored" className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">AI Carbon Intelligence</h3>
-                <p className="text-muted-foreground">
-                  Machine learning-powered insights and recommendations
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-medium">Live Analysis</span>
-            </div>
-          </div>
-        </GlassmorphismCard>
-      </motion.div>
-
       {/* Insights Grid */}
       <motion.div variants={fadeInUp}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

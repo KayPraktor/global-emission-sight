@@ -162,31 +162,6 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
       variants={stagger}
       className="space-y-6"
     >
-      {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <GlassmorphismCard variant="colored" className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">Compliance Intelligence</h3>
-                <p className="text-muted-foreground">
-                  AI-powered regulatory monitoring and compliance optimization
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge className="bg-green-100 text-green-800">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                87% Compliant
-              </Badge>
-            </div>
-          </div>
-        </GlassmorphismCard>
-      </motion.div>
-
       {/* Compliance Score Dashboard */}
       <motion.div variants={fadeInUp}>
         <GlassmorphismCard variant="light" className="p-6">

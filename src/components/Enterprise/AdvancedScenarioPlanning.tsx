@@ -97,29 +97,6 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
       variants={stagger}
       className="space-y-6"
     >
-      {/* Header */}
-      <motion.div variants={fadeInUp}>
-        <GlassmorphismCard variant="colored" className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold">Advanced Scenario Planning</h3>
-                <p className="text-muted-foreground">
-                  Strategic carbon trajectory analysis with Monte Carlo simulations
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm">
-              <Target className="w-4 h-4 mr-2" />
-              Run Simulation
-            </Button>
-          </div>
-        </GlassmorphismCard>
-      </motion.div>
-
       {/* Scenario Overview Cards */}
       <motion.div variants={fadeInUp}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
