@@ -4,8 +4,8 @@ import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
@@ -28,6 +28,7 @@ import StrategicIntelligencePanel from '@/components/Dashboard/StrategicIntellig
 import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 import { SectionHeader } from '@/components/ui/section-header';
 import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -164,6 +165,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const { addToast } = useAnimatedToast();
   const { startOnboarding } = useOnboarding();
 
@@ -374,40 +376,85 @@ const Index = () => {
         </GlassmorphismCard>
       </StaggeredList>
 
-      {/* Performance Intelligence Section */}
-      <SectionHeader
-        icon={BarChart3}
-        title="Performance Intelligence"
-        subtitle="Advanced analytics and strategic insights for carbon management excellence"
-        helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
-        lastUpdated="2025-01-15T12:15:00Z"
-      />
-
-      <div className="space-y-6 mt-6">
-        {/* Top row: Key Drivers Analysis */}
-        <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-          <TopDrivers />
-          <InsightsNextActions />
-        </StaggeredList>
-        
-        {/* Enhanced Targets Widget */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
+      {/* Toggle Button for Advanced Analytics */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.5 }}
+        className="flex justify-center"
+      >
+        <Button
+          onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+          variant="outline"
+          size="lg"
+          className="group relative overflow-hidden border-2 hover:border-primary transition-all duration-300"
         >
-          <EnhancedTargetsWidget />
-        </motion.div>
+          <motion.div
+            animate={{ rotate: showAdvancedAnalytics ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="mr-2"
+          >
+            {showAdvancedAnalytics ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
+          </motion.div>
+          <span className="font-medium">
+            {showAdvancedAnalytics ? 'Hide' : 'Show'} Performance Intelligence
+          </span>
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+            4 Sections
+          </span>
+        </Button>
+      </motion.div>
 
-        {/* Strategic Intelligence Panel - Always Visible */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-        >
-          <StrategicIntelligencePanel />
-        </motion.div>
-      </div>
+      {/* Performance Intelligence Section - Collapsible */}
+      <AnimatePresence>
+        {showAdvancedAnalytics && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-6 pt-6">
+              <SectionHeader
+                icon={BarChart3}
+                title="Performance Intelligence"
+                subtitle="Advanced analytics and strategic insights for carbon management excellence"
+                helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
+                lastUpdated="2025-01-15T12:15:00Z"
+              />
+
+              {/* Top row: Key Drivers Analysis */}
+              <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
+                <TopDrivers />
+                <InsightsNextActions />
+              </StaggeredList>
+              
+              {/* Enhanced Targets Widget */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <EnhancedTargetsWidget />
+              </motion.div>
+
+              {/* Strategic Intelligence Panel */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <StrategicIntelligencePanel />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Empty state example (conditionally shown) */}
       {sampleTableData.length === 0 && <EmptyState icon={FileSpreadsheet} title="No emissions data found" description="Start by adding your first emissions record to see analytics and insights." action={{
