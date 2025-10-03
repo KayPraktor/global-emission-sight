@@ -69,10 +69,7 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
         <GlassmorphismCard variant="light" className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Executive Command Center</h3>
-              <p className="text-muted-foreground">
-                Real-time portfolio performance and strategic insights
-              </p>
+              <h3 className="text-xl font-semibold">Executive Command Center</h3>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="outline">
