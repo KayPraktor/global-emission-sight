@@ -60,6 +60,7 @@ const EnterpriseIndex = () => {
       <motion.div variants={fadeInUp}>
         <PageHeader 
           title="Enterprise Carbon Management Platform" 
+          subtitle="Advanced analytics, predictive modeling, and enterprise-grade carbon management"
           actions={
             <>
               <PageHeaderDateFilter defaultValue="Jan - May 2025" />
