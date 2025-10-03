@@ -32,22 +32,16 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'excellent': return 'text-emerald-600 bg-emerald-50 border-emerald-200';
-      case 'good': return 'text-green-600 bg-green-50 border-green-200';
-      case 'warning': return 'text-amber-600 bg-amber-50 border-amber-200';
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
+    return 'bg-card hover:bg-accent/5 border-border';
   };
 
   const getTrendIcon = (trend: string, change: number) => {
     if (trend === 'up') {
-      return <TrendingUp className={`w-4 h-4 ${change > 0 ? 'text-red-500' : 'text-green-500'}`} />;
+      return <TrendingUp className="w-4 h-4 text-muted-foreground" />;
     } else if (trend === 'down') {
-      return <TrendingDown className={`w-4 h-4 ${change < 0 ? 'text-green-500' : 'text-red-500'}`} />;
+      return <TrendingDown className="w-4 h-4 text-muted-foreground" />;
     }
-    return <Activity className="w-4 h-4 text-gray-500" />;
+    return <Activity className="w-4 h-4 text-muted-foreground" />;
   };
 
   const fadeInUp = {
@@ -81,7 +75,7 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 All Systems Operational
               </Badge>
@@ -119,9 +113,7 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1">
-                        <span className={`text-sm font-medium ${
-                          kpi.change > 0 ? 'text-red-600' : 'text-green-600'
-                        }`}>
+                        <span className="text-sm font-medium">
                           {kpi.change > 0 ? '+' : ''}{kpi.change.toFixed(1)}%
                         </span>
                         <span className="text-xs text-muted-foreground">vs last month</span>
@@ -163,22 +155,22 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg">
-                <div className="text-2xl font-bold text-emerald-600">34%</div>
+              <div className="text-center p-4 bg-card border border-border rounded-lg">
+                <div className="text-2xl font-bold">34%</div>
                 <div className="text-sm text-muted-foreground">Progress to Net Zero</div>
                 <Progress value={34} className="mt-2 h-2" />
               </div>
               
-              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">2030</div>
+              <div className="text-center p-4 bg-card border border-border rounded-lg">
+                <div className="text-2xl font-bold">2030</div>
                 <div className="text-sm text-muted-foreground">Target Year</div>
-                <div className="text-xs mt-1">6 years remaining</div>
+                <div className="text-xs mt-1 text-muted-foreground">6 years remaining</div>
               </div>
               
-              <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">66%</div>
+              <div className="text-center p-4 bg-card border border-border rounded-lg">
+                <div className="text-2xl font-bold">66%</div>
                 <div className="text-sm text-muted-foreground">Reduction Required</div>
-                <div className="text-xs mt-1">16,200 tCO₂e</div>
+                <div className="text-xs mt-1 text-muted-foreground">16,200 tCO₂e</div>
               </div>
             </div>
 
