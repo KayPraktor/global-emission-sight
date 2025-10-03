@@ -71,7 +71,7 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
             <div>
               <h3 className="text-xl font-semibold mb-2">Executive Command Center</h3>
               <p className="text-muted-foreground">
-                Real-time portfolio performance and strategic insights
+                &nbsp;
               </p>
             </div>
             <div className="flex items-center space-x-2">
