@@ -12,8 +12,13 @@ import {
   HelpCircle,
   Target,
   Building2,
-  Globe2
+  Globe2,
+  LogOut,
+  User
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { 
   Sidebar,
@@ -28,6 +33,7 @@ import {
 
 export function AppSidebar() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   const navItems = [
     { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/' },
@@ -76,12 +82,33 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className="p-4 mt-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <HelpCircle className="h-4 w-4 text-sidebar-foreground/70" />
-            <span className="text-sm text-sidebar-foreground/70">Help & Support</span>
+      <SidebarFooter className="p-4 mt-auto border-t">
+        {user && (
+          <div className="space-y-3 mb-3">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.email}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={signOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
+        )}
+        <div className="flex items-center space-x-2">
+          <HelpCircle className="h-4 w-4 text-sidebar-foreground/70" />
+          <span className="text-sm text-sidebar-foreground/70">Help & Support</span>
         </div>
       </SidebarFooter>
     </Sidebar>
