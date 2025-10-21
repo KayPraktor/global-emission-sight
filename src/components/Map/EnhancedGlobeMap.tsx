@@ -3,10 +3,9 @@ import type { CountryCoordsMap, CountryTotals } from '@/types/emissions';
 import type { Facility } from '@/utils/facilityData';
 import { facilityTypes } from '@/utils/facilityData';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { BarChart3, Layers, MapPin, Zap } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 interface EnhancedGlobeMapProps {
   token?: string;
@@ -14,10 +13,6 @@ interface EnhancedGlobeMapProps {
   coords: CountryCoordsMap;
   facilities: Facility[];
   height?: number;
-  visualMode: 'markers' | 'heatmap' | 'choropleth' | 'facilities';
-  onVisualizationChange: (mode: 'markers' | 'heatmap' | 'choropleth' | 'facilities') => void;
-  selectedFacility?: string;
-  onFacilitySelect: (facilityId: string | null) => void;
 }
 
 function scopeColorClass(values: { s1: number; s2: number; s3: number }) {
@@ -34,10 +29,6 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
   coords, 
   facilities,
   height = 520,
-  visualMode,
-  onVisualizationChange,
-  selectedFacility,
-  onFacilitySelect
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -71,7 +62,7 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
         if (!mapRef.current) {
           mapRef.current = new mapboxgl.Map({
             container: containerRef.current,
-            style: visualMode === 'choropleth' ? 'mapbox://styles/mapbox/light-v11' : 'mapbox://styles/mapbox/dark-v11',
+            style: 'mapbox://styles/mapbox/dark-v11',
             center: [10, 15],
             zoom: 1.8,
             projection: 'globe',
@@ -95,11 +86,8 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
         markersRef.current.forEach((m) => m.remove());
         markersRef.current = [];
 
-        if (visualMode === 'markers') {
-          renderMarkers(mapboxgl);
-        } else if (visualMode === 'facilities') {
-          renderFacilities(mapboxgl);
-        }
+        // Render facilities view
+        renderFacilities(mapboxgl);
 
         setIsLoading(false);
       } catch (error) {
@@ -111,7 +99,7 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
     return () => {
       canceled = true;
     };
-  }, [token, dataArr, maxVal, visualMode, facilityData]);
+  }, [token, dataArr, maxVal, facilityData]);
 
   const renderMarkers = (mapboxgl: any) => {
     dataArr.forEach(d => {
@@ -176,14 +164,9 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
       element.className = `
         text-2xl p-2 rounded-full cursor-pointer transition-all duration-300 
         hover:scale-125 hover:shadow-xl
-        ${selectedFacility === facility.id ? 'ring-4 ring-primary shadow-xl scale-110' : ''}
       `;
       element.style.backgroundColor = facilityType.color + '20';
       element.style.border = `2px solid ${facilityType.color}`;
-
-      element.addEventListener('click', () => {
-        onFacilitySelect(facility.id);
-      });
 
       const marker = new mapboxgl.Marker({ element }).setLngLat([facility.lng, facility.lat]);
 
@@ -243,13 +226,6 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
     };
   }, []);
 
-  const visualModes = [
-    { key: 'markers', label: 'Country Markers', icon: MapPin },
-    { key: 'facilities', label: 'Facilities', icon: BarChart3 },
-    { key: 'heatmap', label: 'Heat Map', icon: Zap },
-    { key: 'choropleth', label: 'Choropleth', icon: Layers },
-  ];
-
   if (!token) {
     return (
       <Card className="glass-card">
@@ -271,27 +247,6 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
 
   return (
     <div className="relative">
-      {/* Visualization Mode Controls */}
-      <div className="absolute top-4 left-4 z-10 floating-panel">
-        <div className="flex gap-2 flex-wrap">
-          {visualModes.map(mode => {
-            const Icon = mode.icon;
-            return (
-              <Button
-                key={mode.key}
-                size="sm"
-                variant={visualMode === mode.key ? 'default' : 'outline'}
-                onClick={() => onVisualizationChange(mode.key as any)}
-                className="text-xs"
-              >
-                <Icon className="h-3 w-3 mr-1" />
-                {mode.label}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-20 glass-overlay rounded-lg flex items-center justify-center">
@@ -303,23 +258,21 @@ export const EnhancedGlobeMap: React.FC<EnhancedGlobeMapProps> = ({
       )}
 
       {/* Info Panel */}
-      {visualMode === 'facilities' && (
-        <div className="absolute top-4 right-4 z-10 floating-panel max-w-xs">
-          <div className="text-sm">
-            <div className="font-semibold mb-2">Facility View</div>
-            <div className="text-muted-foreground mb-2">
-              Showing {facilityData.length} facilities across {Object.keys(coords).length} countries.
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(facilityTypes).map(([type, config]) => (
-                <Badge key={type} variant="outline" className="text-xs">
-                  {config.icon} {type}
-                </Badge>
-              ))}
-            </div>
+      <div className="absolute top-4 right-4 z-10 floating-panel max-w-xs">
+        <div className="text-sm">
+          <div className="font-semibold mb-2">Facility View</div>
+          <div className="text-muted-foreground mb-2">
+            Showing {facilityData.length} facilities across {Object.keys(coords).length} countries.
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(facilityTypes).map(([type, config]) => (
+              <Badge key={type} variant="outline" className="text-xs">
+                {config.icon} {type}
+              </Badge>
+            ))}
           </div>
         </div>
-      )}
+      </div>
 
       <div 
         ref={containerRef} 

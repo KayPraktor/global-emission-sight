@@ -5,12 +5,9 @@ import { Progress } from '@/components/ui/progress';
 import { 
   TrendingUp, 
   TrendingDown, 
-  Target, 
   Zap, 
   Building, 
-  Factory,
-  AlertTriangle,
-  Award
+  Factory
 } from 'lucide-react';
 import type { Facility } from '@/utils/facilityData';
 import { industries, facilityTypes } from '@/utils/facilityData';
@@ -18,7 +15,6 @@ import { industries, facilityTypes } from '@/utils/facilityData';
 interface AnalyticsPanelProps {
   facilities: Facility[];
   selectedCountries: string[];
-  selectedIndustries: string[];
   totalEmissions: number;
   periodChange: number;
 }
@@ -26,15 +22,13 @@ interface AnalyticsPanelProps {
 export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   facilities,
   selectedCountries,
-  selectedIndustries,
   totalEmissions,
   periodChange
 }) => {
   // Calculate analytics
   const facilityStats = React.useMemo(() => {
     const filtered = facilities.filter(f => 
-      (selectedCountries.length === 0 || selectedCountries.includes(f.country)) &&
-      (selectedIndustries.length === 0 || selectedIndustries.includes(f.industry))
+      (selectedCountries.length === 0 || selectedCountries.includes(f.country))
     );
 
     const byIndustry = filtered.reduce((acc, f) => {
@@ -64,53 +58,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       byType,
       filtered
     };
-  }, [facilities, selectedCountries, selectedIndustries, totalEmissions]);
-
-  const topEmitters = React.useMemo(() => {
-    return facilityStats.filtered
-      .map(f => ({
-        ...f,
-        estimatedEmissions: (f.annual_revenue / 1000000) * industries[f.industry].intensity * (Math.random() * 0.5 + 0.75) // Mock calculation
-      }))
-      .sort((a, b) => b.estimatedEmissions - a.estimatedEmissions)
-      .slice(0, 5);
-  }, [facilityStats.filtered]);
-
-  const reductionOpportunities = React.useMemo(() => {
-    const opportunities = [];
-    
-    if (facilityStats.byIndustry.manufacturing?.count > 0) {
-      opportunities.push({
-        title: 'Manufacturing Efficiency',
-        description: 'Implement energy-efficient equipment in manufacturing facilities',
-        impact: 15,
-        cost: 'Medium',
-        facilities: facilityStats.byIndustry.manufacturing.count
-      });
-    }
-
-    if (facilityStats.byType.office > 3) {
-      opportunities.push({
-        title: 'Office HVAC Optimization',
-        description: 'Smart building systems for office locations',
-        impact: 12,
-        cost: 'Low',
-        facilities: facilityStats.byType.office
-      });
-    }
-
-    if (facilityStats.totalEmployees > 1000) {
-      opportunities.push({
-        title: 'Remote Work Program',
-        description: 'Reduce commuting emissions through hybrid work',
-        impact: 8,
-        cost: 'Low',
-        facilities: Object.keys(facilityStats.byType).length
-      });
-    }
-
-    return opportunities;
-  }, [facilityStats]);
+  }, [facilities, selectedCountries, totalEmissions]);
 
   return (
     <div className="space-y-4">
@@ -197,76 +145,6 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
               </div>
             );
           })}
-        </CardContent>
-      </Card>
-
-      {/* Top Emitters */}
-      <Card className="floating-panel">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Top Emission Sources
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {topEmitters.map((facility, index) => {
-            const typeInfo = facilityTypes[facility.type];
-            const industryInfo = industries[facility.industry];
-            
-            return (
-              <div key={facility.id} className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                <div className="text-lg">{index + 1}</div>
-                <div className="text-lg">{typeInfo.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{facility.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {facility.city} • {industryInfo.name}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{facility.estimatedEmissions.toFixed(1)}</div>
-                  <div className="text-xs text-muted-foreground">tCO2e/month</div>
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Reduction Opportunities */}
-      <Card className="floating-panel">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Reduction Opportunities
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {reductionOpportunities.map((opportunity, index) => (
-            <div key={index} className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <div className="flex items-start gap-3">
-                <Award className="h-5 w-5 text-green-500 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-medium">{opportunity.title}</div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {opportunity.description}
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-500">↓</span>
-                      <span>{opportunity.impact}% reduction potential</span>
-                    </div>
-                    <Badge variant="outline">
-                      {opportunity.cost} cost
-                    </Badge>
-                    <span className="text-muted-foreground">
-                      {opportunity.facilities} facilities
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </CardContent>
       </Card>
     </div>
