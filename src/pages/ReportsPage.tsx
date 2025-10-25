@@ -13,7 +13,7 @@ const ReportsPage = () => {
           <p className="text-gray-500">View, analyze, and export your emissions data</p>
         </div>
         
-        <Tabs defaultValue="data" className="mb-6">
+        <Tabs defaultValue="templates" className="mb-6">
           <TabsList className="mb-4">
             <TabsTrigger value="data">Data Reports</TabsTrigger>
             <TabsTrigger value="templates">Report Templates</TabsTrigger>
