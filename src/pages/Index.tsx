@@ -29,7 +29,6 @@ import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 import { SectionHeader } from '@/components/ui/section-header';
 import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -211,7 +210,6 @@ const Index = () => {
       
       <FadeIn>
         <PageHeader title="Carbon Emissions Dashboard" subtitle="Track, analyze, and reduce your organization's carbon footprint" actions={<>
-              <SampleDataBadge />
               <PageHeaderDateFilter defaultValue="Jan - May 2025" />
               <PageHeaderExport />
               <HoverScale>
@@ -263,11 +261,8 @@ const Index = () => {
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-foreground">Compliance Status</h4>
-                <SampleDataBadge />
-              </div>
+            <div>
+              <h4 className="font-semibold text-foreground">Compliance Status</h4>
               <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
             </div>
           </div>
@@ -330,11 +325,8 @@ const Index = () => {
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mr-3">
               <Clock className="h-4 w-4 text-blue-600" />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
-                <SampleDataBadge />
-              </div>
+            <div>
+              <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
               <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
             </div>
           </div>
@@ -428,18 +420,13 @@ const Index = () => {
             className="overflow-hidden"
           >
             <div className="space-y-6 pt-6">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <SectionHeader
-                    icon={BarChart3}
-                    title="Performance Intelligence"
-                    subtitle="Advanced analytics and strategic insights for carbon management excellence"
-                    helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
-                    lastUpdated="2025-01-15T12:15:00Z"
-                  />
-                </div>
-                <SampleDataBadge />
-              </div>
+              <SectionHeader
+                icon={BarChart3}
+                title="Performance Intelligence"
+                subtitle="Advanced analytics and strategic insights for carbon management excellence"
+                helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
+                lastUpdated="2025-01-15T12:15:00Z"
+              />
 
               {/* Top row: Key Drivers Analysis */}
               <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
