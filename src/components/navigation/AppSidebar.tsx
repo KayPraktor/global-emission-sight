@@ -5,14 +5,9 @@ import {
   BarChart3,
   ClipboardList,
   Home,
-  MonitorSmartphone,
   FileSpreadsheet,
-  Settings,
   Zap,
-  HelpCircle,
   Target,
-  Building2,
-  Globe2,
   LogOut,
   User
 } from 'lucide-react';
@@ -37,15 +32,11 @@ export function AppSidebar() {
   
   const navItems = [
     { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/' },
-    { name: 'Enterprise', icon: <Building2 className="h-4 w-4" />, path: '/enterprise' },
     { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry' },
-    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
-    { name: 'Map', icon: <Globe2 className="h-4 w-4" />, path: '/map' },
+    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
-    { name: 'Monitoring', icon: <MonitorSmartphone className="h-4 w-4" />, path: '/monitoring' },
     { name: 'AI Assistant', icon: <Zap className="h-4 w-4" />, path: '/ai-assistant' },
-    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },
   ];
 
   const isActive = (path: string) => {
@@ -84,7 +75,7 @@ export function AppSidebar() {
       
       <SidebarFooter className="p-4 mt-auto border-t">
         {user && (
-          <div className="space-y-3 mb-3">
+          <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
@@ -106,10 +97,6 @@ export function AppSidebar() {
             </Button>
           </div>
         )}
-        <div className="flex items-center space-x-2">
-          <HelpCircle className="h-4 w-4 text-sidebar-foreground/70" />
-          <span className="text-sm text-sidebar-foreground/70">Help & Support</span>
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
