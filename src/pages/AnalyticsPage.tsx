@@ -11,6 +11,7 @@ import ActiveFilters from '@/components/Analytics/ActiveFilters';
 import EnhancedPageHeader from '@/components/Analytics/EnhancedPageHeader';
 import { AnalyticsFilterProvider, useAnalyticsFilters } from '@/contexts/AnalyticsFilterContext';
 import ProcessFlowMap from '@/components/Productivity/ProcessFlowMap';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 const AnalyticsContent: React.FC = () => {
   const { filters, updateFilters } = useAnalyticsFilters();
@@ -32,9 +33,20 @@ const AnalyticsContent: React.FC = () => {
       
       
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <div className="mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold tracking-tight">Emissions Analytics</h1>
+                <SampleDataBadge />
+              </div>
+              <p className="text-muted-foreground mt-1">In-depth analysis of your emissions data and trends</p>
+            </div>
+          </div>
+        </div>
         <EnhancedPageHeader 
-          title="Emissions Analytics" 
-          subtitle="In-depth analysis of your emissions data and trends"
+          title="" 
+          subtitle=""
           onDateRangeChange={handleDateRangeChange}
         />
         

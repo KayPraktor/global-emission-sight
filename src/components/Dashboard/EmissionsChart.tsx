@@ -22,6 +22,7 @@ import { DataFreshness } from '@/components/ui/data-freshness';
 import DoughnutChart from '@/components/ui/doughnut-chart';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 const EmissionsChart: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -146,7 +147,10 @@ const EmissionsChart: React.FC = () => {
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
+            <SampleDataBadge />
+          </div>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-sm text-muted-foreground">
               Latest total: {insights.totalEmissions} tCO₂e

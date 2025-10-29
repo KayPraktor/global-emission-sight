@@ -3,6 +3,7 @@ import React from 'react';
 import EmissionsReport from '@/components/Reports/EmissionsReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 const ReportsPage = () => {
   return (
@@ -20,7 +21,13 @@ const ReportsPage = () => {
           </TabsList>
           
           <TabsContent value="data">
-            <EmissionsReport />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <SampleDataBadge />
+                <span className="text-sm text-muted-foreground">The data shown below is for demonstration purposes</span>
+              </div>
+              <EmissionsReport />
+            </div>
           </TabsContent>
           
           <TabsContent value="templates">

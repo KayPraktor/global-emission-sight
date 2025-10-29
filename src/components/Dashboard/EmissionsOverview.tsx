@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, BarChart3, CloudRain, Factory, Truck } from 'lucide-react';
 import { calculateTotal, calculateTotalByScope } from '@/utils/dummyData';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 const EmissionsOverview: React.FC = () => {
   const scope1Total = calculateTotalByScope('Scope 1');
@@ -25,8 +26,13 @@ const EmissionsOverview: React.FC = () => {
   };
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="stat-card">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground">Emissions Overview</h3>
+        <SampleDataBadge />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="stat-card">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <span className="stat-label">Total Emissions</span>
@@ -81,6 +87,7 @@ const EmissionsOverview: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
