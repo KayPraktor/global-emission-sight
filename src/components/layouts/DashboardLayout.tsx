@@ -83,10 +83,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </header>
           
-          <div className="flex-1 overflow-auto bg-luxury-mesh dark:bg-luxury-gradient">
-            <div className="p-8 md:p-10 lg:p-12">
+          <div className="flex-1 overflow-auto">
+            <div className="p-6">
               <BreadcrumbNav />
-              <div className="animate-fade-in space-luxury-lg">
+              <div className="animate-fade-in">
                 {children}
               </div>
             </div>

@@ -20,48 +20,11 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				heading: ['Inter', 'system-ui', 'sans-serif'],
+				sans: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
+				heading: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['JetBrains Mono', 'monospace'],
-				display: ['Playfair Display', 'serif'],
-				body: ['Inter', 'sans-serif'],
-				luxury: ['Cormorant Garamond', 'serif'],
 			},
 			colors: {
-				luxury: {
-					midnight: '#0A0E27',
-					charcoal: '#1A1D2E',
-					slate: '#2D3250',
-				},
-				metallic: {
-					gold: '#D4AF37',
-					champagne: '#F7E7CE',
-					bronze: '#CD7F32',
-					platinum: '#E5E4E2',
-				},
-				premium: {
-					emerald: {
-						from: '#047857',
-						via: '#10b981',
-						to: '#34d399',
-					},
-					sapphire: {
-						from: '#1e40af',
-						via: '#3b82f6',
-						to: '#60a5fa',
-					},
-					amethyst: {
-						from: '#6b21a8',
-						via: '#9333ea',
-						to: '#c084fc',
-					},
-				},
-				status: {
-					success: '#047857',
-					warning: '#d97706',
-					error: '#b91c1c',
-					info: '#1e40af',
-				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -183,18 +146,6 @@ export default {
 				'pulse': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
-				},
-				'shimmer': {
-					'0%': { backgroundPosition: '-1000px 0' },
-					'100%': { backgroundPosition: '1000px 0' }
-				},
-				'float': {
-					'0%, 100%': { transform: 'translateY(0px)' },
-					'50%': { transform: 'translateY(-10px)' }
-				},
-				'glow': {
-					'0%, 100%': { boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)' },
-					'50%': { boxShadow: '0 0 40px rgba(16, 185, 129, 0.6)' }
 				}
 			},
 			animation: {
@@ -204,10 +155,7 @@ export default {
 				'fade-out': 'fade-out 0.3s ease-out',
 				'slide-in': 'slide-in 0.3s ease-out',
 				'slide-out': 'slide-out 0.3s ease-out',
-				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-				'shimmer': 'shimmer 3s infinite',
-				'float': 'float 6s ease-in-out infinite',
-				'glow': 'glow 2s ease-in-out infinite'
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 			}
 		}
 	},

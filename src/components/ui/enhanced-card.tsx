@@ -4,29 +4,20 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EnhancedCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "gradient" | "outline" | "glass" | "luxury" | "premium";
-  elevation?: "sm" | "md" | "lg" | "xl";
-  shimmer?: boolean;
+  variant?: "default" | "gradient" | "outline" | "glass";
 }
 
 const EnhancedCard = React.forwardRef<
   HTMLDivElement,
   EnhancedCardProps
->(({ className, variant = "default", elevation = "md", shimmer = false, ...props }, ref) => (
+>(({ className, variant = "default", ...props }, ref) => (
   <Card
     ref={ref}
     className={cn(
-      "overflow-hidden transition-luxury hover-luxury relative",
+      "overflow-hidden transition-all duration-200",
       variant === "gradient" && "border-none bg-gradient-to-br from-card to-muted/50",
       variant === "outline" && "border-2",
       variant === "glass" && "glass-panel",
-      variant === "luxury" && "glass-luxury-card",
-      variant === "premium" && "bg-frosted border-white/20",
-      elevation === "sm" && "shadow-luxury-sm",
-      elevation === "md" && "shadow-luxury-md",
-      elevation === "lg" && "shadow-luxury-lg",
-      elevation === "xl" && "shadow-luxury-xl",
-      shimmer && "animate-shimmer",
       className
     )}
     {...props}
