@@ -116,6 +116,152 @@
 }
 
 @layer utilities {
+  /* Premium Spacing Scale */
+  .space-luxury-xs { @apply space-y-4; }
+  .space-luxury-sm { @apply space-y-6; }
+  .space-luxury-md { @apply space-y-8; }
+  .space-luxury-lg { @apply space-y-12; }
+  .space-luxury-xl { @apply space-y-16; }
+  
+  /* Premium Card Padding */
+  .card-luxury { @apply p-8 md:p-10 lg:p-12; }
+  
+  /* Premium Section Spacing */
+  .section-luxury { @apply py-12 md:py-16 lg:py-20; }
+  
+  /* Premium Glass Effects */
+  .glass-luxury {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10;
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.12),
+      0 2px 8px 0 rgba(0, 0, 0, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-luxury-card {
+    @apply bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20;
+    box-shadow: 
+      0 20px 60px -12px rgba(0, 0, 0, 0.25),
+      0 8px 16px -8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Premium Elevation Shadows */
+  .shadow-luxury-sm {
+    box-shadow: 
+      0 2px 8px 0 rgba(0, 0, 0, 0.08),
+      0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-luxury-md {
+    box-shadow: 
+      0 8px 24px -6px rgba(0, 0, 0, 0.12),
+      0 4px 8px -4px rgba(0, 0, 0, 0.08);
+  }
+  
+  .shadow-luxury-lg {
+    box-shadow: 
+      0 20px 60px -12px rgba(0, 0, 0, 0.25),
+      0 8px 16px -8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .shadow-luxury-xl {
+    box-shadow: 
+      0 32px 80px -16px rgba(0, 0, 0, 0.35),
+      0 12px 24px -8px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Frosted Glass Background */
+  .bg-frosted {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(20px) saturate(150%);
+  }
+  
+  /* Premium Page Backgrounds */
+  .bg-luxury-gradient {
+    background: linear-gradient(
+      160deg,
+      #0A0E27 0%,
+      #1A1D2E 40%,
+      #2D3250 100%
+    );
+  }
+  
+  .bg-luxury-light {
+    background: linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #f8fafc 50%,
+      #f1f5f9 100%
+    );
+  }
+  
+  .bg-luxury-mesh {
+    background: 
+      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.08) 0%, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+      #ffffff;
+  }
+  
+  /* Premium Card Gradients */
+  .card-gradient-emerald {
+    background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+  }
+  
+  .card-gradient-sapphire {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  }
+  
+  .card-gradient-gold {
+    background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
+  }
+  
+  /* Premium Hover Effects */
+  .hover-luxury {
+    @apply transition-all duration-500 ease-out;
+  }
+  
+  .hover-luxury:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 
+      0 24px 64px -12px rgba(0, 0, 0, 0.2),
+      0 8px 16px -8px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Premium Button Hover */
+  .btn-luxury {
+    @apply relative overflow-hidden transition-all duration-500;
+  }
+  
+  .btn-luxury::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0;
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  
+  .btn-luxury:hover::before {
+    transform: translateX(100%);
+  }
+  
+  /* Premium Focus States */
+  .focus-luxury {
+    @apply focus:outline-none focus:ring-4 focus:ring-primary/20 focus:ring-offset-2 focus:ring-offset-background;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Smooth Transitions */
+  .transition-luxury {
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
   .card-hover {
     @apply transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
   }

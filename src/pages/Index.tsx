@@ -29,6 +29,8 @@ import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 import { SectionHeader } from '@/components/ui/section-header';
 import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PersonalizedGreeting } from '@/components/Dashboard/PersonalizedGreeting';
+import { VIPBadge } from '@/components/ui/vip-badge';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 // Sample data for the advanced table
@@ -205,32 +207,63 @@ const Index = () => {
       navigate(route);
     }
   };
-  return <div className="space-y-6">
+  return <div className="min-h-screen bg-luxury-mesh dark:bg-luxury-gradient">
+    <div className="space-y-10 md:space-y-12">
       {/* Performance Monitor */}
       <PerformanceMonitor componentName="Dashboard" />
       
       <FadeIn>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-tight">Carbon Emissions Dashboard</h1>
-              <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
+        <div className="space-y-6">
+          {/* Premium Header with Gradient Background */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A0E27] via-[#1A1D2E] to-[#2D3250] p-10 md:p-12 shadow-luxury-xl">
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 -left-4 w-72 h-72 bg-[#10b981] rounded-full mix-blend-multiply filter blur-xl animate-float" />
+              <div className="absolute top-0 -right-4 w-72 h-72 bg-[#3b82f6] rounded-full mix-blend-multiply filter blur-xl animate-float" style={{ animationDelay: '2s' }} />
+              <div className="absolute -bottom-8 left-20 w-72 h-72 bg-[#9333ea] rounded-full mix-blend-multiply filter blur-xl animate-float" style={{ animationDelay: '4s' }} />
             </div>
-            <SampleDataBadge />
-            <div className="flex items-center gap-3">
-              <PageHeaderDateFilter defaultValue="Jan - May 2025" />
-              <PageHeaderExport />
-              <HoverScale>
-                <InteractiveButton onClick={handleNewReport} loading={isLoading} className="bg-primary hover:bg-primary/90">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Creating...' : 'New Report'}
-                </InteractiveButton>
-              </HoverScale>
-              <Tooltip content="Start interactive tour">
-                <InteractiveButton variant="outline" onClick={startOnboarding}>
-                  Help
-                </InteractiveButton>
-              </Tooltip>
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-1 w-12 bg-gradient-to-r from-[#D4AF37] to-[#F7E7CE] rounded-full" />
+                  <span className="text-[#F7E7CE] text-sm font-luxury tracking-wider uppercase">
+                    Executive Dashboard
+                  </span>
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white tracking-tight">
+                  Carbon Emissions
+                  <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F7E7CE] to-[#D4AF37]">
+                    Intelligence Center
+                  </span>
+                </h1>
+                
+                <p className="text-lg text-white/80 font-body max-w-2xl">
+                  Track, analyze, and reduce your organization's carbon footprint with 
+                  <span className="font-semibold text-white"> enterprise-grade precision</span>
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <SampleDataBadge />
+                <PageHeaderDateFilter defaultValue="Jan - May 2025" />
+                <PageHeaderExport />
+                
+                <HoverScale>
+                  <Button 
+                    variant="gold" 
+                    size="lg"
+                    onClick={handleNewReport} 
+                    disabled={isLoading}
+                    className="shadow-luxury-lg"
+                  >
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    {isLoading ? 'Creating...' : 'New Executive Report'}
+                  </Button>
+                </HoverScale>
+              </div>
             </div>
           </div>
         </div>
@@ -480,6 +513,7 @@ const Index = () => {
       label: "Add Emissions Data",
       onClick: handleNewReport
     }} />}
-    </div>;
+    </div>
+  </div>;
 };
 export default Index;
