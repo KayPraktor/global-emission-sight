@@ -14,6 +14,329 @@ export type Database = {
   }
   public: {
     Tables: {
+      calculations: {
+        Row: {
+          calculated_emissions: number
+          calculation_formula: string | null
+          calculation_timestamp: string
+          confidence_score: number | null
+          emission_factor_id: string
+          emissions_entry_id: string
+          id: string
+          metadata: Json | null
+          uncertainty: number | null
+          user_id: string
+        }
+        Insert: {
+          calculated_emissions: number
+          calculation_formula?: string | null
+          calculation_timestamp?: string
+          confidence_score?: number | null
+          emission_factor_id: string
+          emissions_entry_id: string
+          id?: string
+          metadata?: Json | null
+          uncertainty?: number | null
+          user_id: string
+        }
+        Update: {
+          calculated_emissions?: number
+          calculation_formula?: string | null
+          calculation_timestamp?: string
+          confidence_score?: number | null
+          emission_factor_id?: string
+          emissions_entry_id?: string
+          id?: string
+          metadata?: Json | null
+          uncertainty?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculations_emission_factor_id_fkey"
+            columns: ["emission_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calculations_emissions_entry_id_fkey"
+            columns: ["emissions_entry_id"]
+            isOneToOne: false
+            referencedRelation: "emissions_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emission_factors: {
+        Row: {
+          category: string
+          country_code: string | null
+          created_at: string
+          factor_value: number
+          id: string
+          is_custom: boolean | null
+          metadata: Json | null
+          methodology: string | null
+          name: string
+          region: string | null
+          scope: Database["public"]["Enums"]["emission_scope"]
+          source: string
+          uncertainty: number | null
+          unit: Database["public"]["Enums"]["ef_unit"]
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          category: string
+          country_code?: string | null
+          created_at?: string
+          factor_value: number
+          id?: string
+          is_custom?: boolean | null
+          metadata?: Json | null
+          methodology?: string | null
+          name: string
+          region?: string | null
+          scope: Database["public"]["Enums"]["emission_scope"]
+          source: string
+          uncertainty?: number | null
+          unit: Database["public"]["Enums"]["ef_unit"]
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          category?: string
+          country_code?: string | null
+          created_at?: string
+          factor_value?: number
+          id?: string
+          is_custom?: boolean | null
+          metadata?: Json | null
+          methodology?: string | null
+          name?: string
+          region?: string | null
+          scope?: Database["public"]["Enums"]["emission_scope"]
+          source?: string
+          uncertainty?: number | null
+          unit?: Database["public"]["Enums"]["ef_unit"]
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      emissions_entries: {
+        Row: {
+          activity_type: string | null
+          calculation_method: string | null
+          category: string
+          created_at: string
+          data_quality_score: number | null
+          emission_factor_id: string | null
+          entry_date: string
+          facility_id: string | null
+          id: string
+          is_verified: boolean | null
+          metadata: Json | null
+          notes: string | null
+          quantity: number
+          scope: Database["public"]["Enums"]["emission_scope"]
+          unit: Database["public"]["Enums"]["emission_unit"]
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          activity_type?: string | null
+          calculation_method?: string | null
+          category: string
+          created_at?: string
+          data_quality_score?: number | null
+          emission_factor_id?: string | null
+          entry_date: string
+          facility_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          metadata?: Json | null
+          notes?: string | null
+          quantity: number
+          scope: Database["public"]["Enums"]["emission_scope"]
+          unit: Database["public"]["Enums"]["emission_unit"]
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          activity_type?: string | null
+          calculation_method?: string | null
+          category?: string
+          created_at?: string
+          data_quality_score?: number | null
+          emission_factor_id?: string | null
+          entry_date?: string
+          facility_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          metadata?: Json | null
+          notes?: string | null
+          quantity?: number
+          scope?: Database["public"]["Enums"]["emission_scope"]
+          unit?: Database["public"]["Enums"]["emission_unit"]
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emissions_entries_emission_factor_id_fkey"
+            columns: ["emission_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emissions_entries_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facilities: {
+        Row: {
+          address: string | null
+          annual_revenue: number | null
+          area_sqm: number | null
+          city: string | null
+          country_code: string
+          created_at: string
+          employees: number | null
+          facility_type: Database["public"]["Enums"]["facility_type"]
+          id: string
+          industry: string | null
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          annual_revenue?: number | null
+          area_sqm?: number | null
+          city?: string | null
+          country_code: string
+          created_at?: string
+          employees?: number | null
+          facility_type?: Database["public"]["Enums"]["facility_type"]
+          id?: string
+          industry?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          annual_revenue?: number | null
+          area_sqm?: number | null
+          city?: string | null
+          country_code?: string
+          created_at?: string
+          employees?: number | null
+          facility_type?: Database["public"]["Enums"]["facility_type"]
+          id?: string
+          industry?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          baseline_emissions: number | null
+          baseline_year: number | null
+          created_at: string
+          current_emissions: number | null
+          description: string | null
+          facility_id: string | null
+          id: string
+          metadata: Json | null
+          milestones: Json | null
+          progress_percentage: number | null
+          scope_covered: string[] | null
+          status: Database["public"]["Enums"]["goal_status"] | null
+          target_date: string
+          target_emissions: number | null
+          target_reduction_percentage: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          baseline_emissions?: number | null
+          baseline_year?: number | null
+          created_at?: string
+          current_emissions?: number | null
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          milestones?: Json | null
+          progress_percentage?: number | null
+          scope_covered?: string[] | null
+          status?: Database["public"]["Enums"]["goal_status"] | null
+          target_date: string
+          target_emissions?: number | null
+          target_reduction_percentage?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          baseline_emissions?: number | null
+          baseline_year?: number | null
+          created_at?: string
+          current_emissions?: number | null
+          description?: string | null
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          milestones?: Json | null
+          progress_percentage?: number | null
+          scope_covered?: string[] | null
+          status?: Database["public"]["Enums"]["goal_status"] | null
+          target_date?: string
+          target_emissions?: number | null
+          target_reduction_percentage?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_name: string | null
@@ -44,6 +367,75 @@ export type Database = {
           job_title?: string | null
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          facilities_included: string[] | null
+          file_url: string | null
+          generated_at: string | null
+          id: string
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          published_at: string | null
+          report_type: string
+          scope_1_emissions: number | null
+          scope_2_emissions: number | null
+          scope_3_emissions: number | null
+          status: Database["public"]["Enums"]["report_status"] | null
+          title: string
+          total_emissions: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          facilities_included?: string[] | null
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          published_at?: string | null
+          report_type: string
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title: string
+          total_emissions?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          facilities_included?: string[] | null
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          published_at?: string | null
+          report_type?: string
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title?: string
+          total_emissions?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -83,6 +475,30 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      ef_unit:
+        | "kgCO2e/kWh"
+        | "kgCO2e/MWh"
+        | "kgCO2e/L"
+        | "kgCO2e/kg"
+        | "kgCO2e/t"
+        | "kgCO2e/m3"
+        | "kgCO2e/km"
+      emission_scope: "S1" | "S2" | "S3"
+      emission_unit: "kWh" | "MWh" | "L" | "kg" | "t" | "m3" | "km"
+      facility_type:
+        | "office"
+        | "warehouse"
+        | "factory"
+        | "retail"
+        | "datacenter"
+        | "other"
+      goal_status:
+        | "not_started"
+        | "in_progress"
+        | "at_risk"
+        | "completed"
+        | "overdue"
+      report_status: "draft" | "pending" | "approved" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -211,6 +627,33 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ef_unit: [
+        "kgCO2e/kWh",
+        "kgCO2e/MWh",
+        "kgCO2e/L",
+        "kgCO2e/kg",
+        "kgCO2e/t",
+        "kgCO2e/m3",
+        "kgCO2e/km",
+      ],
+      emission_scope: ["S1", "S2", "S3"],
+      emission_unit: ["kWh", "MWh", "L", "kg", "t", "m3", "km"],
+      facility_type: [
+        "office",
+        "warehouse",
+        "factory",
+        "retail",
+        "datacenter",
+        "other",
+      ],
+      goal_status: [
+        "not_started",
+        "in_progress",
+        "at_risk",
+        "completed",
+        "overdue",
+      ],
+      report_status: ["draft", "pending", "approved", "published"],
     },
   },
 } as const
