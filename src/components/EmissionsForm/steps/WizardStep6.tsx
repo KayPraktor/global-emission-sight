@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, AlertTriangle, FileCheck, Send } from "lucide-react";
+import { CheckCircle, AlertTriangle, FileCheck, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmissionsFormData } from '../EmissionsWizard';
+import { EmissionsService } from '@/services/emissionsService';
 
 interface WizardStep6Props {
   formData: EmissionsFormData;
@@ -24,6 +25,9 @@ export const WizardStep6: React.FC<WizardStep6Props> = ({
   updateFormData,
   prevStep,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
   const calculateTotalEmissions = () => {
     let total = 0;
     formData.consumptionData.forEach(consumption => {
@@ -50,21 +54,55 @@ export const WizardStep6: React.FC<WizardStep6Props> = ({
     return { checks, completedCount, total: checks.length };
   };
 
-  const handleSubmit = () => {
-    const totalEmissions = calculateTotalEmissions();
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     
-    console.log('Submitting emissions data:', {
-      ...formData,
-      calculatedEmissions: totalEmissions,
-      submissionDate: new Date().toISOString(),
-    });
+    try {
+      const result = await EmissionsService.saveEmissionsData(formData);
+      
+      if (result.success) {
+        const totalEmissions = calculateTotalEmissions();
+        toast.success('Emissions data submitted successfully!', {
+          description: `Total emissions: ${totalEmissions.toFixed(2)} kg CO₂e`,
+        });
+        
+        // Clear localStorage after successful submission
+        EmissionsService.clearDraft();
+        
+        // Redirect to dashboard after short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        toast.error('Failed to submit emissions data', {
+          description: result.error || 'Please try again or contact support.',
+        });
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred', {
+        description: 'Please try again or contact support.',
+      });
+      console.error('Submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
     
-    toast.success('Emissions data submitted successfully!');
-    
-    // Clear draft from localStorage
-    localStorage.removeItem('emissions-form-draft');
-    
-    // Reset form or redirect as needed
+    try {
+      localStorage.setItem('emissions-form-draft', JSON.stringify(formData));
+      toast.success('Draft saved successfully', {
+        description: 'You can continue editing later.',
+      });
+    } catch (error) {
+      toast.error('Failed to save draft', {
+        description: 'Please try again.',
+      });
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   const status = getCompletionStatus();
@@ -222,16 +260,40 @@ export const WizardStep6: React.FC<WizardStep6Props> = ({
         )}
 
         <div className="flex justify-between pt-6">
-          <Button variant="outline" onClick={prevStep}>
+          <Button variant="outline" onClick={prevStep} disabled={isSubmitting || isSavingDraft}>
             Back
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline">
-              Save as Draft
+            <Button 
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={isSubmitting || isSavingDraft}
+            >
+              {isSavingDraft ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save as Draft'
+              )}
             </Button>
-            <Button onClick={handleSubmit} className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              {formData.approvalRequired ? 'Submit for Approval' : 'Submit Data'}
+            <Button 
+              onClick={handleSubmit} 
+              className="flex items-center gap-2"
+              disabled={isSubmitting || isSavingDraft}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  {formData.approvalRequired ? 'Submit for Approval' : 'Submit Data'}
+                </>
+              )}
             </Button>
           </div>
         </div>
