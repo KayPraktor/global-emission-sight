@@ -14,6 +14,7 @@ import { WizardStep6 } from './steps/WizardStep6';
 export interface EmissionsFormData {
   // Step 1: Organization & Facility
   organizationName: string;
+  facilityId?: string; // Link to existing facility
   facilityName: string;
   facilityType: string;
   address: string;
@@ -64,6 +65,7 @@ export interface EmissionsFormData {
 
 const initialFormData: EmissionsFormData = {
   organizationName: '',
+  facilityId: undefined,
   facilityName: '',
   facilityType: '',
   address: '',

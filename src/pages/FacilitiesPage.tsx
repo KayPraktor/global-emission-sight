@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Building2, AlertCircle, Loader2, Upload, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FacilityCard } from '@/components/Facilities/FacilityCard';
 import { FacilityForm } from '@/components/Facilities/FacilityForm';
+import { FacilitiesMap } from '@/components/Facilities/FacilitiesMap';
+import { CSVImportDialog } from '@/components/Facilities/CSVImportDialog';
 import { FacilityService } from '@/services/facilityService';
 import { Facility } from '@/types/database';
 import { toast } from 'sonner';
@@ -24,6 +26,8 @@ export default function FacilitiesPage() {
   const [emissionsDialogOpen, setEmissionsDialogOpen] = useState(false);
   const [selectedFacilityEmissions, setSelectedFacilityEmissions] = useState<any[]>([]);
   const [isLoadingEmissions, setIsLoadingEmissions] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
   // SEO
   useEffect(() => {
@@ -140,10 +144,28 @@ export default function FacilitiesPage() {
             Manage your facilities, track locations, and monitor emissions across all sites
           </p>
         </div>
-        <Button onClick={handleCreateFacility}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Facility
-        </Button>
+        <div className="flex gap-2">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'grid' | 'map')}>
+            <TabsList>
+              <TabsTrigger value="grid">
+                <Building2 className="h-4 w-4 mr-1" />
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="map">
+                <Map className="h-4 w-4 mr-1" />
+                Map
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button variant="outline" onClick={() => setCsvImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
+          <Button onClick={handleCreateFacility}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Facility
+          </Button>
+        </div>
       </div>
 
       {/* Empty State */}
@@ -170,20 +192,29 @@ export default function FacilitiesPage() {
         </div>
       )}
 
-      {/* Facilities Grid */}
+      {/* Facilities Grid or Map View */}
       {!isLoading && facilities.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {facilities.map((facility) => (
-            <FacilityCard
-              key={facility.id}
-              facility={facility}
-              onEdit={handleEditFacility}
-              onDelete={handleDeleteFacility}
+        <>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {facilities.map((facility) => (
+                <FacilityCard
+                  key={facility.id}
+                  facility={facility}
+                  onEdit={handleEditFacility}
+                  onDelete={handleDeleteFacility}
+                  onViewEmissions={handleViewEmissions}
+                  emissionsCount={getEmissionsCount(facility.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <FacilitiesMap 
+              facilities={facilities} 
               onViewEmissions={handleViewEmissions}
-              emissionsCount={getEmissionsCount(facility.id)}
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Create/Edit Dialog */}
@@ -286,6 +317,13 @@ export default function FacilitiesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog
+        open={csvImportOpen}
+        onOpenChange={setCsvImportOpen}
+        onImportComplete={loadFacilities}
+      />
     </div>
   );
 }

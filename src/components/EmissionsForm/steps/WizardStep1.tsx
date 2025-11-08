@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Building2, MapPin } from "lucide-react";
 import { EmissionsFormData } from '../EmissionsWizard';
+import { FacilityService } from '@/services/facilityService';
+import { Facility } from '@/types/database';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WizardStep1Props {
   formData: EmissionsFormData;
@@ -22,8 +25,45 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
   updateFormData,
   nextStep,
 }) => {
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
+
+  useEffect(() => {
+    loadFacilities();
+  }, []);
+
+  const loadFacilities = async () => {
+    const { data, error } = await FacilityService.getFacilities();
+    if (data) {
+      setFacilities(data);
+    }
+    setIsLoadingFacilities(false);
+  };
+
   const handleInputChange = (field: keyof EmissionsFormData, value: string) => {
     updateFormData({ [field]: value });
+  };
+
+  const handleFacilitySelect = (facilityId: string) => {
+    if (facilityId === 'new') {
+      updateFormData({ 
+        facilityId: undefined,
+        facilityName: '',
+        facilityType: '',
+        address: ''
+      });
+      return;
+    }
+
+    const selectedFacility = facilities.find(f => f.id === facilityId);
+    if (selectedFacility) {
+      updateFormData({
+        facilityId: facilityId,
+        facilityName: selectedFacility.name,
+        facilityType: selectedFacility.facility_type,
+        address: selectedFacility.address || '',
+      });
+    }
   };
 
   const isStepValid = () => {
@@ -47,6 +87,15 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {facilities.length > 0 && (
+          <Alert>
+            <Building2 className="h-4 w-4" />
+            <AlertDescription>
+              You can link this emissions data to an existing facility or create a new one.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
@@ -60,6 +109,28 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
               />
             </div>
 
+            {facilities.length > 0 && (
+              <div>
+                <Label htmlFor="facilitySelect">Link to Existing Facility</Label>
+                <Select 
+                  value={formData.facilityId || 'new'}
+                  onValueChange={handleFacilitySelect}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a facility or create new" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Create New Facility</SelectItem>
+                    {facilities.map((facility) => (
+                      <SelectItem key={facility.id} value={facility.id}>
+                        {facility.name} ({facility.city || facility.country_code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="facilityName">Facility Name *</Label>
               <Input
@@ -68,6 +139,7 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
                 onChange={(e) => handleInputChange('facilityName', e.target.value)}
                 placeholder="Enter facility name"
                 required
+                disabled={!!formData.facilityId}
               />
             </div>
 
@@ -76,6 +148,7 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
               <Select 
                 value={formData.facilityType}
                 onValueChange={(value) => handleInputChange('facilityType', value)}
+                disabled={!!formData.facilityId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select facility type" />
@@ -105,6 +178,7 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
                 placeholder="Enter complete facility address"
                 rows={3}
                 required
+                disabled={!!formData.facilityId}
               />
             </div>
           </div>

@@ -35,32 +35,53 @@ export class EmissionsService {
       const mappedFacilityType = facilityTypeMap[formData.facilityType] || 'other';
 
       // 1. Create or get facility
-      const facilityData: FacilityInsert = {
-        user_id: user.id,
-        name: formData.facilityName,
-        facility_type: mappedFacilityType as any,
-        country_code: 'US', // Default - can be extracted from address in the future
-        city: '', // Can be parsed from address
-        address: formData.address,
-        metadata: {
-          organizationName: formData.organizationName,
-          operationalBoundaries: formData.operationalBoundaries,
-          operationalHours: formData.operationalHours,
-          productionVolume: formData.productionVolume,
-          equipmentInfo: formData.equipmentInfo,
-          fuelSpecifications: formData.fuelSpecifications,
-          processDetails: formData.processDetails,
-        },
-      };
+      let facility;
+      
+      if (formData.facilityId) {
+        // Use existing facility
+        const { data: existingFacility, error: facilityError } = await supabase
+          .from('facilities')
+          .select()
+          .eq('id', formData.facilityId)
+          .eq('user_id', user.id)
+          .single();
+        
+        if (facilityError || !existingFacility) {
+          throw new Error('Selected facility not found');
+        }
+        
+        facility = existingFacility;
+      } else {
+        // Create new facility
+        const facilityData: FacilityInsert = {
+          user_id: user.id,
+          name: formData.facilityName,
+          facility_type: mappedFacilityType as any,
+          country_code: 'US', // Default - can be extracted from address in the future
+          city: '', // Can be parsed from address
+          address: formData.address,
+          metadata: {
+            organizationName: formData.organizationName,
+            operationalBoundaries: formData.operationalBoundaries,
+            operationalHours: formData.operationalHours,
+            productionVolume: formData.productionVolume,
+            equipmentInfo: formData.equipmentInfo,
+            fuelSpecifications: formData.fuelSpecifications,
+            processDetails: formData.processDetails,
+          },
+        };
 
-      const { data: facility, error: facilityError } = await supabase
-        .from('facilities')
-        .insert(facilityData)
-        .select()
-        .single();
+        const { data: newFacility, error: facilityError } = await supabase
+          .from('facilities')
+          .insert(facilityData)
+          .select()
+          .single();
 
-      if (facilityError) {
-        throw new Error(`Failed to create facility: ${facilityError.message}`);
+        if (facilityError) {
+          throw new Error(`Failed to create facility: ${facilityError.message}`);
+        }
+        
+        facility = newFacility;
       }
 
       // 2. Create emission factors
