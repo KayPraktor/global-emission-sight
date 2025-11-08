@@ -16,6 +16,7 @@ import GoalsPage from '@/pages/GoalsPage';
 import MonitoringPage from '@/pages/MonitoringPage';
 import MapPage from '@/pages/MapPage';
 import AIAssistantPage from '@/pages/AIAssistantPage';
+import FacilitiesPage from '@/pages/FacilitiesPage';
 import AuthPage from '@/pages/AuthPage';
 import NotFound from '@/pages/NotFound';
 
@@ -45,6 +46,7 @@ function App() {
                           <Route path="/" element={<Index />} />
                           <Route path="/enterprise" element={<EnterpriseIndex />} />
                           <Route path="/data-entry" element={<DataEntryPage />} />
+                          <Route path="/facilities" element={<FacilitiesPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/analytics" element={<AnalyticsPage />} />
                           <Route path="/map" element={<MapPage />} />
