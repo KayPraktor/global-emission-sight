@@ -1,13 +1,32 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Calculator, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Calculator, TrendingUp, Info } from "lucide-react";
 import { EmissionsFormData } from '../EmissionsWizard';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+interface StandardEmissionFactor {
+  id: string;
+  name: string;
+  category: string;
+  scope: string;
+  factor_value: number;
+  unit: string;
+  source: string;
+  region: string | null;
+  country_code: string | null;
+  year: number | null;
+  uncertainty: number | null;
+  metadata: any;
+}
 
 interface WizardStep4Props {
   formData: EmissionsFormData;
@@ -23,6 +42,39 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
   nextStep,
   prevStep,
 }) => {
+  const [standardFactors, setStandardFactors] = useState<StandardEmissionFactor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  useEffect(() => {
+    fetchStandardFactors();
+  }, []);
+
+  const fetchStandardFactors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('emission_factors')
+        .select('*')
+        .is('user_id', null)
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setStandardFactors(data || []);
+    } catch (error) {
+      console.error('Error fetching standard factors:', error);
+      toast.error('Failed to load standard emission factors');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const categories = ['all', ...new Set(standardFactors.map(f => f.category))];
+
+  const filteredFactors = selectedCategory === 'all' 
+    ? standardFactors 
+    : standardFactors.filter(f => f.category === selectedCategory);
+
   const addEmissionFactor = () => {
     const newFactor = {
       source: '',
@@ -44,6 +96,21 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
     const updatedData = [...formData.emissionFactors];
     updatedData[index] = { ...updatedData[index], [field]: value };
     updateFormData({ emissionFactors: updatedData });
+  };
+
+  const selectStandardFactor = (index: number, factorId: string) => {
+    const standardFactor = standardFactors.find(f => f.id === factorId);
+    if (standardFactor) {
+      const updatedData = [...formData.emissionFactors];
+      updatedData[index] = {
+        source: standardFactor.name,
+        factor: standardFactor.factor_value,
+        unit: standardFactor.unit,
+        methodology: standardFactor.source,
+      };
+      updateFormData({ emissionFactors: updatedData });
+      toast.success(`Applied ${standardFactor.name}`);
+    }
   };
 
   // Calculate estimated total emissions
@@ -72,13 +139,84 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Emission Factors */}
+        {/* Standard Emission Factors Browser */}
+        <div className="bg-muted/50 p-4 rounded-lg border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium">Standard Emission Factors</h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Pre-loaded factors from GHG Protocol, IPCC, EPA, and regional standards</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat === 'all' ? 'All Categories' : cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {loading ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Loading standard factors...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+              {filteredFactors.map(factor => (
+                <Card key={factor.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer group">
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <h4 className="text-sm font-medium line-clamp-2">{factor.name}</h4>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {factor.scope}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{factor.factor_value} {factor.unit}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{factor.source}</span>
+                      {factor.region && (
+                        <Badge variant="secondary" className="text-xs">{factor.region}</Badge>
+                      )}
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => {
+                        addEmissionFactor();
+                        const newIndex = formData.emissionFactors.length;
+                        setTimeout(() => selectStandardFactor(newIndex, factor.id), 100);
+                      }}
+                    >
+                      Use this factor
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Custom Emission Factors */}
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Emission Factors</h3>
+            <h3 className="text-lg font-medium">Custom Emission Factors</h3>
             <Button onClick={addEmissionFactor} size="sm">
               <Plus className="h-4 w-4 mr-1" />
-              Add Factor
+              Add Custom Factor
             </Button>
           </div>
 
