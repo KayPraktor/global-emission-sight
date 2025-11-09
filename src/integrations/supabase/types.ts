@@ -85,7 +85,7 @@ export type Database = {
           uncertainty: number | null
           unit: Database["public"]["Enums"]["ef_unit"]
           updated_at: string
-          user_id: string
+          user_id: string | null
           year: number | null
         }
         Insert: {
@@ -104,7 +104,7 @@ export type Database = {
           uncertainty?: number | null
           unit: Database["public"]["Enums"]["ef_unit"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           year?: number | null
         }
         Update: {
@@ -123,7 +123,7 @@ export type Database = {
           uncertainty?: number | null
           unit?: Database["public"]["Enums"]["ef_unit"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           year?: number | null
         }
         Relationships: []
