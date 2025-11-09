@@ -337,85 +337,35 @@ export type Database = {
           },
         ]
       }
-      organization_members: {
-        Row: {
-          created_at: string
-          id: string
-          organization_id: string
-          role: Database["public"]["Enums"]["org_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          organization_id: string
-          role?: Database["public"]["Enums"]["org_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          organization_id?: string
-          role?: Database["public"]["Enums"]["org_role"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_members_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organizations: {
-        Row: {
-          created_at: string
-          id: string
-          metadata: Json | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          metadata?: Json | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          metadata?: Json | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
+          company_name: string | null
           created_at: string
           email: string
           full_name: string
           id: string
-          onboarding_completed: boolean | null
+          job_title: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          company_name?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
-          onboarding_completed?: boolean | null
+          job_title?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
-          onboarding_completed?: boolean | null
+          job_title?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -522,14 +472,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_organization_member: {
-        Args: { _organization_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_organization_owner: {
-        Args: { _organization_id: string; _user_id: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -569,7 +511,6 @@ export type Database = {
         | "at_risk"
         | "completed"
         | "overdue"
-      org_role: "owner" | "admin" | "member"
       report_status: "draft" | "pending" | "approved" | "published"
     }
     CompositeTypes: {
@@ -739,7 +680,6 @@ export const Constants = {
         "completed",
         "overdue",
       ],
-      org_role: ["owner", "admin", "member"],
       report_status: ["draft", "pending", "approved", "published"],
     },
   },
