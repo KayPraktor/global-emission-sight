@@ -483,6 +483,9 @@ export type Database = {
         | "kgCO2e/t"
         | "kgCO2e/m3"
         | "kgCO2e/km"
+        | "kgCO2e/passenger_km"
+        | "kgCO2e/tonne_km"
+        | "kgCO2e/night"
       emission_scope: "S1" | "S2" | "S3"
       emission_unit:
         | "kWh"
@@ -645,6 +648,9 @@ export const Constants = {
         "kgCO2e/t",
         "kgCO2e/m3",
         "kgCO2e/km",
+        "kgCO2e/passenger_km",
+        "kgCO2e/tonne_km",
+        "kgCO2e/night",
       ],
       emission_scope: ["S1", "S2", "S3"],
       emission_unit: [
