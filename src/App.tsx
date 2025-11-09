@@ -18,7 +18,9 @@ import MapPage from '@/pages/MapPage';
 import AIAssistantPage from '@/pages/AIAssistantPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
 import AuthPage from '@/pages/AuthPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 import NotFound from '@/pages/NotFound';
+import { OnboardingCheck } from '@/components/auth/OnboardingCheck';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,26 +39,36 @@ function App() {
             <Routes>
               <Route path="/auth" element={<AuthPage />} />
               <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/*"
                 element={
                   <ProtectedRoute>
-                    <SidebarProvider>
-                      <DashboardLayout>
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/enterprise" element={<EnterpriseIndex />} />
-                          <Route path="/data-entry" element={<DataEntryPage />} />
-                          <Route path="/facilities" element={<FacilitiesPage />} />
-                          <Route path="/reports" element={<ReportsPage />} />
-                          <Route path="/analytics" element={<AnalyticsPage />} />
-                          <Route path="/map" element={<MapPage />} />
-                          <Route path="/goals" element={<GoalsPage />} />
-                          <Route path="/monitoring" element={<MonitoringPage />} />
-                          <Route path="/ai-assistant" element={<AIAssistantPage />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </DashboardLayout>
-                    </SidebarProvider>
+                    <OnboardingCheck>
+                      <SidebarProvider>
+                        <DashboardLayout>
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/enterprise" element={<EnterpriseIndex />} />
+                            <Route path="/data-entry" element={<DataEntryPage />} />
+                            <Route path="/facilities" element={<FacilitiesPage />} />
+                            <Route path="/reports" element={<ReportsPage />} />
+                            <Route path="/analytics" element={<AnalyticsPage />} />
+                            <Route path="/map" element={<MapPage />} />
+                            <Route path="/goals" element={<GoalsPage />} />
+                            <Route path="/monitoring" element={<MonitoringPage />} />
+                            <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </DashboardLayout>
+                      </SidebarProvider>
+                    </OnboardingCheck>
                   </ProtectedRoute>
                 }
               />
