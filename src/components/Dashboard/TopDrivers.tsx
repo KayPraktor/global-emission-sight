@@ -4,21 +4,27 @@ import { ProgressBar } from '@/components/ui/loading-states';
 import { PieChart, ExternalLink } from 'lucide-react';
 import { DataFreshness } from '@/components/ui/data-freshness';
 import { Button } from '@/components/ui/button';
+import { CategoryBreakdown } from '@/services/analyticsService';
 
-interface Driver {
-  category: string;
-  value: number;
+interface TopDriversProps {
+  categoryBreakdown: CategoryBreakdown[];
 }
 
-const TopDrivers: React.FC = () => {
-  const drivers: Driver[] = [
-    { category: 'Electricity', value: 1250.5 },
-    { category: 'Natural Gas', value: 890.2 },
-    { category: 'Business Travel', value: 456.8 },
-    { category: 'Waste', value: 123.4 },
-  ];
+const TopDrivers: React.FC<TopDriversProps> = ({ categoryBreakdown }) => {
+  // Use real data or fallback to sample data
+  const drivers = categoryBreakdown.length > 0 
+    ? categoryBreakdown.slice(0, 4).map(item => ({
+        category: item.category,
+        value: item.value
+      }))
+    : [
+        { category: 'Electricity', value: 1250.5 },
+        { category: 'Natural Gas', value: 890.2 },
+        { category: 'Business Travel', value: 456.8 },
+        { category: 'Waste', value: 123.4 },
+      ];
 
-  const max = Math.max(...drivers.map((d) => d.value));
+  const max = Math.max(...drivers.map((d) => d.value), 1);
 
   return (
     <GlassmorphismCard variant="light" className="p-6 space-y-4">

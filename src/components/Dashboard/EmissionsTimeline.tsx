@@ -1,254 +1,115 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  EnhancedCard as Card,
-  EnhancedCardContent as CardContent,
-  EnhancedCardHeader as CardHeader,
-  EnhancedCardTitle as CardTitle,
-} from "@/components/ui/enhanced-card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Minus, Info, AlertTriangle } from "lucide-react";
+import React, { useState } from 'react';
+import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
+import { MonthlyEmissions } from '@/services/analyticsService';
+import { ChevronRight, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { DataFreshness } from '@/components/ui/data-freshness';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
-interface MonthDatum {
-  month: string; // e.g., "Jan"
-  emissions: number; // tons CO2e
-  change: number; // % vs previous month (can be negative)
+interface EmissionsTimelineProps {
+  monthlyData: MonthlyEmissions[];
+  hasData: boolean;
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasData }) => {
+  const [selectedPeriod, setSelectedPeriod] = useState<'all' | '6months' | '3months'>('6months');
 
-const normalizeMonth = (m: string) => {
-  if (!m) return "";
-  const abbr = m.slice(0, 3).toLowerCase();
-  return abbr.charAt(0).toUpperCase() + abbr.slice(1);
-};
+  const filterData = () => {
+    if (!monthlyData || monthlyData.length === 0) return [];
+    const monthsMap = { '3months': 3, '6months': 6, 'all': monthlyData.length };
+    const months = monthsMap[selectedPeriod];
+    return monthlyData.slice(-months);
+  };
 
-const fallbackData: MonthDatum[] = MONTHS.map((m, i) => ({
-  month: m,
-  emissions: Math.round(40 + i * 3 + (i % 3 === 0 ? 6 : 0)),
-  change: i === 0 ? 0 : (i % 2 === 0 ? -4 : 5),
-}));
-
-const EmissionsTimeline: React.FC = () => {
-  const [data, setData] = useState<MonthDatum[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch("/api/carbon/monthly", {
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as MonthDatum[];
-        if (!Array.isArray(json)) throw new Error("Invalid response");
-        if (mounted) {
-          setData(json);
-          setLoading(false);
-        }
-      } catch (e: any) {
-        // Fallback to local sample so the UI still renders nicely
-        if (mounted) {
-          setError(e?.message ?? "Failed to load");
-          setData(fallbackData);
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const currentMonthIndex = new Date().getMonth();
-
-  const timeline = useMemo(() => {
-    const source = data ?? fallbackData;
-    // Normalize and sort into calendar order, de-duplicate by month
-    const normalized = source
-      .map((d) => ({
-        ...d,
-        month: normalizeMonth(d.month),
-      }))
-      .filter((d) => MONTHS.includes(d.month));
-
-    const byMonth = new Map<string, MonthDatum>();
-    normalized.forEach((d) => byMonth.set(d.month, d));
-
-    return MONTHS.map((m) => byMonth.get(m) || { month: m, emissions: 0, change: 0 });
-  }, [data]);
+  const filteredData = filterData();
 
   return (
-    <TooltipProvider>
-      <Card variant="gradient" className="w-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">Monthly Carbon Emissions Timeline</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Track monthly tCO₂e and change vs previous month
-              </p>
-            </div>
-            {error && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Using demo data: {error}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+    <GlassmorphismCard className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Emissions Timeline</h3>
+            <p className="text-sm text-muted-foreground">Monthly tracking & progress</p>
           </div>
-          {/* Legend */}
-          <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
-              <span>Current month</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-              <span>Increase vs previous</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <ArrowDownRight className="h-3 w-3 text-red-500" />
-              <span>Decrease vs previous</span>
-            </div>
-            <Tooltip>
-              <TooltipTrigger className="flex items-center gap-1 cursor-help">
-                <Info className="h-3 w-3" />
-                <span>tCO₂e</span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Tons of carbon dioxide equivalent - a standard unit for measuring greenhouse gas emissions</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-5 w-56" />
-            <div className="overflow-x-auto">
-              <div className="flex gap-8 min-w-max py-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex flex-col items-center min-w-[88px]">
-                    <Skeleton className="h-3 w-10 mb-3" />
-                    <Skeleton className="h-6 w-6 rounded-full mb-3" />
-                    <Skeleton className="h-4 w-20 mb-1" />
-                    <Skeleton className="h-3 w-24" />
+          {!hasData && <SampleDataBadge />}
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as typeof selectedPeriod)}>
+            <SelectTrigger className="w-32">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3months">3 months</SelectItem>
+              <SelectItem value="6months">6 months</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+            </SelectContent>
+          </Select>
+          <DataFreshness lastUpdated={new Date()} />
+        </div>
+      </div>
+
+      {filteredData.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>No emissions data available</p>
+          <p className="text-sm mt-2">Start by adding emissions entries</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredData.map((item, index) => {
+            const prevMonth = index > 0 ? filteredData[index - 1] : null;
+            const change = prevMonth ? ((item.total - prevMonth.total) / prevMonth.total) * 100 : 0;
+            const isIncrease = change > 0;
+
+            return (
+              <motion.div
+                key={item.month}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border/50 hover:bg-background/80 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="relative overflow-x-auto py-6 animate-fade-in">
-            {/* Enhanced connecting line with gradient */}
-            <div
-              className="pointer-events-none absolute left-0 right-0 top-[46px] h-0.5 bg-gradient-to-r from-border via-primary/20 to-border"
-              aria-hidden
-            />
-            <div className="flex gap-8 min-w-max px-1">
-              {timeline.map((item, idx) => {
-                const isCurrent = idx === currentMonthIndex;
-                const monthLabel = normalizeMonth(item.month).toUpperCase();
-                const change = item.change ?? 0;
-                const ChangeIcon = change > 0 ? ArrowUpRight : change < 0 ? ArrowDownRight : Minus;
-                const changeColor = change > 0 ? "text-primary" : change < 0 ? "text-destructive" : "text-muted-foreground";
-                const changeText = `${change > 0 ? "+" : ""}${change}% vs prev`;
-
-                return (
-                  <Tooltip key={item.month}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="flex flex-col items-center min-w-[88px] rounded-lg p-2 transition-all duration-200 hover:scale-105 hover:bg-muted/30 cursor-pointer"
-                        aria-label={`${monthLabel}: ${item.emissions} tCO2e, ${change}% vs previous`}
-                      >
-                        <div className="text-xs tracking-wide font-semibold text-foreground mb-2">
-                          {monthLabel}
-                        </div>
-
-                    {/* Dot */}
-                    <div className="relative flex items-center justify-center mb-3">
-                      {isCurrent && (
-                        <div
-                          className="absolute -inset-2 rounded-full bg-primary/25 blur-md opacity-70 pulse"
-                          aria-hidden
-                        />
-                      )}
-                      <div
-                        className={cn(
-                          "rounded-full border border-border shadow-sm transition-all duration-200",
-                          isCurrent
-                            ? "w-8 h-8 bg-primary text-primary-foreground ring-4 ring-primary/25"
-                            : "w-6 h-6 bg-secondary hover:bg-muted"
-                        )}
-                      />
+                  <div>
+                    <h4 className="font-medium text-foreground">{item.month}</h4>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Scope 1: {item.scope1.toFixed(1)}</span>
+                      <span>•</span>
+                      <span>Scope 2: {item.scope2.toFixed(1)}</span>
+                      <span>•</span>
+                      <span>Scope 3: {item.scope3.toFixed(1)}</span>
                     </div>
+                  </div>
+                </div>
 
-                        {/* Emissions value */}
-                        <div className="text-sm font-bold text-foreground">
-                          {item.emissions.toLocaleString()} tCO₂e
-                        </div>
-                        {/* Change vs previous */}
-                        <div className={cn("mt-1 flex items-center gap-1 text-xs font-medium", changeColor)}>
-                          <ChangeIcon className="h-3 w-3" aria-hidden />
-                          <span>{changeText}</span>
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <div className="space-y-2">
-                        <div className="font-semibold">{monthLabel} 2024</div>
-                        <div>
-                          <span className="text-muted-foreground">Emissions: </span>
-                          <span className="font-medium">{item.emissions.toLocaleString()} tCO₂e</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Change: </span>
-                          <span className={cn("font-medium", changeColor)}>
-                            {change > 0 ? "+" : ""}{change}% vs previous month
-                          </span>
-                        </div>
-                        {isCurrent && (
-                          <div className="text-xs text-primary font-medium">Current month</div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-foreground">
+                      {item.total.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">tCO₂e</span>
+                    </div>
+                    {prevMonth && (
+                      <div className={`flex items-center gap-1 text-xs ${isIncrease ? 'text-red-600' : 'text-green-600'}`}>
+                        {isIncrease ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3" />
                         )}
-                        <div className="text-xs text-muted-foreground pt-1 border-t">
-                          Click for detailed breakdown
-                        </div>
+                        <span>{Math.abs(change).toFixed(1)}%</span>
                       </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-    </TooltipProvider>
+                    )}
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </GlassmorphismCard>
   );
 };
 

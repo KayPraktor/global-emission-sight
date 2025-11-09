@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { analyticsService, AnalyticsSummary } from '@/services/analyticsService';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
@@ -164,9 +165,10 @@ const UPCOMING_DEADLINES = [
 ];
 const Index = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
   const { addToast } = useAnimatedToast();
   const { startOnboarding } = useOnboarding();
 
@@ -175,6 +177,25 @@ const Index = () => {
     ttl: 10 * 60 * 1000,
     enableLogging: true
   });
+
+  // Fetch analytics data on mount
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        const data = await analyticsService.getAnalyticsSummary(6);
+        setAnalyticsData(data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        addToast("Failed to load analytics data", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
   const handleNewReport = async () => {
     setIsLoading(true);
     addToast("Creating new report...", "info");
@@ -237,15 +258,42 @@ const Index = () => {
       </FadeIn>
       
       <SlideIn direction="up" delay={0.1}>
-        <EmissionsOverview />
+        {isLoading ? (
+          <SkeletonCard />
+        ) : (
+          <EmissionsOverview 
+            totalEmissions={analyticsData?.totalEmissions || 0}
+            scope1Total={analyticsData?.scope1Total || 0}
+            scope2Total={analyticsData?.scope2Total || 0}
+            scope3Total={analyticsData?.scope3Total || 0}
+            previousPeriodTotal={analyticsData?.previousPeriodTotal || 0}
+            changePercentage={analyticsData?.changePercentage || 0}
+            hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+          />
+        )}
       </SlideIn>
       
       <SlideIn direction="up" delay={0.2}>
-        <EmissionsChart />
+        {isLoading ? (
+          <SkeletonCard />
+        ) : (
+          <EmissionsChart 
+            monthlyData={analyticsData?.monthlyData || []}
+            categoryBreakdown={analyticsData?.categoryBreakdown || []}
+            hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+          />
+        )}
       </SlideIn>
 
       <SlideIn direction="up" delay={0.35}>
-        <EmissionsTimeline />
+        {isLoading ? (
+          <SkeletonCard />
+        ) : (
+          <EmissionsTimeline 
+            monthlyData={analyticsData?.monthlyData || []}
+            hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+          />
+        )}
       </SlideIn>
 
       {/* Advanced Data Table with loading states */}
@@ -449,7 +497,7 @@ const Index = () => {
 
               {/* Top row: Key Drivers Analysis */}
               <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-                <TopDrivers />
+                <TopDrivers categoryBreakdown={analyticsData?.categoryBreakdown || []} />
                 <InsightsNextActions />
               </StaggeredList>
               

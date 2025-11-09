@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { monthlySummary, categoryBreakdown } from '@/utils/dummyData';
+import { MonthlyEmissions, CategoryBreakdown } from '@/services/analyticsService';
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Calendar, Download, BarChart3, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,13 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
-const EmissionsChart: React.FC = () => {
+interface EmissionsChartProps {
+  monthlyData: MonthlyEmissions[];
+  categoryBreakdown: CategoryBreakdown[];
+  hasData: boolean;
+}
+
+const EmissionsChart: React.FC<EmissionsChartProps> = ({ monthlyData, categoryBreakdown, hasData }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [timePeriod, setTimePeriod] = useState('6months');
   const [visibleScopes, setVisibleScopes] = useState({
@@ -50,18 +56,32 @@ const EmissionsChart: React.FC = () => {
 
   // Filter data based on time period
   const filteredData = useMemo(() => {
+    if (!monthlyData || monthlyData.length === 0) return [];
+    
     const periodMap = {
       '3months': 3,
       '6months': 6,
       '12months': 12,
-      'all': monthlySummary.length
+      'all': monthlyData.length
     };
     const monthsToShow = periodMap[timePeriod as keyof typeof periodMap] || 6;
-    return monthlySummary.slice(-monthsToShow);
-  }, [timePeriod]);
+    return monthlyData.slice(-monthsToShow);
+  }, [timePeriod, monthlyData]);
 
   // Calculate insights based on actual data
   const insights = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) {
+      return {
+        totalEmissions: '0',
+        percentageChange: '0',
+        isDecreasing: false,
+        trend: 'stable' as const,
+        averageTotal: '0',
+        dominantScope: 'Scope 1',
+        dominantValue: '0'
+      };
+    }
+    
     const latestMonth = filteredData[filteredData.length - 1];
     const previousMonth = filteredData[filteredData.length - 2];
     const totalEmissions = latestMonth.scope1 + latestMonth.scope2 + latestMonth.scope3;
@@ -149,7 +169,7 @@ const EmissionsChart: React.FC = () => {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
-            <SampleDataBadge />
+            {!hasData && <SampleDataBadge />}
           </div>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-sm text-muted-foreground">
