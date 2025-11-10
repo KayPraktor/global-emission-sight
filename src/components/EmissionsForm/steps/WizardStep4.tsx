@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Calculator, TrendingUp, Info } from "lucide-react";
+import { Plus, Trash2, Calculator, TrendingUp, Info, Lightbulb, Zap } from "lucide-react";
 import { EmissionsFormData } from '../EmissionsWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -69,7 +69,28 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
     }
   };
 
-  const categories = ['all', ...new Set(standardFactors.map(f => f.category))];
+  // Filtering and recommendation logic
+  const categories = ['all', ...Array.from(new Set(standardFactors.map(f => f.category)))];
+  
+  // Filter factors based on facility location and industry
+  const getRecommendedFactors = () => {
+    return standardFactors.filter(factor => {
+      // Match by country if available
+      if (formData.facilityCountry && factor.country_code === formData.facilityCountry) {
+        return true;
+      }
+      // Match by region if no specific country match
+      if (formData.facilityCountry && factor.region && !factor.country_code) {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const recommendedFactors = getRecommendedFactors();
+  const gridElectricityFactors = recommendedFactors.filter(f => 
+    f.category === 'Electricity' && f.scope === 'S2'
+  );
 
   const filteredFactors = selectedCategory === 'all' 
     ? standardFactors 
@@ -113,6 +134,13 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
     }
   };
 
+  // Helper to select a standard factor directly
+  const selectFactorDirectly = (factor: StandardEmissionFactor) => {
+    addEmissionFactor();
+    const newIndex = formData.emissionFactors.length;
+    setTimeout(() => selectStandardFactor(newIndex, factor.id), 100);
+  };
+
   // Calculate estimated total emissions
   const calculateEstimatedEmissions = () => {
     let total = 0;
@@ -139,11 +167,91 @@ export const WizardStep4: React.FC<WizardStep4Props> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Recommended Factors for Your Facility */}
+        {(gridElectricityFactors.length > 0 || recommendedFactors.length > 0) && (
+          <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+            <div className="flex items-start gap-2 mb-4">
+              <Lightbulb className="h-5 w-5 text-primary mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-primary mb-1">
+                  Recommended for {formData.facilityCountry ? `${formData.facilityCountry}` : 'Your Location'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Based on your facility location and type, these emission factors are most relevant
+                </p>
+              </div>
+            </div>
+
+            {gridElectricityFactors.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Grid Electricity Factors
+                </h4>
+                <div className="space-y-2">
+                  {gridElectricityFactors.slice(0, 3).map((factor) => (
+                    <Card key={factor.id} className="p-3 bg-background">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{factor.name}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {factor.factor_value} {factor.unit}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{factor.source}</span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => selectFactorDirectly(factor)}
+                          className="ml-2"
+                        >
+                          Use Factor
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recommendedFactors.filter(f => f.category !== 'Electricity').length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Other Recommended Factors</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {recommendedFactors
+                    .filter(f => f.category !== 'Electricity')
+                    .slice(0, 4)
+                    .map((factor) => (
+                      <Card key={factor.id} className="p-2 bg-background">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-xs truncate">{factor.name}</p>
+                            <Badge variant="outline" className="text-xs mt-1">
+                              {factor.category}
+                            </Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => selectFactorDirectly(factor)}
+                          >
+                            Use
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Standard Emission Factors Browser */}
         <div className="bg-muted/50 p-4 rounded-lg border">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium">Standard Emission Factors</h3>
+              <h3 className="text-lg font-medium">All Standard Emission Factors</h3>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>

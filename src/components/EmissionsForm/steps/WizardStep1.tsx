@@ -50,6 +50,8 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
         facilityId: undefined,
         facilityName: '',
         facilityType: '',
+        facilityCountry: '',
+        facilityIndustry: '',
         address: ''
       });
       return;
@@ -61,6 +63,8 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
         facilityId: facilityId,
         facilityName: selectedFacility.name,
         facilityType: selectedFacility.facility_type,
+        facilityCountry: selectedFacility.country_code,
+        facilityIndustry: selectedFacility.industry || '',
         address: selectedFacility.address || '',
       });
     }
@@ -70,6 +74,7 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
     return formData.organizationName && 
            formData.facilityName && 
            formData.facilityType && 
+           formData.facilityCountry &&
            formData.address &&
            formData.reportingPeriodStart &&
            formData.reportingPeriodEnd;
@@ -161,6 +166,55 @@ export const WizardStep1: React.FC<WizardStep1Props> = ({
                   <SelectItem value="retail">Retail Store</SelectItem>
                   <SelectItem value="hospital">Hospital/Healthcare</SelectItem>
                   <SelectItem value="school">Educational Institution</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="facilityCountry">Country *</Label>
+              <Select 
+                value={formData.facilityCountry}
+                onValueChange={(value) => handleInputChange('facilityCountry', value)}
+                disabled={!!formData.facilityId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="US">United States</SelectItem>
+                  <SelectItem value="GB">United Kingdom</SelectItem>
+                  <SelectItem value="DE">Germany</SelectItem>
+                  <SelectItem value="FR">France</SelectItem>
+                  <SelectItem value="CA">Canada</SelectItem>
+                  <SelectItem value="AU">Australia</SelectItem>
+                  <SelectItem value="JP">Japan</SelectItem>
+                  <SelectItem value="CN">China</SelectItem>
+                  <SelectItem value="IN">India</SelectItem>
+                  <SelectItem value="BR">Brazil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="facilityIndustry">Industry</Label>
+              <Select 
+                value={formData.facilityIndustry}
+                onValueChange={(value) => handleInputChange('facilityIndustry', value)}
+                disabled={!!formData.facilityId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="technology">Technology</SelectItem>
+                  <SelectItem value="healthcare">Healthcare</SelectItem>
+                  <SelectItem value="retail">Retail</SelectItem>
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="logistics">Logistics & Transportation</SelectItem>
+                  <SelectItem value="hospitality">Hospitality</SelectItem>
+                  <SelectItem value="finance">Finance</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>

@@ -17,6 +17,8 @@ export interface EmissionsFormData {
   facilityId?: string; // Link to existing facility
   facilityName: string;
   facilityType: string;
+  facilityCountry: string;
+  facilityIndustry: string;
   address: string;
   reportingPeriodStart: string;
   reportingPeriodEnd: string;
@@ -68,6 +70,8 @@ const initialFormData: EmissionsFormData = {
   facilityId: undefined,
   facilityName: '',
   facilityType: '',
+  facilityCountry: '',
+  facilityIndustry: '',
   address: '',
   reportingPeriodStart: '',
   reportingPeriodEnd: '',
