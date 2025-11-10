@@ -14,7 +14,8 @@ import {
   Building2,
   Globe2,
   LogOut,
-  User
+  User,
+  Database
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ export function AppSidebar() {
     { name: 'Enterprise', icon: <Building2 className="h-4 w-4" />, path: '/enterprise' },
     { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry' },
     { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities' },
+    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors' },
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
     { name: 'Map', icon: <Globe2 className="h-4 w-4" />, path: '/map' },

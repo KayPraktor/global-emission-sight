@@ -17,6 +17,7 @@ import MonitoringPage from '@/pages/MonitoringPage';
 import MapPage from '@/pages/MapPage';
 import AIAssistantPage from '@/pages/AIAssistantPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
+import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
 import AuthPage from '@/pages/AuthPage';
 import NotFound from '@/pages/NotFound';
 
@@ -53,6 +54,7 @@ function App() {
                           <Route path="/goals" element={<GoalsPage />} />
                           <Route path="/monitoring" element={<MonitoringPage />} />
                           <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                          <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
