@@ -26,6 +26,8 @@ const customFactorSchema = z.object({
   year: z.string().optional(),
   uncertainty: z.string().optional(),
   notes: z.string().optional(),
+  version: z.string().default('1.0'),
+  version_notes: z.string().optional(),
 });
 
 type CustomFactorFormData = z.infer<typeof customFactorSchema>;
@@ -47,6 +49,8 @@ export const CustomFactorForm = () => {
       year: new Date().getFullYear().toString(),
       uncertainty: '',
       notes: '',
+      version: '1.0',
+      version_notes: '',
     },
   });
 
@@ -66,6 +70,9 @@ export const CustomFactorForm = () => {
         year: data.year ? parseInt(data.year) : null,
         uncertainty: data.uncertainty ? parseFloat(data.uncertainty) : null,
         is_custom: true,
+        version: data.version || '1.0',
+        version_notes: data.version_notes || null,
+        is_latest: true,
         metadata: { notes: data.notes },
       });
 
@@ -269,6 +276,35 @@ export const CustomFactorForm = () => {
                     <FormLabel>Uncertainty (%)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.1" placeholder="e.g., 15" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="version"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Version</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 1.0" {...field} />
+                    </FormControl>
+                    <FormDescription>Factor version number</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="version_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Version Notes</FormLabel>
+                    <FormControl>
+                      <Input placeholder="What changed in this version?" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

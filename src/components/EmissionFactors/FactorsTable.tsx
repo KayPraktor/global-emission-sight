@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Search, Download, Filter, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { FactorVersionBadge } from './FactorVersionBadge';
+import { FactorUpdateNotifications } from './FactorUpdateNotifications';
 
 export const FactorsTable = () => {
   const { user } = useAuth();
@@ -92,7 +94,7 @@ export const FactorsTable = () => {
   }, [factors, searchTerm, scopeFilter, categoryFilter, regionFilter]);
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Category', 'Scope', 'Factor Value', 'Unit', 'Region', 'Source', 'Year'];
+    const headers = ['Name', 'Category', 'Scope', 'Factor Value', 'Unit', 'Region', 'Version', 'Source', 'Year'];
     const rows = filteredFactors.map(f => [
       f.name,
       f.category,
@@ -100,6 +102,7 @@ export const FactorsTable = () => {
       f.factor_value,
       f.unit,
       f.region || '',
+      f.version || '1.0',
       f.source,
       f.year || ''
     ]);
@@ -124,14 +127,17 @@ export const FactorsTable = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Emission Factors Database</CardTitle>
-        <CardDescription>
-          {showCustomOnly ? 'Your custom emission factors' : 'All standard and custom emission factors'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <>
+      <FactorUpdateNotifications />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Emission Factors Database</CardTitle>
+          <CardDescription>
+            {showCustomOnly ? 'Your custom emission factors' : 'All standard and custom emission factors'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -210,6 +216,7 @@ export const FactorsTable = () => {
                   <TableHead>Factor Value</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Region</TableHead>
+                  <TableHead>Version</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead>Year</TableHead>
                   {showCustomOnly && <TableHead>Actions</TableHead>}
@@ -218,13 +225,13 @@ export const FactorsTable = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={showCustomOnly ? 9 : 8} className="text-center py-8">
+                    <TableCell colSpan={showCustomOnly ? 10 : 9} className="text-center py-8">
                       Loading emission factors...
                     </TableCell>
                   </TableRow>
                 ) : filteredFactors.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={showCustomOnly ? 9 : 8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={showCustomOnly ? 10 : 9} className="text-center py-8 text-muted-foreground">
                       No emission factors found
                     </TableCell>
                   </TableRow>
@@ -246,6 +253,13 @@ export const FactorsTable = () => {
                       <TableCell>{Number(factor.factor_value).toFixed(6)}</TableCell>
                       <TableCell className="text-sm">{factor.unit}</TableCell>
                       <TableCell>{factor.region || '-'}</TableCell>
+                      <TableCell>
+                        <FactorVersionBadge
+                          version={factor.version || '1.0'}
+                          isLatest={factor.is_latest ?? true}
+                          publishedDate={factor.published_date}
+                        />
+                      </TableCell>
                       <TableCell className="text-sm">{factor.source}</TableCell>
                       <TableCell>{factor.year || '-'}</TableCell>
                       {showCustomOnly && (
@@ -269,5 +283,6 @@ export const FactorsTable = () => {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 };

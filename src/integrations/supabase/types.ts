@@ -68,6 +68,57 @@ export type Database = {
           },
         ]
       }
+      emission_factor_updates: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          new_factor_id: string
+          notification_type: string | null
+          old_factor_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          new_factor_id: string
+          notification_type?: string | null
+          old_factor_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          new_factor_id?: string
+          notification_type?: string | null
+          old_factor_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emission_factor_updates_new_factor_id_fkey"
+            columns: ["new_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emission_factor_updates_old_factor_id_fkey"
+            columns: ["old_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emission_factors: {
         Row: {
           category: string
@@ -76,16 +127,21 @@ export type Database = {
           factor_value: number
           id: string
           is_custom: boolean | null
+          is_latest: boolean | null
           metadata: Json | null
           methodology: string | null
           name: string
+          published_date: string | null
           region: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
           source: string
+          superseded_by: string | null
           uncertainty: number | null
           unit: Database["public"]["Enums"]["ef_unit"]
           updated_at: string
           user_id: string | null
+          version: string | null
+          version_notes: string | null
           year: number | null
         }
         Insert: {
@@ -95,16 +151,21 @@ export type Database = {
           factor_value: number
           id?: string
           is_custom?: boolean | null
+          is_latest?: boolean | null
           metadata?: Json | null
           methodology?: string | null
           name: string
+          published_date?: string | null
           region?: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
           source: string
+          superseded_by?: string | null
           uncertainty?: number | null
           unit: Database["public"]["Enums"]["ef_unit"]
           updated_at?: string
           user_id?: string | null
+          version?: string | null
+          version_notes?: string | null
           year?: number | null
         }
         Update: {
@@ -114,19 +175,32 @@ export type Database = {
           factor_value?: number
           id?: string
           is_custom?: boolean | null
+          is_latest?: boolean | null
           metadata?: Json | null
           methodology?: string | null
           name?: string
+          published_date?: string | null
           region?: string | null
           scope?: Database["public"]["Enums"]["emission_scope"]
           source?: string
+          superseded_by?: string | null
           uncertainty?: number | null
           unit?: Database["public"]["Enums"]["ef_unit"]
           updated_at?: string
           user_id?: string | null
+          version?: string | null
+          version_notes?: string | null
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emission_factors_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emissions_entries: {
         Row: {
@@ -337,35 +411,85 @@ export type Database = {
           },
         ]
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
-          company_name: string | null
           created_at: string
           email: string
           full_name: string
           id: string
-          job_title: string | null
-          phone: string | null
+          onboarding_completed: boolean | null
           updated_at: string
         }
         Insert: {
-          company_name?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
-          job_title?: string | null
-          phone?: string | null
+          onboarding_completed?: boolean | null
           updated_at?: string
         }
         Update: {
-          company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
-          job_title?: string | null
-          phone?: string | null
+          onboarding_completed?: boolean | null
           updated_at?: string
         }
         Relationships: []
@@ -439,6 +563,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_emission_factor_versions: {
+        Row: {
+          auto_update: boolean | null
+          created_at: string | null
+          emission_factor_id: string
+          id: string
+          last_checked: string | null
+          locked_version: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_update?: boolean | null
+          created_at?: string | null
+          emission_factor_id: string
+          id?: string
+          last_checked?: string | null
+          locked_version: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_update?: boolean | null
+          created_at?: string | null
+          emission_factor_id?: string
+          id?: string
+          last_checked?: string | null
+          locked_version?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_emission_factor_versions_emission_factor_id_fkey"
+            columns: ["emission_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -465,11 +630,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_emission_factor_updates: {
+        Args: never
+        Returns: {
+          factor_name: string
+          new_factor_id: string
+          new_version: string
+          old_factor_id: string
+          old_version: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_organization_member: {
+        Args: { _organization_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_organization_owner: {
+        Args: { _organization_id: string; _user_id: string }
         Returns: boolean
       }
     }
@@ -511,6 +695,7 @@ export type Database = {
         | "at_risk"
         | "completed"
         | "overdue"
+      org_role: "owner" | "admin" | "member"
       report_status: "draft" | "pending" | "approved" | "published"
     }
     CompositeTypes: {
@@ -680,6 +865,7 @@ export const Constants = {
         "completed",
         "overdue",
       ],
+      org_role: ["owner", "admin", "member"],
       report_status: ["draft", "pending", "approved", "published"],
     },
   },
