@@ -7,14 +7,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScenarioList } from '@/components/Scenarios/ScenarioList';
 import { ScenarioBuilder } from '@/components/Scenarios/ScenarioBuilder';
 import { ScenarioComparison } from '@/components/Scenarios/ScenarioComparison';
-import { Plus, TrendingUp, GitCompare } from 'lucide-react';
+import { CostBenefitAnalysis } from '@/components/Scenarios/CostBenefitAnalysis';
+import { SensitivityAnalysis } from '@/components/Scenarios/SensitivityAnalysis';
+import { Plus, TrendingUp, GitCompare, LineChart } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ScenarioPlanningPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('scenarios');
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
+  const [selectedScenarioData, setSelectedScenarioData] = useState<any>(null);
   const [showBuilder, setShowBuilder] = useState(false);
+
+  useEffect(() => {
+    if (selectedScenario) {
+      loadScenarioData(selectedScenario);
+    }
+  }, [selectedScenario]);
+
+  const loadScenarioData = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('emission_scenarios')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setSelectedScenarioData(data);
+    } catch (error) {
+      console.error('Failed to load scenario:', error);
+    }
+  };
 
   const handleScenarioSelect = (scenarioId: string) => {
     setSelectedScenario(scenarioId);
@@ -45,7 +69,7 @@ const ScenarioPlanningPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5">
             <TabsTrigger value="scenarios" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               Scenarios
@@ -57,6 +81,14 @@ const ScenarioPlanningPage = () => {
             <TabsTrigger value="compare" className="gap-2">
               <GitCompare className="h-4 w-4" />
               Compare
+            </TabsTrigger>
+            <TabsTrigger value="cost-benefit" className="gap-2" disabled={!selectedScenario}>
+              <LineChart className="h-4 w-4" />
+              Cost-Benefit
+            </TabsTrigger>
+            <TabsTrigger value="sensitivity" className="gap-2" disabled={!selectedScenario}>
+              <LineChart className="h-4 w-4" />
+              Sensitivity
             </TabsTrigger>
           </TabsList>
 
@@ -76,6 +108,40 @@ const ScenarioPlanningPage = () => {
 
           <TabsContent value="compare" className="mt-6">
             <ScenarioComparison />
+          </TabsContent>
+
+          <TabsContent value="cost-benefit" className="mt-6">
+            {selectedScenario && selectedScenarioData ? (
+              <CostBenefitAnalysis
+                scenarioId={selectedScenario}
+                baselineYear={selectedScenarioData.baseline_year}
+                targetYear={selectedScenarioData.target_year}
+                baselineEmissions={Number(selectedScenarioData.baseline_emissions)}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Select a scenario to view cost-benefit analysis
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sensitivity" className="mt-6">
+            {selectedScenario && selectedScenarioData ? (
+              <SensitivityAnalysis
+                scenarioId={selectedScenario}
+                baselineYear={selectedScenarioData.baseline_year}
+                targetYear={selectedScenarioData.target_year}
+                baselineEmissions={Number(selectedScenarioData.baseline_emissions)}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Select a scenario to view sensitivity analysis
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>
