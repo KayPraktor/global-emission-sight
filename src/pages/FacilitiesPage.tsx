@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Building2, AlertCircle, Loader2, Upload, Map } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -129,9 +130,36 @@ export default function FacilitiesPage() {
     setIsLoadingEmissions(false);
   };
 
+  const [emissionsCounts, setEmissionsCounts] = useState<Record<string, number>>({});
+
+  // Fetch emissions counts for all facilities
+  useEffect(() => {
+    const fetchEmissionsCounts = async () => {
+      if (facilities.length === 0) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const counts: Record<string, number> = {};
+      
+      for (const facility of facilities) {
+        const { count } = await supabase
+          .from('emissions_entries')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('facility_id', facility.id);
+        
+        counts[facility.id] = count || 0;
+      }
+      
+      setEmissionsCounts(counts);
+    };
+
+    fetchEmissionsCounts();
+  }, [facilities]);
+
   const getEmissionsCount = (facilityId: string) => {
-    // This would be better fetched from the database, but for now we'll return 0
-    return 0;
+    return emissionsCounts[facilityId] || 0;
   };
 
   return (

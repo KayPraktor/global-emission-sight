@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,8 @@ import {
   FileText,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,81 +33,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-const professionalGoals = [
-  {
-    id: '1',
-    title: 'Achieve Carbon Neutrality in Manufacturing',
-    description: 'Implement comprehensive carbon reduction strategies across all manufacturing facilities to achieve net-zero emissions.',
-    category: 'emissions-reduction',
-    scope: 'Scope 1',
-    priority: 'critical',
-    status: 'on-track',
-    progress: 72,
-    baselineValue: 15000,
-    targetValue: 0,
-    unit: 'tCO2e',
-    baselineYear: 2020,
-    targetYear: 2030,
-    owner: 'Sarah Chen',
-    department: 'Operations',
-    budget: '$2.5M',
-    nextMilestone: 'Q3 Energy Audit',
-    milestoneDue: '2025-09-15',
-    risks: ['high', 'medium'],
-    framework: 'SBTi',
-    lastUpdated: '2025-05-15',
-    trend: 'up'
-  },
-  {
-    id: '2',
-    title: 'Supply Chain Emissions Reduction',
-    description: 'Collaborate with key suppliers to reduce Scope 3 emissions by 40% through partnership and procurement strategies.',
-    category: 'supply-chain',
-    scope: 'Scope 3',
-    priority: 'high',
-    status: 'at-risk',
-    progress: 34,
-    baselineValue: 25000,
-    targetValue: 15000,
-    unit: 'tCO2e',
-    baselineYear: 2022,
-    targetYear: 2028,
-    owner: 'Michael Rodriguez',
-    department: 'Procurement',
-    budget: '$850K',
-    nextMilestone: 'Supplier Assessment',
-    milestoneDue: '2025-07-20',
-    risks: ['high', 'medium', 'low'],
-    framework: 'CDP',
-    lastUpdated: '2025-05-10',
-    trend: 'down'
-  },
-  {
-    id: '3',
-    title: '100% Renewable Energy Transition',
-    description: 'Complete transition to renewable energy sources for all facilities, achieving 100% clean electricity consumption.',
-    category: 'renewable-energy',
-    scope: 'Scope 2',
-    priority: 'high',
-    status: 'on-track',
-    progress: 68,
-    baselineValue: 0,
-    targetValue: 100,
-    unit: '%',
-    baselineYear: 2023,
-    targetYear: 2027,
-    owner: 'Emma Thompson',
-    department: 'Facilities',
-    budget: '$4.2M',
-    nextMilestone: 'Solar Installation Phase 2',
-    milestoneDue: '2025-08-01',
-    risks: ['medium'],
-    framework: 'RE100',
-    lastUpdated: '2025-05-18',
-    trend: 'up'
-  }
-];
+import { goalsService, GoalWithProgress } from '@/services/goalsService';
+import { format } from 'date-fns';
 
 interface ProfessionalGoalsListProps {
   scope?: string;
@@ -117,18 +45,36 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('priority');
+  const [goals, setGoals] = useState<GoalWithProgress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredGoals = professionalGoals
-    .filter(goal => scope ? goal.scope === scope : true)
+  useEffect(() => {
+    loadGoals();
+  }, [scope]);
+
+  const loadGoals = async () => {
+    setIsLoading(true);
+    const { data, error } = await goalsService.getGoalsWithProgress(scope);
+    
+    if (error) {
+      toast.error('Failed to load goals', { description: error });
+      setGoals([]);
+    } else {
+      setGoals(data || []);
+    }
+    
+    setIsLoading(false);
+  };
+
+  const filteredGoals = goals
     .filter(goal => 
       goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      goal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      goal.owner.toLowerCase().includes(searchTerm.toLowerCase())
+      (goal.description && goal.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
-    .filter(goal => statusFilter === 'all' || goal.status === statusFilter)
-    .filter(goal => priorityFilter === 'all' || goal.priority === priorityFilter);
+    .filter(goal => statusFilter === 'all' || goal.status === statusFilter);
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityBadge = (priority?: string) => {
+    if (!priority) return null;
     const variants = {
       critical: 'bg-red-100 text-red-800 border-red-200',
       high: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -144,14 +90,14 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'on-track':
+      case 'in_progress':
         return (
           <Badge className="bg-green-100 text-green-800 border-green-200">
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            On Track
+            In Progress
           </Badge>
         );
-      case 'at-risk':
+      case 'at_risk':
         return (
           <Badge className="bg-amber-100 text-amber-800 border-amber-200">
             <AlertTriangle className="w-3 h-3 mr-1" />
@@ -162,7 +108,7 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
         return (
           <Badge variant="outline">
             <Clock className="w-3 h-3 mr-1" />
-            {status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </Badge>
         );
     }
@@ -184,8 +130,15 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
     toast.info(`Editing goal #${goalId}`);
   };
 
-  const handleDeleteGoal = (goalId: string) => {
-    toast.success(`Goal #${goalId} deleted`);
+  const handleDeleteGoal = async (goalId: string) => {
+    const { success, error } = await goalsService.deleteGoal(goalId);
+    
+    if (error) {
+      toast.error('Failed to delete goal', { description: error });
+    } else {
+      toast.success('Goal deleted successfully');
+      loadGoals();
+    }
   };
 
   return (
@@ -213,9 +166,11 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="on-track">On Track</SelectItem>
-                  <SelectItem value="at-risk">At Risk</SelectItem>
-                  <SelectItem value="behind">Behind</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="at_risk">At Risk</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="not_started">Not Started</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -248,9 +203,17 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+
       {/* Goals List */}
-      <div className="space-y-4">
-        {filteredGoals.length === 0 ? (
+      {!isLoading && (
+        <div className="space-y-4">
+          {filteredGoals.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mb-4" />
@@ -268,7 +231,11 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
             </CardContent>
           </Card>
         ) : (
-          filteredGoals.map(goal => (
+          filteredGoals.map(goal => {
+            const progressPercent = goal.progressPercentage || 0;
+            const scopeLabel = goal.scope_covered?.join(', ') || 'All Scopes';
+            
+            return (
             <Card key={goal.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
@@ -277,12 +244,10 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
                       <CardTitle className="text-lg">{goal.title}</CardTitle>
                       {getTrendIcon(goal.trend)}
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">{goal.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{goal.description || 'No description provided'}</p>
                     <div className="flex flex-wrap gap-2">
                       {getStatusBadge(goal.status)}
-                      {getPriorityBadge(goal.priority)}
-                      <Badge variant="outline">{goal.scope}</Badge>
-                      <Badge variant="outline">{goal.framework}</Badge>
+                      <Badge variant="outline">{scopeLabel}</Badge>
                     </div>
                   </div>
                   <DropdownMenu>
@@ -321,86 +286,59 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium">Progress to Target</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{goal.progress}%</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({goal.targetValue - goal.baselineValue > 0 ? '+' : ''}{Math.round((goal.targetValue - goal.baselineValue) * goal.progress / 100)} {goal.unit})
-                      </span>
+                      <span className="text-sm font-medium">{progressPercent}%</span>
+                      {goal.baseline_emissions && goal.actualEmissions && (
+                        <span className="text-xs text-muted-foreground">
+                          ({goal.actualEmissions.toFixed(1)} / {goal.target_emissions?.toFixed(1) || 'N/A'} tCO₂e)
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Progress 
-                    value={goal.progress} 
+                    value={progressPercent} 
                     className={cn(
                       "h-2",
-                      goal.status === 'on-track' && "text-green-600",
-                      goal.status === 'at-risk' && "text-amber-600",
-                      goal.status === 'behind' && "text-red-600"
+                      goal.status === 'in_progress' && "[&>div]:bg-green-600",
+                      goal.status === 'at_risk' && "[&>div]:bg-amber-600",
+                      goal.status === 'overdue' && "[&>div]:bg-red-600"
                     )}
                   />
                 </div>
 
                 {/* Key Information Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Target</p>
-                    <p className="font-medium">{goal.targetValue} {goal.unit} by {goal.targetYear}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Owner</p>
-                    <p className="font-medium flex items-center">
-                      <Users className="w-3 h-3 mr-1" />
-                      {goal.owner}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Budget</p>
-                    <p className="font-medium">{goal.budget}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Next Milestone</p>
+                    <p className="text-muted-foreground">Target Date</p>
                     <p className="font-medium flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
-                      {goal.nextMilestone}
+                      {format(new Date(goal.target_date), 'MMM yyyy')}
                     </p>
                   </div>
-                </div>
-
-                {/* Risk Indicators */}
-                {goal.risks.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Risks:</span>
-                    <div className="flex gap-1">
-                      {goal.risks.map((risk, index) => (
-                        <Badge 
-                          key={index}
-                          variant="outline"
-                          className={cn(
-                            "text-xs",
-                            risk === 'high' && "border-red-300 text-red-700",
-                            risk === 'medium' && "border-amber-300 text-amber-700",
-                            risk === 'low' && "border-green-300 text-green-700"
-                          )}
-                        >
-                          {risk}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div>
+                    <p className="text-muted-foreground">Baseline</p>
+                    <p className="font-medium">{goal.baseline_emissions?.toFixed(1) || 'N/A'} tCO₂e ({goal.baseline_year})</p>
                   </div>
-                )}
+                  <div>
+                    <p className="text-muted-foreground">Target Reduction</p>
+                    <p className="font-medium">{goal.target_reduction_percentage || 'N/A'}%</p>
+                  </div>
+                </div>
               </CardContent>
               
               <div className="border-t bg-muted/30 px-6 py-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-4">
-                    <span>Milestone due: {new Date(goal.milestoneDue).toLocaleDateString()}</span>
-                    <span>Department: {goal.department}</span>
+                    <span>Current: {goal.actualEmissions.toFixed(1)} tCO₂e</span>
+                    {goal.facility_id && <span>Facility-specific goal</span>}
                   </div>
-                  <span>Updated: {new Date(goal.lastUpdated).toLocaleDateString()}</span>
+                  <span>Updated: {format(new Date(goal.updated_at), 'MMM dd, yyyy')}</span>
                 </div>
               </div>
             </Card>
-          ))
+          );})
         )}
       </div>
+      )}
     </div>
   );
 };
