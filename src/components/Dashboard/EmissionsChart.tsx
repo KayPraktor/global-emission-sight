@@ -46,6 +46,33 @@ const EmissionsChart: React.FC<EmissionsChartProps> = ({ monthlyData, categoryBr
     background: 'hsl(var(--muted))'
   };
 
+  // Show empty state when no data
+  if (!hasData || monthlyData.length === 0) {
+    return (
+      <div className="space-y-6 mt-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
+        </div>
+        <GlassmorphismCard className="p-12">
+          <div className="text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="rounded-full bg-muted p-4">
+                <BarChart3 className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No Trend Data Available</h3>
+                <p className="text-muted-foreground mb-4">Add emissions data to see trends and analysis</p>
+                <a href="/data-entry" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                  Add Emissions Data
+                </a>
+              </div>
+            </div>
+          </div>
+        </GlassmorphismCard>
+      </div>
+    );
+  }
+
   const CHART_COLORS = [
     'hsl(var(--primary))',
     'hsl(var(--secondary))',
@@ -169,7 +196,6 @@ const EmissionsChart: React.FC<EmissionsChartProps> = ({ monthlyData, categoryBr
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-foreground">Emissions Trends & Analysis</h2>
-            {!hasData && <SampleDataBadge />}
           </div>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-sm text-muted-foreground">

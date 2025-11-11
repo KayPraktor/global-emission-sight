@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MetricsCards from '@/components/Analytics/MetricsCards';
-import AnalyticsOverview from '@/components/Analytics/AnalyticsOverview';
+import AnalyticsOverviewNew from '@/components/Analytics/AnalyticsOverviewNew';
 import AnalyticsTrends from '@/components/Analytics/AnalyticsTrends';
 import AnalyticsSources from '@/components/Analytics/AnalyticsSources';
 import AnalyticsAdvanced from '@/components/Analytics/AnalyticsAdvanced';
@@ -11,7 +11,6 @@ import ActiveFilters from '@/components/Analytics/ActiveFilters';
 import EnhancedPageHeader from '@/components/Analytics/EnhancedPageHeader';
 import { AnalyticsFilterProvider, useAnalyticsFilters } from '@/contexts/AnalyticsFilterContext';
 import ProcessFlowMap from '@/components/Productivity/ProcessFlowMap';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 const AnalyticsContent: React.FC = () => {
   const { filters, updateFilters } = useAnalyticsFilters();
@@ -36,10 +35,7 @@ const AnalyticsContent: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold tracking-tight">Emissions Analytics</h1>
-                <SampleDataBadge />
-              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Emissions Analytics</h1>
               <p className="text-muted-foreground mt-1">In-depth analysis of your emissions data and trends</p>
             </div>
           </div>
@@ -65,7 +61,7 @@ const AnalyticsContent: React.FC = () => {
           </TabsList>
           
           <TabsContent value="overview">
-            <AnalyticsOverview />
+            <AnalyticsOverviewNew />
           </TabsContent>
           
           <TabsContent value="trends">

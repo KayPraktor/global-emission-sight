@@ -128,9 +128,10 @@ class AnalyticsService {
       
       if (monthlyMap.has(monthKey)) {
         const data = monthlyMap.get(monthKey)!;
-        if (entry.scope === 'scope_1') data.scope1 += emissions;
-        else if (entry.scope === 'scope_2') data.scope2 += emissions;
-        else if (entry.scope === 'scope_3') data.scope3 += emissions;
+        // Support both scope formats: S1/S2/S3 and scope_1/scope_2/scope_3
+        if (entry.scope === 'S1' || entry.scope === 'scope_1') data.scope1 += emissions;
+        else if (entry.scope === 'S2' || entry.scope === 'scope_2') data.scope2 += emissions;
+        else if (entry.scope === 'S3' || entry.scope === 'scope_3') data.scope3 += emissions;
       }
     });
 
@@ -149,9 +150,10 @@ class AnalyticsService {
 
     entries.forEach((entry) => {
       const emissions = entry.calculations?.[0]?.calculated_emissions || 0;
-      if (entry.scope === 'scope_1') totals.scope1 += emissions;
-      else if (entry.scope === 'scope_2') totals.scope2 += emissions;
-      else if (entry.scope === 'scope_3') totals.scope3 += emissions;
+      // Support both scope formats: S1/S2/S3 and scope_1/scope_2/scope_3
+      if (entry.scope === 'S1' || entry.scope === 'scope_1') totals.scope1 += emissions;
+      else if (entry.scope === 'S2' || entry.scope === 'scope_2') totals.scope2 += emissions;
+      else if (entry.scope === 'S3' || entry.scope === 'scope_3') totals.scope3 += emissions;
     });
 
     return {
@@ -200,15 +202,16 @@ class AnalyticsService {
 
       if (facilityMap.has(entry.facility_id)) {
         const data = facilityMap.get(entry.facility_id)!;
-        if (entry.scope === 'scope_1') data.scope1 += emissions;
-        else if (entry.scope === 'scope_2') data.scope2 += emissions;
-        else if (entry.scope === 'scope_3') data.scope3 += emissions;
+        // Support both scope formats: S1/S2/S3 and scope_1/scope_2/scope_3
+        if (entry.scope === 'S1' || entry.scope === 'scope_1') data.scope1 += emissions;
+        else if (entry.scope === 'S2' || entry.scope === 'scope_2') data.scope2 += emissions;
+        else if (entry.scope === 'S3' || entry.scope === 'scope_3') data.scope3 += emissions;
       } else {
         facilityMap.set(entry.facility_id, {
           name: facilityName,
-          scope1: entry.scope === 'scope_1' ? emissions : 0,
-          scope2: entry.scope === 'scope_2' ? emissions : 0,
-          scope3: entry.scope === 'scope_3' ? emissions : 0,
+          scope1: (entry.scope === 'S1' || entry.scope === 'scope_1') ? emissions : 0,
+          scope2: (entry.scope === 'S2' || entry.scope === 'scope_2') ? emissions : 0,
+          scope3: (entry.scope === 'S3' || entry.scope === 'scope_3') ? emissions : 0,
         });
       }
     });

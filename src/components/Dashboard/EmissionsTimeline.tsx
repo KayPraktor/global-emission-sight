@@ -32,7 +32,6 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
             <h3 className="text-lg font-semibold text-foreground">Emissions Timeline</h3>
             <p className="text-sm text-muted-foreground">Monthly tracking & progress</p>
           </div>
-          {!hasData && <SampleDataBadge />}
         </div>
         <div className="flex items-center gap-3">
           <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as typeof selectedPeriod)}>

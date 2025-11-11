@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { analyticsService, AnalyticsSummary } from '@/services/analyticsService';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
@@ -178,7 +179,7 @@ const Index = () => {
     enableLogging: true
   });
 
-  // Fetch analytics data on mount
+  // Fetch analytics data on mount with real-time updates
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -194,6 +195,27 @@ const Index = () => {
     };
 
     fetchAnalytics();
+
+    // Set up real-time subscription for emissions changes
+    const channel = supabase
+      .channel('dashboard-emissions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'emissions_entries'
+        },
+        () => {
+          // Refetch analytics when emissions entries change
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleNewReport = async () => {
@@ -237,7 +259,6 @@ const Index = () => {
               <h1 className="text-2xl font-bold tracking-tight">Carbon Emissions Dashboard</h1>
               <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
             </div>
-            <SampleDataBadge />
             <div className="flex items-center gap-3">
               <PageHeaderDateFilter defaultValue="Jan - May 2025" />
               <PageHeaderExport />

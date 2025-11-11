@@ -36,18 +36,40 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
     : scope3Total * 0.95;
   
   const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return 0;
     return ((current - previous) / previous) * 100;
   };
   
   const formatNumber = (num: number) => {
     return num.toFixed(1);
   };
+
+  // Show empty state when no data
+  if (!hasData) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="rounded-full bg-muted p-4">
+              <BarChart3 className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">No Emissions Data Yet</h3>
+              <p className="text-muted-foreground mb-4">Start tracking your carbon footprint by adding your first emissions entry</p>
+              <a href="/data-entry" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                Add Your First Entry
+              </a>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <h3 className="text-lg font-semibold text-foreground">Emissions Overview</h3>
-        {!hasData && <SampleDataBadge />}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="stat-card">
