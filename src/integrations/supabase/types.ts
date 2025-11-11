@@ -202,6 +202,48 @@ export type Database = {
           },
         ]
       }
+      emission_scenarios: {
+        Row: {
+          baseline_emissions: number
+          baseline_year: number
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          status: string | null
+          target_year: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          baseline_emissions: number
+          baseline_year: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          status?: string | null
+          target_year: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          baseline_emissions?: number
+          baseline_year?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          status?: string | null
+          target_year?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       emissions_entries: {
         Row: {
           activity_type: string | null
@@ -562,6 +604,118 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scenario_interventions: {
+        Row: {
+          affected_scope: string[]
+          annual_cost: number | null
+          confidence_level: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          implementation_year: number
+          intervention_type: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          one_time_cost: number | null
+          reduction_percentage: number
+          roi_years: number | null
+          scenario_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          affected_scope: string[]
+          annual_cost?: number | null
+          confidence_level?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          implementation_year: number
+          intervention_type: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          one_time_cost?: number | null
+          reduction_percentage: number
+          roi_years?: number | null
+          scenario_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          affected_scope?: string[]
+          annual_cost?: number | null
+          confidence_level?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          implementation_year?: number
+          intervention_type?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          one_time_cost?: number | null
+          reduction_percentage?: number
+          roi_years?: number | null
+          scenario_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_interventions_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "emission_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenario_projections: {
+        Row: {
+          created_at: string | null
+          cumulative_reduction: number | null
+          id: string
+          projected_emissions: number
+          scenario_id: string
+          scope_1_emissions: number | null
+          scope_2_emissions: number | null
+          scope_3_emissions: number | null
+          total_investment: number | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          cumulative_reduction?: number | null
+          id?: string
+          projected_emissions: number
+          scenario_id: string
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          total_investment?: number | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          cumulative_reduction?: number | null
+          id?: string
+          projected_emissions?: number
+          scenario_id?: string
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          total_investment?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_projections_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "emission_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_emission_factor_versions: {
         Row: {

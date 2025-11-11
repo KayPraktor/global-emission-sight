@@ -18,6 +18,7 @@ import MapPage from '@/pages/MapPage';
 import AIAssistantPage from '@/pages/AIAssistantPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
 import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
+import ScenarioPlanningPage from '@/pages/ScenarioPlanningPage';
 import AuthPage from '@/pages/AuthPage';
 import NotFound from '@/pages/NotFound';
 
@@ -55,6 +56,7 @@ function App() {
                           <Route path="/monitoring" element={<MonitoringPage />} />
                           <Route path="/ai-assistant" element={<AIAssistantPage />} />
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
+                          <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
