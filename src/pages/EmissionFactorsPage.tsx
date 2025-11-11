@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FactorsTable } from '@/components/EmissionFactors/FactorsTable';
 import { CustomFactorForm } from '@/components/EmissionFactors/CustomFactorForm';
 import { RegionalComparison } from '@/components/EmissionFactors/RegionalComparison';
+import { BulkImportDialog } from '@/components/EmissionFactors/BulkImportDialog';
 import { Database, Plus, GitCompare } from 'lucide-react';
 
 const EmissionFactorsPage = () => {
@@ -11,11 +12,14 @@ const EmissionFactorsPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Emission Factors Management</h1>
-          <p className="text-muted-foreground">
-            Browse standard factors, create custom factors, and compare regional variations
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-foreground">Emission Factors Management</h1>
+            <p className="text-muted-foreground">
+              Browse standard factors, create custom factors, and compare regional variations
+            </p>
+          </div>
+          <BulkImportDialog />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
