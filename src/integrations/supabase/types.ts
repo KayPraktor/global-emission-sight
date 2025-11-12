@@ -244,6 +244,71 @@ export type Database = {
         }
         Relationships: []
       }
+      emissions_anomalies: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          actual_value: number | null
+          anomaly_type: string
+          created_at: string | null
+          description: string | null
+          detected_at: string | null
+          deviation_percentage: number | null
+          entry_id: string | null
+          expected_value: number | null
+          id: string
+          is_acknowledged: boolean | null
+          recommendation: string | null
+          severity: string
+          user_id: string
+          z_score: number | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_value?: number | null
+          anomaly_type: string
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          deviation_percentage?: number | null
+          entry_id?: string | null
+          expected_value?: number | null
+          id?: string
+          is_acknowledged?: boolean | null
+          recommendation?: string | null
+          severity: string
+          user_id: string
+          z_score?: number | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_value?: number | null
+          anomaly_type?: string
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          deviation_percentage?: number | null
+          entry_id?: string | null
+          expected_value?: number | null
+          id?: string
+          is_acknowledged?: boolean | null
+          recommendation?: string | null
+          severity?: string
+          user_id?: string
+          z_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emissions_anomalies_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "emissions_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emissions_entries: {
         Row: {
           activity_type: string | null
@@ -324,6 +389,108 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      emissions_forecasts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          generated_at: string | null
+          id: string
+          lower_bound: number | null
+          model_version: string | null
+          period: string
+          predicted_emissions: number
+          scope: string
+          upper_bound: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          lower_bound?: number | null
+          model_version?: string | null
+          period: string
+          predicted_emissions: number
+          scope: string
+          upper_bound?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          lower_bound?: number | null
+          model_version?: string | null
+          period?: string
+          predicted_emissions?: number
+          scope?: string
+          upper_bound?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      emissions_insights: {
+        Row: {
+          actioned_at: string | null
+          category: string
+          created_at: string | null
+          dismissed_at: string | null
+          expected_benefit: string | null
+          finding: string | null
+          generated_at: string | null
+          id: string
+          impact: string | null
+          is_actioned: boolean | null
+          is_dismissed: boolean | null
+          metadata: Json | null
+          priority: string
+          recommendation: string | null
+          timeframe: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actioned_at?: string | null
+          category: string
+          created_at?: string | null
+          dismissed_at?: string | null
+          expected_benefit?: string | null
+          finding?: string | null
+          generated_at?: string | null
+          id?: string
+          impact?: string | null
+          is_actioned?: boolean | null
+          is_dismissed?: boolean | null
+          metadata?: Json | null
+          priority: string
+          recommendation?: string | null
+          timeframe?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          actioned_at?: string | null
+          category?: string
+          created_at?: string | null
+          dismissed_at?: string | null
+          expected_benefit?: string | null
+          finding?: string | null
+          generated_at?: string | null
+          id?: string
+          impact?: string | null
+          is_actioned?: boolean | null
+          is_dismissed?: boolean | null
+          metadata?: Json | null
+          priority?: string
+          recommendation?: string | null
+          timeframe?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       facilities: {
         Row: {
@@ -452,6 +619,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      industry_benchmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          industry: string
+          last_updated: string | null
+          metric_type: string
+          naics_code: string
+          p10: number | null
+          p25: number | null
+          p50: number | null
+          p75: number | null
+          p90: number | null
+          sample_size: number | null
+          source: string | null
+          unit: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          industry: string
+          last_updated?: string | null
+          metric_type: string
+          naics_code: string
+          p10?: number | null
+          p25?: number | null
+          p50?: number | null
+          p75?: number | null
+          p90?: number | null
+          sample_size?: number | null
+          source?: string | null
+          unit: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          industry?: string
+          last_updated?: string | null
+          metric_type?: string
+          naics_code?: string
+          p10?: number | null
+          p25?: number | null
+          p50?: number | null
+          p75?: number | null
+          p90?: number | null
+          sample_size?: number | null
+          source?: string | null
+          unit?: string
+          year?: number
+        }
+        Relationships: []
       }
       organization_members: {
         Row: {

@@ -19,6 +19,7 @@ import AIAssistantPage from '@/pages/AIAssistantPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
 import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
 import ScenarioPlanningPage from '@/pages/ScenarioPlanningPage';
+import AdvancedAnalyticsPage from '@/pages/AdvancedAnalyticsPage';
 import AuthPage from '@/pages/AuthPage';
 import NotFound from '@/pages/NotFound';
 
@@ -51,6 +52,7 @@ function App() {
                           <Route path="/facilities" element={<FacilitiesPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/analytics" element={<AnalyticsPage />} />
+                          <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
                           <Route path="/map" element={<MapPage />} />
                           <Route path="/goals" element={<GoalsPage />} />
                           <Route path="/monitoring" element={<MonitoringPage />} />
