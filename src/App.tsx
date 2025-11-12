@@ -11,7 +11,7 @@ import Index from '@/pages/Index';
 import EnterpriseIndex from '@/pages/EnterpriseIndex';
 import DataEntryPage from '@/pages/DataEntryPage';
 import ReportsPage from '@/pages/ReportsPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
+
 import GoalsPage from '@/pages/GoalsPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
 import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
@@ -48,7 +48,7 @@ function App() {
                           <Route path="/data-entry" element={<DataEntryPage />} />
                           <Route path="/facilities" element={<FacilitiesPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
-                          <Route path="/analytics" element={<AnalyticsPage />} />
+                          
                           <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
                           <Route path="/goals" element={<GoalsPage />} />
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />

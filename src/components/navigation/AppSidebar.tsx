@@ -42,7 +42,7 @@ export function AppSidebar() {
     { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors' },
     { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning' },
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
-    { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
+    
     { name: 'Advanced Analytics', icon: <LineChart className="h-4 w-4" />, path: '/advanced-analytics' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },
