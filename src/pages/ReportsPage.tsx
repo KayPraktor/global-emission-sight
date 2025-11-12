@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
+import { BrandingSettings } from '@/components/Reports/BrandingSettings';
 
 const ReportsPage = () => {
   return (
@@ -22,8 +23,11 @@ const ReportsPage = () => {
             <TabsTrigger value="templates">Report Templates</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="monthly">
-            <MonthlyReportGenerator />
+          <TabsContent value="monthly" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <MonthlyReportGenerator />
+              <BrandingSettings />
+            </div>
           </TabsContent>
           
           <TabsContent value="data">

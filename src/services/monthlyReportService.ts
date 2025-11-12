@@ -3,6 +3,15 @@ import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format, subMonths } from 'date-fns';
 
+interface BrandingSettings {
+  company_name?: string;
+  company_logo_url?: string;
+  primary_color: string;
+  secondary_color: string;
+  header_text?: string;
+  footer_text?: string;
+}
+
 interface MonthlyReportData {
   period: string;
   totalEmissions: number;
@@ -27,6 +36,7 @@ interface MonthlyReportData {
     month: string;
     emissions: number;
   }>;
+  branding: BrandingSettings;
 }
 
 export class MonthlyReportService {
@@ -41,10 +51,41 @@ export class MonthlyReportService {
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
 
-    // Header with logo and title
-    doc.setFillColor(37, 99, 235);
+    // Convert hex color to RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 37, g: 99, b: 235 };
+    };
+
+    const primaryColor = hexToRgb(data.branding.primary_color);
+
+    // Header with custom branding
+    doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
     doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    // Company logo if provided
+    if (data.branding.company_logo_url) {
+      // Note: In production, you'd load the image from URL
+      // For now, we'll just show company name
+    }
+    
     doc.setTextColor(255, 255, 255);
+    
+    if (data.branding.company_name) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(data.branding.company_name, 14, 15);
+    }
+    
+    if (data.branding.header_text) {
+      doc.setFontSize(8);
+      doc.text(data.branding.header_text, pageWidth - 14, 15, { align: 'right' });
+    }
+    
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
     doc.text('Monthly Emissions Report', pageWidth / 2, 25, { align: 'center' });
@@ -76,8 +117,10 @@ export class MonthlyReportService {
     yPosition += 8;
 
     const cardWidth = (pageWidth - 42) / 4;
+    const secondaryColor = hexToRgb(data.branding.secondary_color);
+    
     const cards = [
-      { label: 'Total', value: data.totalEmissions, color: [37, 99, 235] },
+      { label: 'Total', value: data.totalEmissions, color: [primaryColor.r, primaryColor.g, primaryColor.b] },
       { label: 'Scope 1', value: data.scope1, color: [239, 68, 68] },
       { label: 'Scope 2', value: data.scope2, color: [234, 179, 8] },
       { label: 'Scope 3', value: data.scope3, color: [34, 197, 94] },
@@ -119,7 +162,7 @@ export class MonthlyReportService {
         const barHeight = (point.emissions / maxEmissions) * (chartHeight - 5);
         const y = yPosition + chartHeight - barHeight;
         
-        doc.setFillColor(37, 99, 235);
+        doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
         doc.circle(x, y, 2, 'F');
         
         if (index < data.monthlyTrend.length - 1) {
@@ -157,7 +200,7 @@ export class MonthlyReportService {
           `${((source.emissions / data.totalEmissions) * 100).toFixed(1)}%`
         ]),
         theme: 'grid',
-        headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+        headStyles: { fillColor: [primaryColor.r, primaryColor.g, primaryColor.b], textColor: 255 },
         styles: { fontSize: 9 },
       });
 
@@ -182,7 +225,7 @@ export class MonthlyReportService {
         
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(37, 99, 235);
+        doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
         doc.text(`${index + 1}. ${insight.title}`, 16, yPosition + 6);
         
         doc.setFontSize(9);
@@ -233,8 +276,14 @@ export class MonthlyReportService {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(128, 128, 128);
+      
+      const defaultFooter = `Generated on ${format(new Date(), 'PPP')} | Page ${i} of ${totalPages}`;
+      const footerText = data.branding.footer_text 
+        ? `${data.branding.footer_text} | ${defaultFooter}`
+        : defaultFooter;
+      
       doc.text(
-        `Generated on ${format(new Date(), 'PPP')} | Page ${i} of ${totalPages}`,
+        footerText,
         pageWidth / 2,
         pageHeight - 10,
         { align: 'center' }
@@ -253,6 +302,22 @@ export class MonthlyReportService {
 
       const startDate = startOfMonth(new Date(year, month - 1));
       const endDate = endOfMonth(startDate);
+
+      // Fetch branding settings
+      const { data: brandingData } = await supabase
+        .from('report_branding_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      const branding: BrandingSettings = {
+        company_name: brandingData?.company_name || undefined,
+        company_logo_url: brandingData?.company_logo_url || undefined,
+        primary_color: brandingData?.primary_color || '#2563eb',
+        secondary_color: brandingData?.secondary_color || '#1e40af',
+        header_text: brandingData?.header_text || undefined,
+        footer_text: brandingData?.footer_text || undefined,
+      };
 
       // Fetch emissions entries
       const { data: entries } = await supabase
@@ -342,7 +407,8 @@ export class MonthlyReportService {
           description: a.description || ''
         })),
         topSources,
-        monthlyTrend
+        monthlyTrend,
+        branding
       };
     } catch (error) {
       console.error('Error fetching monthly data:', error);
