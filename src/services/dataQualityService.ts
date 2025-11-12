@@ -1,100 +1,173 @@
+import { supabase } from '@/integrations/supabase/client';
 
-interface DataQualityMetrics {
+export interface DataQualityScore {
+  overall: number;
   completeness: number;
   accuracy: number;
+  freshness: number;
   consistency: number;
-  timeliness: number;
-  overall: number;
 }
 
-interface DataValidationResult {
-  isValid: boolean;
-  confidence: number;
-  issues: string[];
-  suggestions: string[];
+export interface DataQualityMetrics {
+  date: string;
+  totalEntries: number;
+  completeEntries: number;
+  completenessScore: number;
+  validationErrors: number;
+  dataFreshnessDays: number;
+  lastEntryDate: string | null;
+  scope1Completeness: number;
+  scope2Completeness: number;
+  scope3Completeness: number;
+  missingFields: string[];
+}
+
+export interface ValidationError {
+  entry_id: string;
+  field: string;
+  error: string;
+  severity: 'error' | 'warning';
 }
 
 class DataQualityService {
-  validateDataPoint(value: number, activityType: string, historicalData?: number[]): DataValidationResult {
-    const issues: string[] = [];
-    const suggestions: string[] = [];
-    let confidence = 100;
+  async calculateDataQuality(userId: string): Promise<DataQualityScore> {
+    try {
+      // Get all emissions entries
+      const { data: entries, error } = await supabase
+        .from('emissions_entries')
+        .select('*, calculations(*), facilities(*)')
+        .eq('user_id', userId);
 
-    // Range validation
-    if (value < 0) {
-      issues.push('Negative values not allowed for emission activities');
-      confidence -= 30;
-    }
-
-    // Outlier detection using historical data
-    if (historicalData && historicalData.length > 3) {
-      const mean = historicalData.reduce((a, b) => a + b, 0) / historicalData.length;
-      const stdDev = Math.sqrt(
-        historicalData.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / historicalData.length
-      );
-      
-      if (Math.abs(value - mean) > 2 * stdDev) {
-        issues.push('Value appears to be an outlier compared to historical data');
-        suggestions.push('Please verify this measurement or provide explanation for the variance');
-        confidence -= 20;
+      if (error) throw error;
+      if (!entries || entries.length === 0) {
+        return {
+          overall: 0,
+          completeness: 0,
+          accuracy: 0,
+          freshness: 0,
+          consistency: 0,
+        };
       }
-    }
 
-    // Activity-specific validation
-    if (activityType === 'electricity' && value > 10000) {
-      issues.push('Unusually high electricity consumption detected');
-      suggestions.push('Consider if units are correct (kWh vs MWh)');
-      confidence -= 15;
-    }
+      // Calculate completeness (required fields present)
+      const completeEntries = entries.filter(e => 
+        e.entry_date && e.scope && e.category && e.quantity && 
+        e.unit && e.emission_factor_id && e.calculations?.length > 0
+      );
+      const completeness = (completeEntries.length / entries.length) * 100;
 
-    return {
-      isValid: issues.length === 0,
-      confidence: Math.max(confidence, 0),
-      issues,
-      suggestions
-    };
+      // Calculate accuracy (verified entries)
+      const verifiedEntries = entries.filter(e => e.is_verified);
+      const accuracy = (verifiedEntries.length / entries.length) * 100;
+
+      // Calculate freshness (days since last entry)
+      const dates = entries.map(e => new Date(e.entry_date).getTime());
+      const mostRecent = Math.max(...dates);
+      const daysSinceLastEntry = Math.floor((Date.now() - mostRecent) / (1000 * 60 * 60 * 24));
+      const freshness = Math.max(0, 100 - (daysSinceLastEntry * 2)); // Decrease 2% per day
+
+      // Calculate consistency (data quality scores)
+      const avgQualityScore = entries.reduce((sum, e) => sum + (e.data_quality_score || 0), 0) / entries.length;
+      const consistency = avgQualityScore * 100;
+
+      // Overall score (weighted average)
+      const overall = (
+        completeness * 0.35 +
+        accuracy * 0.25 +
+        freshness * 0.20 +
+        consistency * 0.20
+      );
+
+      return {
+        overall: Math.round(overall),
+        completeness: Math.round(completeness),
+        accuracy: Math.round(accuracy),
+        freshness: Math.round(freshness),
+        consistency: Math.round(consistency),
+      };
+    } catch (error) {
+      console.error('Error calculating data quality:', error);
+      throw error;
+    }
   }
 
-  calculateQualityMetrics(dataset: any[]): DataQualityMetrics {
-    const total = dataset.length;
-    const complete = dataset.filter(d => d.value !== null && d.value !== undefined).length;
-    const recent = dataset.filter(d => {
-      const age = Date.now() - new Date(d.timestamp).getTime();
-      return age < 90 * 24 * 60 * 60 * 1000; // 90 days
-    }).length;
+  async validateEntries(userId: string): Promise<ValidationError[]> {
+    try {
+      const { data: entries, error } = await supabase
+        .from('emissions_entries')
+        .select('*')
+        .eq('user_id', userId);
 
-    const completeness = (complete / total) * 100;
-    const timeliness = (recent / total) * 100;
-    const accuracy = 85; // Would be calculated based on validation results
-    const consistency = 90; // Would be calculated based on cross-validation
+      if (error) throw error;
 
-    const overall = (completeness + accuracy + consistency + timeliness) / 4;
+      const errors: ValidationError[] = [];
 
-    return {
-      completeness,
-      accuracy,
-      consistency,
-      timeliness,
-      overall
-    };
-  }
+      entries?.forEach(entry => {
+        // Required field validation
+        if (!entry.entry_date) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'entry_date',
+            error: 'Entry date is required',
+            severity: 'error',
+          });
+        }
 
-  generateQualityReport(data: any[]): string {
-    const metrics = this.calculateQualityMetrics(data);
-    
-    return `
-Data Quality Report:
-- Overall Score: ${metrics.overall.toFixed(1)}%
-- Completeness: ${metrics.completeness.toFixed(1)}%
-- Accuracy: ${metrics.accuracy.toFixed(1)}%
-- Consistency: ${metrics.consistency.toFixed(1)}%
-- Timeliness: ${metrics.timeliness.toFixed(1)}%
+        if (!entry.emission_factor_id) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'emission_factor_id',
+            error: 'Emission factor is required',
+            severity: 'error',
+          });
+        }
 
-Recommendations:
-${metrics.completeness < 80 ? '- Improve data collection processes to reduce missing values' : ''}
-${metrics.timeliness < 70 ? '- Implement more frequent data updates' : ''}
-${metrics.accuracy < 85 ? '- Review validation processes and data sources' : ''}
-    `.trim();
+        if (!entry.quantity || entry.quantity <= 0) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'quantity',
+            error: 'Quantity must be greater than 0',
+            severity: 'error',
+          });
+        }
+
+        // Optional field warnings
+        if (!entry.facility_id) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'facility_id',
+            error: 'Facility not specified',
+            severity: 'warning',
+          });
+        }
+
+        if (!entry.activity_type) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'activity_type',
+            error: 'Activity type not specified',
+            severity: 'warning',
+          });
+        }
+
+        // Data freshness warning
+        const entryDate = new Date(entry.entry_date);
+        const daysSinceEntry = Math.floor((Date.now() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceEntry > 90) {
+          errors.push({
+            entry_id: entry.id,
+            field: 'entry_date',
+            error: `Entry is ${daysSinceEntry} days old`,
+            severity: 'warning',
+          });
+        }
+      });
+
+      return errors;
+    } catch (error) {
+      console.error('Error validating entries:', error);
+      throw error;
+    }
   }
 }
 

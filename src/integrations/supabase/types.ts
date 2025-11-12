@@ -68,6 +68,105 @@ export type Database = {
           },
         ]
       }
+      data_quality_metrics: {
+        Row: {
+          calculated_at: string | null
+          complete_entries: number | null
+          completeness_score: number | null
+          data_freshness_days: number | null
+          id: string
+          incomplete_entries: number | null
+          last_entry_date: string | null
+          metadata: Json | null
+          metric_date: string
+          missing_fields: Json | null
+          scope_1_completeness: number | null
+          scope_2_completeness: number | null
+          scope_3_completeness: number | null
+          total_entries: number | null
+          user_id: string
+          validation_errors: number | null
+        }
+        Insert: {
+          calculated_at?: string | null
+          complete_entries?: number | null
+          completeness_score?: number | null
+          data_freshness_days?: number | null
+          id?: string
+          incomplete_entries?: number | null
+          last_entry_date?: string | null
+          metadata?: Json | null
+          metric_date: string
+          missing_fields?: Json | null
+          scope_1_completeness?: number | null
+          scope_2_completeness?: number | null
+          scope_3_completeness?: number | null
+          total_entries?: number | null
+          user_id: string
+          validation_errors?: number | null
+        }
+        Update: {
+          calculated_at?: string | null
+          complete_entries?: number | null
+          completeness_score?: number | null
+          data_freshness_days?: number | null
+          id?: string
+          incomplete_entries?: number | null
+          last_entry_date?: string | null
+          metadata?: Json | null
+          metric_date?: string
+          missing_fields?: Json | null
+          scope_1_completeness?: number | null
+          scope_2_completeness?: number | null
+          scope_3_completeness?: number | null
+          total_entries?: number | null
+          user_id?: string
+          validation_errors?: number | null
+        }
+        Relationships: []
+      }
+      email_reports_log: {
+        Row: {
+          anomalies_count: number | null
+          email_to: string
+          error_message: string | null
+          id: string
+          insights_count: number | null
+          metadata: Json | null
+          report_type: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          anomalies_count?: number | null
+          email_to: string
+          error_message?: string | null
+          id?: string
+          insights_count?: number | null
+          metadata?: Json | null
+          report_type: string
+          sent_at?: string | null
+          status: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          anomalies_count?: number | null
+          email_to?: string
+          error_message?: string | null
+          id?: string
+          insights_count?: number | null
+          metadata?: Json | null
+          report_type?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       emission_factor_updates: {
         Row: {
           created_at: string | null
@@ -674,6 +773,60 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          dismissed_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          read_at: string | null
+          related_id: string | null
+          related_table: string | null
+          severity: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          dismissed_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          read_at?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          severity?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          dismissed_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          read_at?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          severity?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -979,6 +1132,48 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_anomaly_alerts: boolean | null
+          email_critical_only: boolean | null
+          email_frequency: string | null
+          email_weekly_insights: boolean | null
+          id: string
+          notification_anomaly_alerts: boolean | null
+          notification_insights: boolean | null
+          notification_sound: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_anomaly_alerts?: boolean | null
+          email_critical_only?: boolean | null
+          email_frequency?: string | null
+          email_weekly_insights?: boolean | null
+          id?: string
+          notification_anomaly_alerts?: boolean | null
+          notification_insights?: boolean | null
+          notification_sound?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_anomaly_alerts?: boolean | null
+          email_critical_only?: boolean | null
+          email_frequency?: string | null
+          email_weekly_insights?: boolean | null
+          id?: string
+          notification_anomaly_alerts?: boolean | null
+          notification_insights?: boolean | null
+          notification_sound?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1015,6 +1210,19 @@ export type Database = {
           old_version: string
           user_id: string
         }[]
+      }
+      create_notification: {
+        Args: {
+          p_action_url?: string
+          p_message: string
+          p_related_id?: string
+          p_related_table?: string
+          p_severity?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
       }
       has_role: {
         Args: {

@@ -1,1 +1,10 @@
 project_id = "gohgrsbrvlwnffufkkhn"
+
+[functions.generate-emissions-insights]
+verify_jwt = true
+
+[functions.send-weekly-report]
+verify_jwt = false
+
+[functions.run-anomaly-scan]
+verify_jwt = false

@@ -8,7 +8,7 @@ import { CommandPalette, useCommandPalette } from '@/components/ui/command-palet
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { Sidebar, SidebarContent, SidebarInset, SidebarRail, useSidebar } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { NotificationBell } from '@/components/notifications/notification-bell';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Atom, HelpCircle, Menu, Command } from 'lucide-react';
