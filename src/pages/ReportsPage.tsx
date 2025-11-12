@@ -4,6 +4,7 @@ import EmissionsReport from '@/components/Reports/EmissionsReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 
 const ReportsPage = () => {
   return (
@@ -14,11 +15,16 @@ const ReportsPage = () => {
           <p className="text-gray-500">View, analyze, and export your emissions data</p>
         </div>
         
-        <Tabs defaultValue="templates" className="mb-6">
+        <Tabs defaultValue="monthly" className="mb-6">
           <TabsList className="mb-4">
+            <TabsTrigger value="monthly">Monthly Reports</TabsTrigger>
             <TabsTrigger value="data">Data Reports</TabsTrigger>
             <TabsTrigger value="templates">Report Templates</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="monthly">
+            <MonthlyReportGenerator />
+          </TabsContent>
           
           <TabsContent value="data">
             <div className="space-y-4">

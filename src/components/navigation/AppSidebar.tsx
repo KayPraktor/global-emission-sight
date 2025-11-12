@@ -5,16 +5,12 @@ import {
   BarChart3,
   ClipboardList,
   Home,
-  MonitorSmartphone,
   FileSpreadsheet,
   Settings,
-  Zap,
   HelpCircle,
   Target,
   Building2,
-  Globe2,
   LogOut,
-  User,
   Database,
   TrendingUp,
   LineChart
@@ -48,10 +44,7 @@ export function AppSidebar() {
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
     { name: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, path: '/analytics' },
     { name: 'Advanced Analytics', icon: <LineChart className="h-4 w-4" />, path: '/advanced-analytics' },
-    { name: 'Map', icon: <Globe2 className="h-4 w-4" />, path: '/map' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
-    { name: 'Monitoring', icon: <MonitorSmartphone className="h-4 w-4" />, path: '/monitoring' },
-    { name: 'AI Assistant', icon: <Zap className="h-4 w-4" />, path: '/ai-assistant' },
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },
   ];
 

@@ -13,9 +13,6 @@ import DataEntryPage from '@/pages/DataEntryPage';
 import ReportsPage from '@/pages/ReportsPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import GoalsPage from '@/pages/GoalsPage';
-import MonitoringPage from '@/pages/MonitoringPage';
-import MapPage from '@/pages/MapPage';
-import AIAssistantPage from '@/pages/AIAssistantPage';
 import FacilitiesPage from '@/pages/FacilitiesPage';
 import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
 import ScenarioPlanningPage from '@/pages/ScenarioPlanningPage';
@@ -53,10 +50,7 @@ function App() {
                           <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/analytics" element={<AnalyticsPage />} />
                           <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
-                          <Route path="/map" element={<MapPage />} />
                           <Route path="/goals" element={<GoalsPage />} />
-                          <Route path="/monitoring" element={<MonitoringPage />} />
-                          <Route path="/ai-assistant" element={<AIAssistantPage />} />
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
                           <Route path="*" element={<NotFound />} />
