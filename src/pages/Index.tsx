@@ -28,6 +28,8 @@ import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
 import StrategicIntelligencePanel from '@/components/Dashboard/StrategicIntelligencePanel';
 import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
+import { DataQualityWidget } from '@/components/Dashboard/DataQualityWidget';
+import { QualityAlertsWidget } from '@/components/Dashboard/QualityAlertsWidget';
 import { SectionHeader } from '@/components/ui/section-header';
 import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -459,6 +461,20 @@ const Index = () => {
             ))}
           </div>
         </GlassmorphismCard>
+      </StaggeredList>
+
+      {/* Data Quality Section */}
+      <SectionHeader
+        icon={Shield}
+        title="Data Quality & Validation"
+        subtitle="Monitor data integrity and address quality issues"
+        helpText="Track the quality of your emissions data and receive alerts for validation issues to ensure accurate reporting."
+        lastUpdated={new Date().toISOString()}
+      />
+      
+      <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
+        <DataQualityWidget />
+        <QualityAlertsWidget />
       </StaggeredList>
 
       {/* Toggle Button for Advanced Analytics */}
