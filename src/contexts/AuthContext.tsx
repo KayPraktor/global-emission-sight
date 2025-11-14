@@ -3,13 +3,24 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface Organization {
+  id: string;
+  name: string;
+  role: 'owner' | 'admin' | 'member';
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  organization: Organization | null;
+  roles: string[];
+  hasRole: (role: string) => boolean;
+  isAdmin: boolean;
   signUp: (email: string, password: string, userData: SignUpData) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 interface SignUpData {
@@ -25,6 +36,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Fetch organization membership
+      const { data: orgData } = await supabase
+        .from('organization_members')
+        .select('organization_id, role, organizations(name)')
+        .eq('user_id', userId)
+        .single();
+
+      if (orgData) {
+        setOrganization({
+          id: orgData.organization_id,
+          name: (orgData.organizations as any)?.name || 'Organization',
+          role: orgData.role as 'owner' | 'admin' | 'member',
+        });
+      }
+
+      // Fetch user roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (rolesData) {
+        setRoles(rolesData.map(r => r.role));
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const refreshUserData = async () => {
+    if (user) {
+      await fetchUserData(user.id);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -32,6 +82,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => fetchUserData(session.user.id), 0);
+        } else {
+          setOrganization(null);
+          setRoles([]);
+        }
+        
         setLoading(false);
       }
     );
@@ -40,6 +98,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      }
+      
       setLoading(false);
     });
 
@@ -87,12 +150,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
       toast.error(error.message);
     } else {
+      setOrganization(null);
+      setRoles([]);
       toast.success('Signed out successfully');
     }
   };
 
+  const hasRole = (role: string) => roles.includes(role);
+  const isAdmin = hasRole('admin');
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      organization,
+      roles,
+      hasRole,
+      isAdmin,
+      signUp, 
+      signIn, 
+      signOut,
+      refreshUserData
+    }}>
       {children}
     </AuthContext.Provider>
   );

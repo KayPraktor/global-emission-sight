@@ -80,6 +80,7 @@ export type Database = {
           metadata: Json | null
           metric_date: string
           missing_fields: Json | null
+          organization_id: string | null
           scope_1_completeness: number | null
           scope_2_completeness: number | null
           scope_3_completeness: number | null
@@ -98,6 +99,7 @@ export type Database = {
           metadata?: Json | null
           metric_date: string
           missing_fields?: Json | null
+          organization_id?: string | null
           scope_1_completeness?: number | null
           scope_2_completeness?: number | null
           scope_3_completeness?: number | null
@@ -116,6 +118,7 @@ export type Database = {
           metadata?: Json | null
           metric_date?: string
           missing_fields?: Json | null
+          organization_id?: string | null
           scope_1_completeness?: number | null
           scope_2_completeness?: number | null
           scope_3_completeness?: number | null
@@ -123,7 +126,15 @@ export type Database = {
           user_id?: string
           validation_errors?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "data_quality_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_reports_log: {
         Row: {
@@ -230,6 +241,7 @@ export type Database = {
           metadata: Json | null
           methodology: string | null
           name: string
+          organization_id: string | null
           published_date: string | null
           region: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
@@ -254,6 +266,7 @@ export type Database = {
           metadata?: Json | null
           methodology?: string | null
           name: string
+          organization_id?: string | null
           published_date?: string | null
           region?: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
@@ -278,6 +291,7 @@ export type Database = {
           metadata?: Json | null
           methodology?: string | null
           name?: string
+          organization_id?: string | null
           published_date?: string | null
           region?: string | null
           scope?: Database["public"]["Enums"]["emission_scope"]
@@ -292,6 +306,13 @@ export type Database = {
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "emission_factors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "emission_factors_superseded_by_fkey"
             columns: ["superseded_by"]
@@ -310,6 +331,7 @@ export type Database = {
           id: string
           metadata: Json | null
           name: string
+          organization_id: string | null
           status: string | null
           target_year: number
           updated_at: string | null
@@ -323,6 +345,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           name: string
+          organization_id?: string | null
           status?: string | null
           target_year: number
           updated_at?: string | null
@@ -336,12 +359,21 @@ export type Database = {
           id?: string
           metadata?: Json | null
           name?: string
+          organization_id?: string | null
           status?: string | null
           target_year?: number
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emission_scenarios_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emissions_anomalies: {
         Row: {
@@ -357,6 +389,7 @@ export type Database = {
           expected_value: number | null
           id: string
           is_acknowledged: boolean | null
+          organization_id: string | null
           recommendation: string | null
           severity: string
           user_id: string
@@ -375,6 +408,7 @@ export type Database = {
           expected_value?: number | null
           id?: string
           is_acknowledged?: boolean | null
+          organization_id?: string | null
           recommendation?: string | null
           severity: string
           user_id: string
@@ -393,6 +427,7 @@ export type Database = {
           expected_value?: number | null
           id?: string
           is_acknowledged?: boolean | null
+          organization_id?: string | null
           recommendation?: string | null
           severity?: string
           user_id?: string
@@ -404,6 +439,13 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "emissions_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emissions_anomalies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -422,6 +464,7 @@ export type Database = {
           is_verified: boolean | null
           metadata: Json | null
           notes: string | null
+          organization_id: string | null
           quantity: number
           scope: Database["public"]["Enums"]["emission_scope"]
           unit: Database["public"]["Enums"]["emission_unit"]
@@ -443,6 +486,7 @@ export type Database = {
           is_verified?: boolean | null
           metadata?: Json | null
           notes?: string | null
+          organization_id?: string | null
           quantity: number
           scope: Database["public"]["Enums"]["emission_scope"]
           unit: Database["public"]["Enums"]["emission_unit"]
@@ -464,6 +508,7 @@ export type Database = {
           is_verified?: boolean | null
           metadata?: Json | null
           notes?: string | null
+          organization_id?: string | null
           quantity?: number
           scope?: Database["public"]["Enums"]["emission_scope"]
           unit?: Database["public"]["Enums"]["emission_unit"]
@@ -487,6 +532,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "emissions_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       emissions_forecasts: {
@@ -497,6 +549,7 @@ export type Database = {
           id: string
           lower_bound: number | null
           model_version: string | null
+          organization_id: string | null
           period: string
           predicted_emissions: number
           scope: string
@@ -510,6 +563,7 @@ export type Database = {
           id?: string
           lower_bound?: number | null
           model_version?: string | null
+          organization_id?: string | null
           period: string
           predicted_emissions: number
           scope: string
@@ -523,13 +577,22 @@ export type Database = {
           id?: string
           lower_bound?: number | null
           model_version?: string | null
+          organization_id?: string | null
           period?: string
           predicted_emissions?: number
           scope?: string
           upper_bound?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emissions_forecasts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emissions_insights: {
         Row: {
@@ -545,6 +608,7 @@ export type Database = {
           is_actioned: boolean | null
           is_dismissed: boolean | null
           metadata: Json | null
+          organization_id: string | null
           priority: string
           recommendation: string | null
           timeframe: string | null
@@ -564,6 +628,7 @@ export type Database = {
           is_actioned?: boolean | null
           is_dismissed?: boolean | null
           metadata?: Json | null
+          organization_id?: string | null
           priority: string
           recommendation?: string | null
           timeframe?: string | null
@@ -583,13 +648,22 @@ export type Database = {
           is_actioned?: boolean | null
           is_dismissed?: boolean | null
           metadata?: Json | null
+          organization_id?: string | null
           priority?: string
           recommendation?: string | null
           timeframe?: string | null
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emissions_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       facilities: {
         Row: {
@@ -607,6 +681,7 @@ export type Database = {
           longitude: number | null
           metadata: Json | null
           name: string
+          organization_id: string | null
           updated_at: string
           user_id: string
         }
@@ -625,6 +700,7 @@ export type Database = {
           longitude?: number | null
           metadata?: Json | null
           name: string
+          organization_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -643,10 +719,19 @@ export type Database = {
           longitude?: number | null
           metadata?: Json | null
           name?: string
+          organization_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "facilities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
@@ -659,6 +744,7 @@ export type Database = {
           id: string
           metadata: Json | null
           milestones: Json | null
+          organization_id: string | null
           progress_percentage: number | null
           scope_covered: string[] | null
           status: Database["public"]["Enums"]["goal_status"] | null
@@ -679,6 +765,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           milestones?: Json | null
+          organization_id?: string | null
           progress_percentage?: number | null
           scope_covered?: string[] | null
           status?: Database["public"]["Enums"]["goal_status"] | null
@@ -699,6 +786,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           milestones?: Json | null
+          organization_id?: string | null
           progress_percentage?: number | null
           scope_covered?: string[] | null
           status?: Database["public"]["Enums"]["goal_status"] | null
@@ -715,6 +803,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -783,6 +878,7 @@ export type Database = {
           is_read: boolean | null
           message: string
           metadata: Json | null
+          organization_id: string | null
           read_at: string | null
           related_id: string | null
           related_table: string | null
@@ -800,6 +896,7 @@ export type Database = {
           is_read?: boolean | null
           message: string
           metadata?: Json | null
+          organization_id?: string | null
           read_at?: string | null
           related_id?: string | null
           related_table?: string | null
@@ -817,6 +914,7 @@ export type Database = {
           is_read?: boolean | null
           message?: string
           metadata?: Json | null
+          organization_id?: string | null
           read_at?: string | null
           related_id?: string | null
           related_table?: string | null
@@ -825,7 +923,15 @@ export type Database = {
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_members: {
         Row: {
@@ -918,6 +1024,7 @@ export type Database = {
           footer_text: string | null
           header_text: string | null
           id: string
+          organization_id: string | null
           primary_color: string | null
           secondary_color: string | null
           updated_at: string
@@ -930,6 +1037,7 @@ export type Database = {
           footer_text?: string | null
           header_text?: string | null
           id?: string
+          organization_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
@@ -942,12 +1050,21 @@ export type Database = {
           footer_text?: string | null
           header_text?: string | null
           id?: string
+          organization_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "report_branding_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
@@ -959,6 +1076,7 @@ export type Database = {
           generated_at: string | null
           id: string
           metadata: Json | null
+          organization_id: string | null
           period_end: string
           period_start: string
           published_at: string | null
@@ -981,6 +1099,7 @@ export type Database = {
           generated_at?: string | null
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           period_end: string
           period_start: string
           published_at?: string | null
@@ -1003,6 +1122,7 @@ export type Database = {
           generated_at?: string | null
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           period_end?: string
           period_start?: string
           published_at?: string | null
@@ -1016,7 +1136,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scenario_interventions: {
         Row: {
@@ -1182,6 +1310,7 @@ export type Database = {
           notification_anomaly_alerts: boolean | null
           notification_insights: boolean | null
           notification_sound: boolean | null
+          organization_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1195,6 +1324,7 @@ export type Database = {
           notification_anomaly_alerts?: boolean | null
           notification_insights?: boolean | null
           notification_sound?: boolean | null
+          organization_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1208,10 +1338,19 @@ export type Database = {
           notification_anomaly_alerts?: boolean | null
           notification_insights?: boolean | null
           notification_sound?: boolean | null
+          organization_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1263,11 +1402,16 @@ export type Database = {
         }
         Returns: string
       }
+      get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
       is_organization_member: {

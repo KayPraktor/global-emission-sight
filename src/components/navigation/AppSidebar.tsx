@@ -13,7 +13,8 @@ import {
   LogOut,
   Database,
   TrendingUp,
-  LineChart
+  LineChart,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ import {
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin, organization } = useAuth();
   
   const navItems = [
     { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/' },
@@ -42,10 +43,13 @@ export function AppSidebar() {
     { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors' },
     { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning' },
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
-    
     { name: 'Advanced Analytics', icon: <LineChart className="h-4 w-4" />, path: '/advanced-analytics' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },
+  ];
+
+  const adminNavItems = [
+    { name: 'Admin', icon: <Shield className="h-4 w-4" />, path: '/admin' },
   ];
 
   const isActive = (path: string) => {
@@ -79,6 +83,21 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          
+          {isAdmin && adminNavItems.map((item) => (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive(item.path)}
+                tooltip={item.name}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       
@@ -93,6 +112,9 @@ export function AppSidebar() {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.email}</p>
+                {organization && (
+                  <p className="text-xs text-muted-foreground truncate">{organization.name}</p>
+                )}
               </div>
             </div>
             <Button

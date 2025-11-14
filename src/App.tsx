@@ -7,18 +7,18 @@ import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import Index from '@/pages/Index';
-import EnterpriseIndex from '@/pages/EnterpriseIndex';
-import DataEntryPage from '@/pages/DataEntryPage';
-import ReportsPage from '@/pages/ReportsPage';
-
-import GoalsPage from '@/pages/GoalsPage';
-import FacilitiesPage from '@/pages/FacilitiesPage';
-import EmissionFactorsPage from '@/pages/EmissionFactorsPage';
-import ScenarioPlanningPage from '@/pages/ScenarioPlanningPage';
-import AdvancedAnalyticsPage from '@/pages/AdvancedAnalyticsPage';
-import AuthPage from '@/pages/AuthPage';
-import NotFound from '@/pages/NotFound';
+import Index from "./pages/Index";
+import EnterpriseIndex from "./pages/EnterpriseIndex";
+import DataEntryPage from "./pages/DataEntryPage";
+import FacilitiesPage from "./pages/FacilitiesPage";
+import GoalsPage from "./pages/GoalsPage";
+import ReportsPage from "./pages/ReportsPage";
+import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
+import ScenarioPlanningPage from "./pages/ScenarioPlanningPage";
+import EmissionFactorsPage from "./pages/EmissionFactorsPage";
+import AdminPage from "./pages/AdminPage";
+import NotFound from "./pages/NotFound";
+import AuthPage from "./pages/AuthPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +53,7 @@ function App() {
                           <Route path="/goals" element={<GoalsPage />} />
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
+                          <Route path="/admin" element={<AdminPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
