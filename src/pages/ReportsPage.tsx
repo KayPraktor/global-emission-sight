@@ -6,6 +6,7 @@ import ReportTemplates from '@/components/Reports/ReportTemplates';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import { BrandingSettings } from '@/components/Reports/BrandingSettings';
+import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
 
 const ReportsPage = () => {
   return (
@@ -18,14 +19,22 @@ const ReportsPage = () => {
         
         <Tabs defaultValue="monthly" className="mb-6">
           <TabsList className="mb-4">
-            <TabsTrigger value="monthly">Monthly Reports</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="comprehensive">Quarterly & Annual</TabsTrigger>
             <TabsTrigger value="data">Data Reports</TabsTrigger>
-            <TabsTrigger value="templates">Report Templates</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
           
           <TabsContent value="monthly" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <MonthlyReportGenerator />
+              <BrandingSettings />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="comprehensive" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ComprehensiveReportGenerator />
               <BrandingSettings />
             </div>
           </TabsContent>
