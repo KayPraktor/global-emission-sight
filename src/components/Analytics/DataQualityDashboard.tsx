@@ -7,10 +7,15 @@ import { CheckCircle2, AlertTriangle, Clock, TrendingUp, FileWarning } from 'luc
 import { dataQualityService, type DataQualityScore, type ValidationError } from '@/services/dataQualityService';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QualityTrendsChart } from './QualityTrendsChart';
+import { DataQualityActions } from './DataQualityActions';
+import { QualityRecommendations } from './QualityRecommendations';
+import { QualityReportGenerator } from './QualityReportGenerator';
 
 export function DataQualityDashboard() {
   const [qualityScore, setQualityScore] = useState<DataQualityScore | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [trends, setTrends] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,13 +27,15 @@ export function DataQualityDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [score, errors] = await Promise.all([
+      const [score, errors, trendsData] = await Promise.all([
         dataQualityService.calculateDataQuality(user.id),
         dataQualityService.validateEntries(user.id),
+        dataQualityService.getQualityTrends(user.id, 30),
       ]);
 
       setQualityScore(score);
       setValidationErrors(errors);
+      setTrends(trendsData);
     } catch (error) {
       console.error('Error loading data quality:', error);
     } finally {
@@ -83,8 +90,14 @@ export function DataQualityDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Overall Score */}
-      <Card>
+      {/* Trends Chart */}
+      {trends.length > 0 && (
+        <QualityTrendsChart data={trends} showBreakdown={true} />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Overall Score */}
+        <Card className="lg:col-span-2">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -226,64 +239,15 @@ export function DataQualityDashboard() {
         </CardContent>
       </Card>
 
-      {/* Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recommendations</CardTitle>
-          <CardDescription>Actions to improve your data quality</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {qualityScore.completeness < 80 && (
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 mt-0.5 text-blue-500" />
-                <div className="flex-1">
-                  <p className="font-medium">Improve Completeness</p>
-                  <p className="text-sm text-muted-foreground">
-                    Fill in missing fields like facility assignments and activity types
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {qualityScore.freshness < 80 && (
-              <div className="flex items-start gap-2">
-                <Clock className="h-4 w-4 mt-0.5 text-purple-500" />
-                <div className="flex-1">
-                  <p className="font-medium">Update Data More Frequently</p>
-                  <p className="text-sm text-muted-foreground">
-                    Your data is getting stale. Add recent emissions entries to maintain freshness
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {qualityScore.accuracy < 80 && (
-              <div className="flex items-start gap-2">
-                <TrendingUp className="h-4 w-4 mt-0.5 text-green-500" />
-                <div className="flex-1">
-                  <p className="font-medium">Verify Your Data</p>
-                  <p className="text-sm text-muted-foreground">
-                    Review and verify entries to increase accuracy score
-                  </p>
-                </div>
-              </div>
-            )}
+        {/* Quick Actions Sidebar */}
+        <div className="space-y-6">
+          <DataQualityActions />
+          <QualityRecommendations />
+        </div>
+      </div>
 
-            {qualityScore.overall >= 80 && (
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-500" />
-                <div className="flex-1">
-                  <p className="font-medium">Excellent Data Quality!</p>
-                  <p className="text-sm text-muted-foreground">
-                    Your emissions data meets high quality standards. Keep up the good work!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Report Generator */}
+      <QualityReportGenerator />
     </div>
   );
 }

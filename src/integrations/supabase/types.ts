@@ -1016,6 +1016,65 @@ export type Database = {
         }
         Relationships: []
       }
+      quality_tracking: {
+        Row: {
+          accuracy_score: number | null
+          completeness_score: number | null
+          consistency_score: number | null
+          created_at: string | null
+          critical_issues: number | null
+          freshness_score: number | null
+          id: string
+          metadata: Json | null
+          metric_date: string
+          organization_id: string | null
+          overall_score: number | null
+          total_entries: number | null
+          user_id: string
+          warnings: number | null
+        }
+        Insert: {
+          accuracy_score?: number | null
+          completeness_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          critical_issues?: number | null
+          freshness_score?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_date: string
+          organization_id?: string | null
+          overall_score?: number | null
+          total_entries?: number | null
+          user_id: string
+          warnings?: number | null
+        }
+        Update: {
+          accuracy_score?: number | null
+          completeness_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          critical_issues?: number | null
+          freshness_score?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          organization_id?: string | null
+          overall_score?: number | null
+          total_entries?: number | null
+          user_id?: string
+          warnings?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_tracking_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_branding_settings: {
         Row: {
           company_logo_url: string | null
@@ -1302,43 +1361,52 @@ export type Database = {
       user_notification_preferences: {
         Row: {
           created_at: string | null
+          daily_quality_digest: boolean | null
           email_anomaly_alerts: boolean | null
           email_critical_only: boolean | null
           email_frequency: string | null
+          email_quality_alerts: boolean | null
           email_weekly_insights: boolean | null
           id: string
           notification_anomaly_alerts: boolean | null
           notification_insights: boolean | null
           notification_sound: boolean | null
           organization_id: string | null
+          quality_alert_threshold: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          daily_quality_digest?: boolean | null
           email_anomaly_alerts?: boolean | null
           email_critical_only?: boolean | null
           email_frequency?: string | null
+          email_quality_alerts?: boolean | null
           email_weekly_insights?: boolean | null
           id?: string
           notification_anomaly_alerts?: boolean | null
           notification_insights?: boolean | null
           notification_sound?: boolean | null
           organization_id?: string | null
+          quality_alert_threshold?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
+          daily_quality_digest?: boolean | null
           email_anomaly_alerts?: boolean | null
           email_critical_only?: boolean | null
           email_frequency?: string | null
+          email_quality_alerts?: boolean | null
           email_weekly_insights?: boolean | null
           id?: string
           notification_anomaly_alerts?: boolean | null
           notification_insights?: boolean | null
           notification_sound?: boolean | null
           organization_id?: string | null
+          quality_alert_threshold?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1372,6 +1440,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      validation_rules: {
+        Row: {
+          condition: Json
+          created_at: string | null
+          error_message: string
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          rule_name: string
+          rule_type: string
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          condition: Json
+          created_at?: string | null
+          error_message: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          rule_name: string
+          rule_type: string
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          condition?: Json
+          created_at?: string | null
+          error_message?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          rule_name?: string
+          rule_type?: string
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validation_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
