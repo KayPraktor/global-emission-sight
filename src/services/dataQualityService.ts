@@ -8,6 +8,21 @@ export interface DataQualityScore {
   consistency: number;
 }
 
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Array<{
+    field: string;
+    error: string;
+    severity: 'error' | 'warning' | 'info';
+  }>;
+  warnings: Array<{
+    field: string;
+    warning: string;
+  }>;
+  qualityScore: number;
+  suggestions: string[];
+}
+
 export interface DataQualityMetrics {
   date: string;
   totalEntries: number;
@@ -166,6 +181,94 @@ class DataQualityService {
       return errors;
     } catch (error) {
       console.error('Error validating entries:', error);
+      throw error;
+    }
+  }
+
+  async validateInRealTime(userId: string, entry: any, entryId?: string): Promise<ValidationResult> {
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-data-quality', {
+        body: { entry, entryId },
+      });
+
+      if (error) throw error;
+
+      return data as ValidationResult;
+    } catch (error) {
+      console.error('Error validating in real-time:', error);
+      return {
+        isValid: true,
+        errors: [],
+        warnings: [],
+        qualityScore: 100,
+        suggestions: [],
+      };
+    }
+  }
+
+  async getQualityTrends(userId: string, days: number = 30): Promise<Array<{
+    date: string;
+    overall: number;
+    completeness: number;
+    accuracy: number;
+    freshness: number;
+    consistency: number;
+  }>> {
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const { data, error } = await supabase
+        .from('quality_tracking')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('metric_date', startDate.toISOString().split('T')[0])
+        .order('metric_date', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map(row => ({
+        date: row.metric_date,
+        overall: row.overall_score || 0,
+        completeness: row.completeness_score || 0,
+        accuracy: row.accuracy_score || 0,
+        freshness: row.freshness_score || 0,
+        consistency: row.consistency_score || 0,
+      }));
+    } catch (error) {
+      console.error('Error fetching quality trends:', error);
+      return [];
+    }
+  }
+
+  async trackQualityMetric(userId: string, organizationId: string, metrics: Omit<DataQualityScore, 'overall'> & { totalEntries: number; criticalIssues: number; warnings: number }): Promise<void> {
+    try {
+      const overall = (
+        metrics.completeness * 0.35 +
+        metrics.accuracy * 0.25 +
+        metrics.freshness * 0.20 +
+        metrics.consistency * 0.20
+      );
+
+      const { error } = await supabase
+        .from('quality_tracking')
+        .insert({
+          organization_id: organizationId,
+          user_id: userId,
+          metric_date: new Date().toISOString().split('T')[0],
+          overall_score: Math.round(overall),
+          completeness_score: Math.round(metrics.completeness),
+          accuracy_score: Math.round(metrics.accuracy),
+          freshness_score: Math.round(metrics.freshness),
+          consistency_score: Math.round(metrics.consistency),
+          total_entries: metrics.totalEntries,
+          critical_issues: metrics.criticalIssues,
+          warnings: metrics.warnings,
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error tracking quality metric:', error);
       throw error;
     }
   }
