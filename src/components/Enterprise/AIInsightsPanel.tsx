@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,15 +15,44 @@ import {
   Clock,
   ChevronRight,
   Sparkles,
-  Activity
+  Activity,
+  ExternalLink
 } from 'lucide-react';
 import { AIInsight } from '@/utils/enterpriseData';
+import { toast } from 'sonner';
 
 interface AIInsightsPanelProps {
   insights: AIInsight[];
 }
 
 const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
+  const navigate = useNavigate();
+
+  const getNavigationPath = (insight: AIInsight): string => {
+    const category = insight.category.toLowerCase();
+    
+    if (category.includes('anomaly') || category.includes('detection')) {
+      return '/advanced-analytics?tab=anomalies';
+    } else if (category.includes('quality') || category.includes('validation')) {
+      return '/advanced-analytics?tab=quality';
+    } else if (category.includes('reduction') || category.includes('optimization')) {
+      return '/data-entry';
+    } else if (category.includes('compliance') || category.includes('reporting')) {
+      return '/reports';
+    } else if (category.includes('forecast') || category.includes('prediction')) {
+      return '/advanced-analytics?tab=forecasts';
+    }
+    
+    return '/advanced-analytics';
+  };
+
+  const handleInsightClick = (insight: AIInsight) => {
+    const path = getNavigationPath(insight);
+    toast.info(`Viewing ${insight.title}`, {
+      description: 'Opening detailed analysis'
+    });
+    navigate(path);
+  };
   const getInsightIcon = (type: string) => {
     switch (type) {
       case 'opportunity': return <TrendingUp className="w-5 h-5 text-green-600" />;
@@ -78,9 +108,13 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
               key={insight.id}
               variants={fadeInUp}
               whileHover={{ scale: 1.02 }}
-              className="group"
+              className="group cursor-pointer"
+              onClick={() => handleInsightClick(insight)}
             >
-              <GlassmorphismCard variant="light" className="p-6 h-full hover:shadow-xl transition-all duration-300">
+              <GlassmorphismCard variant="light" className="p-6 h-full hover:shadow-xl transition-all duration-300 hover:border-primary/50 relative">
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ExternalLink className="w-4 h-4 text-primary" />
+                </div>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     {getInsightIcon(insight.type)}
@@ -144,8 +178,12 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
                 {/* Action Button */}
                 <Button 
                   variant="outline" 
-                  size="sm" 
+                  size="sm"
                   className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInsightClick(insight);
+                  }}
                 >
                   View Details
                   <ChevronRight className="w-4 h-4 ml-2" />
