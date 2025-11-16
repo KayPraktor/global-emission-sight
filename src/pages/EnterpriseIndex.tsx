@@ -2,16 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Download, BarChart3, Brain, Shield, Target } from 'lucide-react';
+import { PlusCircle, BarChart3, Brain, Shield, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import ExecutiveCommandCenter from '@/components/Enterprise/ExecutiveCommandCenter';
 import AIInsightsPanel from '@/components/Enterprise/AIInsightsPanel';
 import AdvancedScenarioPlanning from '@/components/Enterprise/AdvancedScenarioPlanning';
 import ComplianceIntelligence from '@/components/Enterprise/ComplianceIntelligence';
-import { predictiveModelingService } from '@/services/predictiveModelingService';
-import { benchmarkingService } from '@/services/benchmarkingService';
-import { complianceService } from '@/services/complianceService';
+import { enterpriseComplianceService } from '@/services/enterpriseComplianceService';
+import { useAuth } from '@/contexts/AuthContext';
 import { executiveKPIs, aiInsights, scenarioAnalyses } from '@/utils/enterpriseData';
 
 const fadeInUp = {
@@ -28,21 +27,13 @@ const stagger = {
 };
 
 const EnterpriseIndex = () => {
-  const [complianceDeadlines, setComplianceDeadlines] = useState<any[]>([]);
+  const { organization } = useAuth();
   
   useEffect(() => {
-    initializeServices();
-  }, []);
-
-  const initializeServices = async () => {
-    try {
-      await benchmarkingService.loadBenchmarkData();
-      await complianceService.loadComplianceFrameworks();
-      setComplianceDeadlines(complianceService.getUpcomingDeadlines(60));
-    } catch (error) {
-      console.error('Failed to initialize services:', error);
+    if (organization?.id) {
+      enterpriseComplianceService.initializeFrameworks(organization.id);
     }
-  };
+  }, [organization?.id]);
 
   const handleNewReport = () => {
     toast.success("Creating new enterprise report...", {
@@ -106,7 +97,7 @@ const EnterpriseIndex = () => {
         </TabsContent>
 
         <TabsContent value="compliance">
-          <ComplianceIntelligence deadlines={complianceDeadlines} />
+          <ComplianceIntelligence deadlines={[]} />
         </TabsContent>
       </Tabs>
     </motion.div>
