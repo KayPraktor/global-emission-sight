@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.run-anomaly-scan]
 verify_jwt = false
+
+[functions.run-quality-scan]
+verify_jwt = false
+
+[functions.validate-data-quality]
+verify_jwt = true
