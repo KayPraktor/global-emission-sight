@@ -68,6 +68,128 @@ export type Database = {
           },
         ]
       }
+      compliance_deadlines: {
+        Row: {
+          assignee_id: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          dependencies: string[] | null
+          description: string | null
+          documents: string[] | null
+          due_date: string
+          estimated_hours: number | null
+          framework_id: string | null
+          id: string
+          organization_id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          dependencies?: string[] | null
+          description?: string | null
+          documents?: string[] | null
+          due_date: string
+          estimated_hours?: number | null
+          framework_id?: string | null
+          id?: string
+          organization_id: string
+          priority: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          dependencies?: string[] | null
+          description?: string | null
+          documents?: string[] | null
+          due_date?: string
+          estimated_hours?: number | null
+          framework_id?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_deadlines_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_frameworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_deadlines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_frameworks: {
+        Row: {
+          completeness_percentage: number | null
+          created_at: string | null
+          estimated_cost: number | null
+          framework_name: string
+          id: string
+          metadata: Json | null
+          next_deadline: string | null
+          organization_id: string
+          risk_level: string | null
+          score: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          completeness_percentage?: number | null
+          created_at?: string | null
+          estimated_cost?: number | null
+          framework_name: string
+          id?: string
+          metadata?: Json | null
+          next_deadline?: string | null
+          organization_id: string
+          risk_level?: string | null
+          score?: number | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          completeness_percentage?: number | null
+          created_at?: string | null
+          estimated_cost?: number | null
+          framework_name?: string
+          id?: string
+          metadata?: Json | null
+          next_deadline?: string | null
+          organization_id?: string
+          risk_level?: string | null
+          score?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_frameworks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_quality_metrics: {
         Row: {
           calculated_at: string | null
@@ -658,6 +780,186 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "emissions_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enterprise_insights: {
+        Row: {
+          category: string | null
+          confidence_score: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          impact_co2_reduction: number | null
+          impact_cost_saving: number | null
+          insight_type: string
+          metadata: Json | null
+          organization_id: string
+          priority: string
+          source: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact_co2_reduction?: number | null
+          impact_cost_saving?: number | null
+          insight_type: string
+          metadata?: Json | null
+          organization_id: string
+          priority: string
+          source?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact_co2_reduction?: number | null
+          impact_cost_saving?: number | null
+          insight_type?: string
+          metadata?: Json | null
+          organization_id?: string
+          priority?: string
+          source?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enterprise_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enterprise_metrics: {
+        Row: {
+          carbon_cost: number | null
+          carbon_intensity: number | null
+          compliance_score: number | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          metric_date: string
+          net_zero_progress: number | null
+          organization_id: string
+          risk_exposure: number | null
+          scope_1_emissions: number | null
+          scope_2_emissions: number | null
+          scope_3_emissions: number | null
+          total_emissions: number | null
+        }
+        Insert: {
+          carbon_cost?: number | null
+          carbon_intensity?: number | null
+          compliance_score?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date: string
+          net_zero_progress?: number | null
+          organization_id: string
+          risk_exposure?: number | null
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          total_emissions?: number | null
+        }
+        Update: {
+          carbon_cost?: number | null
+          carbon_intensity?: number | null
+          compliance_score?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          net_zero_progress?: number | null
+          organization_id?: string
+          risk_exposure?: number | null
+          scope_1_emissions?: number | null
+          scope_2_emissions?: number | null
+          scope_3_emissions?: number | null
+          total_emissions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enterprise_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enterprise_scenarios: {
+        Row: {
+          baseline_emissions: number
+          baseline_year: number
+          confidence_level: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          impact_score: number | null
+          interventions: Json | null
+          organization_id: string
+          probability: number | null
+          projected_costs: Json | null
+          projected_emissions: Json | null
+          scenario_name: string
+          target_year: number
+          updated_at: string | null
+        }
+        Insert: {
+          baseline_emissions: number
+          baseline_year: number
+          confidence_level?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact_score?: number | null
+          interventions?: Json | null
+          organization_id: string
+          probability?: number | null
+          projected_costs?: Json | null
+          projected_emissions?: Json | null
+          scenario_name: string
+          target_year: number
+          updated_at?: string | null
+        }
+        Update: {
+          baseline_emissions?: number
+          baseline_year?: number
+          confidence_level?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impact_score?: number | null
+          interventions?: Json | null
+          organization_id?: string
+          probability?: number | null
+          projected_costs?: Json | null
+          projected_emissions?: Json | null
+          scenario_name?: string
+          target_year?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enterprise_scenarios_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
