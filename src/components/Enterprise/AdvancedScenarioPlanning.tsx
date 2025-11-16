@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,16 +29,26 @@ import {
   Activity,
   Zap,
   Globe,
-  Lightbulb
+  Lightbulb,
+  ExternalLink
 } from 'lucide-react';
 import { ScenarioAnalysis } from '@/utils/enterpriseData';
+import { toast } from 'sonner';
 
 interface AdvancedScenarioPlanningProps {
   scenarios: ScenarioAnalysis[];
 }
 
 const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ scenarios }) => {
+  const navigate = useNavigate();
   const [selectedScenario, setSelectedScenario] = useState<ScenarioAnalysis>(scenarios[0]);
+
+  const handleViewScenarioDetails = () => {
+    toast.info('Opening scenario planning tools', {
+      description: 'View detailed projections and interventions'
+    });
+    navigate('/scenario-planning');
+  };
   
   // Sample data for visualization
   const scenarioData = [
@@ -99,6 +110,17 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
     >
       {/* Scenario Overview Cards */}
       <motion.div variants={fadeInUp}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold">Scenario Analysis</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleViewScenarioDetails}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            View Full Analysis
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {scenarios.map((scenario, index) => (
             <motion.div

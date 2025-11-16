@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +20,10 @@ import {
   Target,
   Activity,
   Award,
-  Bell
+  Bell,
+  ExternalLink
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ComplianceDeadline {
   id: string;
@@ -40,7 +43,22 @@ interface ComplianceIntelligenceProps {
 }
 
 const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlines }) => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  const handleFrameworkClick = (frameworkId: string) => {
+    toast.info('Opening compliance documentation', {
+      description: 'View detailed requirements and progress'
+    });
+    navigate('/reports');
+  };
+
+  const handleDeadlineClick = (deadline: any) => {
+    toast.info(`Opening ${deadline.title}`, {
+      description: 'View deadline details and requirements'
+    });
+    navigate('/reports');
+  };
   
   // Enhanced compliance data
   const complianceFrameworks = [
@@ -238,7 +256,14 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
                   <h4 className="text-lg font-semibold mb-4">Critical Deadlines</h4>
                   <div className="space-y-4">
                     {deadlines.slice(0, 6).map((deadline, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all group relative"
+                        onClick={() => handleDeadlineClick(deadline)}
+                      >
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ExternalLink className="w-3 h-3 text-primary" />
+                        </div>
                         <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-full ${
                             deadline.priority === 'critical' ? 'bg-red-500' :

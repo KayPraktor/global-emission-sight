@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -12,15 +13,44 @@ import {
   Zap,
   AlertTriangle,
   CheckCircle,
-  Activity
+  Activity,
+  ExternalLink
 } from 'lucide-react';
 import { ExecutiveKPI } from '@/utils/enterpriseData';
+import { toast } from 'sonner';
 
 interface ExecutiveCommandCenterProps {
   kpis: ExecutiveKPI[];
 }
 
 const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis }) => {
+  const navigate = useNavigate();
+
+  const getNavigationPath = (kpi: ExecutiveKPI): string => {
+    const title = kpi.title.toLowerCase();
+    
+    if (title.includes('emissions') || title.includes('carbon intensity')) {
+      return '/data-entry';
+    } else if (title.includes('compliance') || title.includes('data quality')) {
+      return '/advanced-analytics?tab=quality';
+    } else if (title.includes('cost') || title.includes('risk')) {
+      return '/reports';
+    } else if (title.includes('net zero') || title.includes('target')) {
+      return '/goals';
+    } else if (title.includes('facility') || title.includes('site')) {
+      return '/facilities';
+    }
+    
+    return '/data-entry';
+  };
+
+  const handleKPIClick = (kpi: ExecutiveKPI) => {
+    const path = getNavigationPath(kpi);
+    toast.info(`Navigating to ${kpi.title} details`, {
+      description: 'View detailed data and analytics'
+    });
+    navigate(path);
+  };
   const getKPIIcon = (category: string) => {
     switch (category) {
       case 'emissions': return <Activity className="w-5 h-5" />;
@@ -88,9 +118,15 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
               <motion.div
                 key={kpi.id}
                 variants={fadeInUp}
-                className="relative"
+                className="relative cursor-pointer"
+                onClick={() => handleKPIClick(kpi)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getStatusColor(kpi.status)}`}>
+                <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:border-primary/50 group ${getStatusColor(kpi.status)}`}>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ExternalLink className="w-4 h-4 text-primary" />
+                  </div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       {getKPIIcon(kpi.category)}
