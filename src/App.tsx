@@ -17,6 +17,7 @@ import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
 import ScenarioPlanningPage from "./pages/ScenarioPlanningPage";
 import EmissionFactorsPage from "./pages/EmissionFactorsPage";
 import AdminPage from "./pages/AdminPage";
+import ROICalculator from "./pages/ROICalculator";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 
@@ -36,6 +37,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/roi-calculator" element={<ROICalculator />} />
               <Route
                 path="/*"
                 element={
