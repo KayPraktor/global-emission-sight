@@ -12,11 +12,13 @@ import AdvancedScenarioPlanning from '@/components/Enterprise/AdvancedScenarioPl
 import ComplianceIntelligence from '@/components/Enterprise/ComplianceIntelligence';
 import { ViewSelector } from '@/components/Enterprise/ViewSelector';
 import { CustomizableKPIGrid } from '@/components/Enterprise/CustomizableKPIGrid';
+import { TemplateSelector } from '@/components/Enterprise/TemplateSelector';
 import { enterpriseKPIService } from '@/services/enterpriseKPIService';
 import { enterpriseAIService } from '@/services/enterpriseAIService';
 import { scenarioModelingService } from '@/services/scenarioModelingService';
 import { enterpriseComplianceService } from '@/services/enterpriseComplianceService';
 import { dashboardPreferencesService, DashboardPreference, DashboardLayout } from '@/services/dashboardPreferencesService';
+import { DashboardTemplate } from '@/utils/dashboardTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -24,6 +26,7 @@ const EnterpriseIndex = () => {
   const { organization } = useAuth();
   const [customizeMode, setCustomizeMode] = useState(false);
   const [currentView, setCurrentView] = useState<DashboardPreference | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [localLayout, setLocalLayout] = useState<DashboardLayout>({
     pinnedKPIs: [],
     widgetOrder: ['kpis', 'insights', 'scenarios', 'compliance'],
@@ -180,6 +183,18 @@ const EnterpriseIndex = () => {
     }
   };
 
+  const handleApplyTemplate = (template: DashboardTemplate) => {
+    setLocalLayout({
+      pinnedKPIs: template.pinnedKPIs,
+      widgetOrder: template.widgetOrder,
+      hiddenWidgets: [],
+    });
+    setCustomizeMode(true);
+    toast.success(`Applied "${template.name}" template`, {
+      description: 'Customize and save to keep your changes'
+    });
+  };
+
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
@@ -215,6 +230,15 @@ const EnterpriseIndex = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTemplateDialogOpen(true)}
+                className="gap-2"
+              >
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
               <ViewSelector
                 views={dashboardViews}
                 currentView={currentView}
@@ -246,6 +270,13 @@ const EnterpriseIndex = () => {
           )}
         </GlassmorphismCard>
       </motion.div>
+
+      {/* Template Selector Dialog */}
+      <TemplateSelector
+        open={templateDialogOpen}
+        onOpenChange={setTemplateDialogOpen}
+        onSelectTemplate={handleApplyTemplate}
+      />
 
       <Tabs defaultValue="executive" className="w-full">
         <TabsList className="mb-6">
