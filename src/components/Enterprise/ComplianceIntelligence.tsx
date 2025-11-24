@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Shield, 
   AlertTriangle, 
@@ -141,14 +142,16 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                 No compliance frameworks configured. They will be automatically initialized.
               </div>
             ) : frameworks.map((framework, index) => (
-              <motion.div
-                key={framework.id}
-                variants={fadeInUp}
-                whileHover={{ scale: 1.05 }}
-                className="cursor-pointer"
-                onClick={() => handleFrameworkClick(framework)}
-              >
-                <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getFrameworkColor(framework.status)}`}>
+              <TooltipProvider key={framework.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      variants={fadeInUp}
+                      whileHover={{ scale: 1.05 }}
+                      className="cursor-pointer"
+                      onClick={() => handleFrameworkClick(framework)}
+                    >
+                      <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getFrameworkColor(framework.status)}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Shield className="w-5 h-5" />
@@ -186,6 +189,12 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                   </div>
                 </div>
               </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-sm">Click to view compliance reports and framework documentation</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
             ))}
           </div>
         </GlassmorphismCard>
@@ -212,11 +221,13 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                         No upcoming deadlines found
                       </div>
                     ) : deadlines.slice(0, 6).map((deadline, index) => (
-                      <div 
-                        key={index} 
-                        className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all group relative"
-                        onClick={() => handleDeadlineClick(deadline)}
-                      >
+                      <TooltipProvider key={index}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div 
+                              className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all group relative"
+                              onClick={() => handleDeadlineClick(deadline)}
+                            >
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <ExternalLink className="w-3 h-3 text-primary" />
                         </div>
@@ -248,6 +259,12 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                           </div>
                         </div>
                       </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">Click to view compliance reports and deadline details</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                     ))}
                   </div>
                 </GlassmorphismCard>

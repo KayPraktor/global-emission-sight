@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   BarChart, 
   Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   Legend, 
   ResponsiveContainer,
   LineChart,
@@ -128,16 +129,18 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {scenarios.map((scenario, index) => (
-            <motion.div
-              key={index}
-              variants={fadeInUp}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => setSelectedScenario(scenario)}
-              className={`cursor-pointer transition-all duration-300 ${
-                selectedScenario.scenario === scenario.scenario ? 'ring-2 ring-primary' : ''
-              }`}
-            >
-              <GlassmorphismCard variant="light" className="p-4 h-full">
+            <TooltipProvider key={index}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div
+                    variants={fadeInUp}
+                    whileHover={{ scale: 1.05 }}
+                    onClick={() => setSelectedScenario(scenario)}
+                    className={`cursor-pointer transition-all duration-300 ${
+                      selectedScenario.scenario === scenario.scenario ? 'ring-2 ring-primary' : ''
+                    }`}
+                  >
+                    <GlassmorphismCard variant="light" className="p-4 h-full">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-sm">{scenario.scenario_name}</h4>
@@ -167,6 +170,12 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
                 </div>
               </GlassmorphismCard>
             </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">Click to view detailed scenario planning and projections</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
           ))}
         </div>
         )}
@@ -197,7 +206,7 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis dataKey="year" />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value: number, name: string) => [
                         `${value.toLocaleString()} tCO₂e`,
                         name
@@ -250,7 +259,7 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis dataKey="year" />
                     <YAxis />
-                    <Tooltip 
+                    <RechartsTooltip 
                       formatter={(value: number, name: string) => [
                         `$${value.toLocaleString()}K`,
                         name

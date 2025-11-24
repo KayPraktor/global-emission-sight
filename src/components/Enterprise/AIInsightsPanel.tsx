@@ -5,6 +5,7 @@ import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Brain, 
   TrendingUp, 
@@ -52,6 +53,24 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
       description: 'Opening detailed analysis'
     });
     navigate(path);
+  };
+
+  const getTooltipText = (insight: AIInsight): string => {
+    const category = insight.category.toLowerCase();
+    
+    if (category.includes('anomaly')) {
+      return 'Click to view anomaly detection details';
+    } else if (category.includes('quality')) {
+      return 'Click to view data quality metrics and improvements';
+    } else if (category.includes('reduction') || category.includes('optimization')) {
+      return 'Click to view emissions data and opportunities';
+    } else if (category.includes('compliance') || category.includes('reporting')) {
+      return 'Click to view compliance reports';
+    } else if (category.includes('forecast')) {
+      return 'Click to view predictive forecasts and trends';
+    }
+    
+    return 'Click to view detailed analysis';
   };
   const getInsightIcon = (type: string) => {
     switch (type) {
@@ -104,14 +123,16 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
       <motion.div variants={fadeInUp}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {insights.map((insight, index) => (
-            <motion.div
-              key={insight.id}
-              variants={fadeInUp}
-              whileHover={{ scale: 1.02 }}
-              className="group cursor-pointer"
-              onClick={() => handleInsightClick(insight)}
-            >
-              <GlassmorphismCard variant="light" className="p-6 h-full hover:shadow-xl transition-all duration-300 hover:border-primary/50 relative">
+            <TooltipProvider key={insight.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div
+                    variants={fadeInUp}
+                    whileHover={{ scale: 1.02 }}
+                    className="group cursor-pointer"
+                    onClick={() => handleInsightClick(insight)}
+                  >
+                    <GlassmorphismCard variant="light" className="p-6 h-full hover:shadow-xl transition-all duration-300 hover:border-primary/50 relative">
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <ExternalLink className="w-4 h-4 text-primary" />
                 </div>
@@ -190,6 +211,12 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
                 </Button>
               </GlassmorphismCard>
             </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">{getTooltipText(insight)}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
           ))}
         </div>
       </motion.div>

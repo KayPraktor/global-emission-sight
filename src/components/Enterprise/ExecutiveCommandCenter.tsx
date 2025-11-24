@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -42,6 +43,28 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
     }
     
     return '/data-entry';
+  };
+
+  const getTooltipText = (kpi: ExecutiveKPI): string => {
+    const title = kpi.title.toLowerCase();
+    
+    if (title.includes('emissions')) {
+      return 'Click to view emissions data entries and sources';
+    } else if (title.includes('carbon intensity')) {
+      return 'Click to view emissions analytics and intensity metrics';
+    } else if (title.includes('compliance') || title.includes('data quality')) {
+      return 'Click to view data quality dashboard and validation';
+    } else if (title.includes('cost')) {
+      return 'Click to view financial reports and carbon costs';
+    } else if (title.includes('net zero') || title.includes('target')) {
+      return 'Click to view and manage reduction goals';
+    } else if (title.includes('risk')) {
+      return 'Click to view risk analysis and reports';
+    } else if (title.includes('facility') || title.includes('site')) {
+      return 'Click to view facility emissions and details';
+    }
+    
+    return 'Click to view more details';
   };
 
   const handleKPIClick = (kpi: ExecutiveKPI) => {
@@ -115,15 +138,17 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
           {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {kpis.map((kpi, index) => (
-              <motion.div
-                key={kpi.id}
-                variants={fadeInUp}
-                className="relative cursor-pointer"
-                onClick={() => handleKPIClick(kpi)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:border-primary/50 group ${getStatusColor(kpi.status)}`}>
+              <TooltipProvider key={kpi.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      variants={fadeInUp}
+                      className="relative cursor-pointer"
+                      onClick={() => handleKPIClick(kpi)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:border-primary/50 group ${getStatusColor(kpi.status)}`}>
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ExternalLink className="w-4 h-4 text-primary" />
                   </div>
@@ -176,6 +201,12 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
                   </div>
                 </div>
               </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-sm">{getTooltipText(kpi)}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
             ))}
           </div>
         </GlassmorphismCard>
