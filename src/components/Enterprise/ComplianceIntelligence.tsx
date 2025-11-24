@@ -25,29 +25,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface ComplianceDeadline {
-  id: string;
-  title: string;
-  framework: string;
-  dueDate: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: 'pending' | 'in-progress' | 'completed' | 'overdue';
-  completionPercentage: number;
-  estimatedCost: number;
-  assignee: string;
-  riskLevel: number;
-}
-
 interface ComplianceIntelligenceProps {
+  frameworks: any[];
   deadlines: any[];
 }
 
-const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlines }) => {
+const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ frameworks, deadlines }) => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const handleFrameworkClick = (frameworkId: string) => {
-    toast.info('Opening compliance documentation', {
+  const handleFrameworkClick = (framework: any) => {
+    toast.info(`Opening ${framework.framework_name} documentation`, {
       description: 'View detailed requirements and progress'
     });
     navigate('/reports');
@@ -59,50 +47,6 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
     });
     navigate('/reports');
   };
-  
-  // Enhanced compliance data
-  const complianceFrameworks = [
-    {
-      id: 'cdp',
-      name: 'CDP Climate Change',
-      score: 'A-',
-      status: 'compliant',
-      nextDeadline: '2024-07-31',
-      riskLevel: 'low',
-      cost: 45000,
-      completeness: 92
-    },
-    {
-      id: 'tcfd',
-      name: 'TCFD Reporting',
-      score: 'B+',
-      status: 'in-progress',
-      nextDeadline: '2024-06-15',
-      riskLevel: 'medium',
-      cost: 78000,
-      completeness: 67
-    },
-    {
-      id: 'csrd',
-      name: 'EU CSRD',
-      score: 'B',
-      status: 'pending',
-      nextDeadline: '2024-12-31',
-      riskLevel: 'high',
-      cost: 125000,
-      completeness: 34
-    },
-    {
-      id: 'sbti',
-      name: 'SBTi Validation',
-      score: 'A',
-      status: 'compliant',
-      nextDeadline: '2025-03-15',
-      riskLevel: 'low',
-      cost: 32000,
-      completeness: 100
-    }
-  ];
 
   const regulatoryUpdates = [
     {
@@ -192,45 +136,53 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {complianceFrameworks.map((framework, index) => (
+            {frameworks.length === 0 ? (
+              <div className="col-span-4 text-center p-8 text-muted-foreground">
+                No compliance frameworks configured. They will be automatically initialized.
+              </div>
+            ) : frameworks.map((framework, index) => (
               <motion.div
                 key={framework.id}
                 variants={fadeInUp}
                 whileHover={{ scale: 1.05 }}
+                className="cursor-pointer"
+                onClick={() => handleFrameworkClick(framework)}
               >
                 <div className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${getFrameworkColor(framework.status)}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Shield className="w-5 h-5" />
-                      <span className="font-medium text-sm">{framework.name}</span>
+                      <span className="font-medium text-sm">{framework.framework_name}</span>
                     </div>
-                    <Badge className={`text-xs font-bold ${getScoreColor(framework.score)}`}>
-                      {framework.score}
+                    <Badge className={`text-xs font-bold ${getScoreColor(framework.score || 'N/A')}`}>
+                      {framework.score || 'N/A'}
                     </Badge>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Completeness</span>
-                      <span className="text-xs font-medium">{framework.completeness}%</span>
+                      <span className="text-xs font-medium">{framework.completeness_percentage || 0}%</span>
                     </div>
-                    <Progress value={framework.completeness} className="h-2" />
+                    <Progress value={framework.completeness_percentage || 0} className="h-2" />
 
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Risk Level</span>
-                      <span className={`text-xs font-medium ${getRiskColor(framework.riskLevel)}`}>
-                        {framework.riskLevel.toUpperCase()}
+                      <span className={`text-xs font-medium ${getRiskColor(framework.risk_level || 'medium')}`}>
+                        {(framework.risk_level || 'medium').toUpperCase()}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Annual Cost</span>
-                      <span className="text-xs font-medium">${framework.cost.toLocaleString()}</span>
+                      <span className="text-xs font-medium">${(framework.estimated_cost || 0).toLocaleString()}</span>
                     </div>
 
-                    <div className="text-xs text-muted-foreground">
-                      Next: {new Date(framework.nextDeadline).toLocaleDateString()}
-                    </div>
+                    {framework.next_deadline && (
+                      <div className="text-xs text-muted-foreground">
+                        Next: {new Date(framework.next_deadline).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -255,7 +207,11 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
                 <GlassmorphismCard variant="light" className="p-6">
                   <h4 className="text-lg font-semibold mb-4">Critical Deadlines</h4>
                   <div className="space-y-4">
-                    {deadlines.slice(0, 6).map((deadline, index) => (
+                    {deadlines.length === 0 ? (
+                      <div className="text-center p-8 text-muted-foreground">
+                        No upcoming deadlines found
+                      </div>
+                    ) : deadlines.slice(0, 6).map((deadline, index) => (
                       <div 
                         key={index} 
                         className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg cursor-pointer hover:shadow-md transition-all group relative"
@@ -275,7 +231,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
                           <div>
                             <div className="font-medium">{deadline.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {deadline.framework} • Due: {new Date(deadline.dueDate).toLocaleDateString()}
+                              Due: {new Date(deadline.due_date).toLocaleDateString()}
                             </div>
                           </div>
                         </div>
@@ -288,7 +244,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
                             {deadline.status}
                           </Badge>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {deadline.completionPercentage}% complete
+                            {deadline.completion_percentage || 0}% complete
                           </div>
                         </div>
                       </div>
@@ -474,16 +430,16 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ deadlin
 
               <div className="space-y-4">
                 <h5 className="font-medium">Cost Breakdown by Framework</h5>
-                {complianceFrameworks.map((framework, index) => (
+                {frameworks.map((framework, index) => (
                   <div key={framework.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <DollarSign className="w-5 h-5 text-green-600" />
-                      <span className="font-medium">{framework.name}</span>
+                      <span className="font-medium">{framework.framework_name}</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">${framework.cost.toLocaleString()}</div>
+                      <div className="font-semibold">${(framework.estimated_cost || 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {((framework.cost / 280000) * 100).toFixed(0)}% of total
+                        Annual cost
                       </div>
                     </div>
                   </div>
