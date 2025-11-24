@@ -190,6 +190,47 @@ export type Database = {
           },
         ]
       }
+      dashboard_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          layout_config: Json
+          organization_id: string | null
+          updated_at: string | null
+          user_id: string
+          view_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json
+          organization_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          view_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json
+          organization_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          view_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_quality_metrics: {
         Row: {
           calculated_at: string | null
