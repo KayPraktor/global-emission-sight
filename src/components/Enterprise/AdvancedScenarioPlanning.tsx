@@ -46,7 +46,7 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
     toast.info('Opening scenario planning tools', {
       description: 'View detailed projections and interventions'
     });
-    navigate('/scenario-planning');
+    navigate('/scenario-planning?from=enterprise');
   };
   
   // Sample data for visualization

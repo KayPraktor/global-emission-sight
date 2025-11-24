@@ -7,11 +7,13 @@ import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import { BrandingSettings } from '@/components/Reports/BrandingSettings';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
+import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 
 const ReportsPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <BreadcrumbNav />
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Emissions Reports</h1>
           <p className="text-gray-500">View, analyze, and export your emissions data</p>

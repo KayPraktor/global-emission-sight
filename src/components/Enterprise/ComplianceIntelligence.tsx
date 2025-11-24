@@ -38,14 +38,14 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
     toast.info(`Opening ${framework.framework_name} documentation`, {
       description: 'View detailed requirements and progress'
     });
-    navigate('/reports');
+    navigate('/reports?from=enterprise');
   };
 
   const handleDeadlineClick = (deadline: any) => {
     toast.info(`Opening ${deadline.title}`, {
       description: 'View deadline details and requirements'
     });
-    navigate('/reports');
+    navigate('/reports?from=enterprise');
   };
 
   const regulatoryUpdates = [

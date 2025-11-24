@@ -30,18 +30,18 @@ const ExecutiveCommandCenter: React.FC<ExecutiveCommandCenterProps> = ({ kpis })
     const title = kpi.title.toLowerCase();
     
     if (title.includes('emissions') || title.includes('carbon intensity')) {
-      return '/data-entry';
+      return '/data-entry?from=enterprise';
     } else if (title.includes('compliance') || title.includes('data quality')) {
-      return '/advanced-analytics?tab=quality';
+      return '/advanced-analytics?from=enterprise&tab=quality';
     } else if (title.includes('cost') || title.includes('risk')) {
-      return '/reports';
+      return '/reports?from=enterprise';
     } else if (title.includes('net zero') || title.includes('target')) {
-      return '/goals';
+      return '/goals?from=enterprise';
     } else if (title.includes('facility') || title.includes('site')) {
-      return '/facilities';
+      return '/facilities?from=enterprise';
     }
     
-    return '/data-entry';
+    return '/data-entry?from=enterprise';
   };
 
   const handleKPIClick = (kpi: ExecutiveKPI) => {
