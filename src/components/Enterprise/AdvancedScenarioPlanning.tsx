@@ -32,16 +32,15 @@ import {
   Lightbulb,
   ExternalLink
 } from 'lucide-react';
-import { ScenarioAnalysis } from '@/utils/enterpriseData';
 import { toast } from 'sonner';
 
 interface AdvancedScenarioPlanningProps {
-  scenarios: ScenarioAnalysis[];
+  scenarios: any[];
 }
 
 const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ scenarios }) => {
   const navigate = useNavigate();
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioAnalysis>(scenarios[0]);
+  const [selectedScenario, setSelectedScenario] = useState<any>(scenarios[0] || null);
 
   const handleViewScenarioDetails = () => {
     toast.info('Opening scenario planning tools', {
@@ -121,8 +120,14 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
             View Full Analysis
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {scenarios.map((scenario, index) => (
+        {scenarios.length === 0 ? (
+          <div className="text-center p-12 text-muted-foreground">
+            <p className="mb-2">No scenario analysis available yet</p>
+            <p className="text-sm">Scenarios will be generated based on your emissions data</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {scenarios.map((scenario, index) => (
             <motion.div
               key={index}
               variants={fadeInUp}
@@ -135,9 +140,9 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
               <GlassmorphismCard variant="light" className="p-4 h-full">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm">{scenario.scenario}</h4>
-                    <Badge className={`text-xs ${getProbabilityColor(scenario.probability)}`}>
-                      {scenario.probability}%
+                    <h4 className="font-semibold text-sm">{scenario.scenario_name}</h4>
+                    <Badge className={`text-xs ${getProbabilityColor(scenario.probability || 50)}`}>
+                      {scenario.probability || 50}%
                     </Badge>
                   </div>
                   
@@ -148,13 +153,13 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
                   <div className="grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 bg-green-50 rounded">
                       <div className="text-sm font-bold text-green-600">
-                        {scenario.impact.emissions.toLocaleString()}
+                        {(scenario.projected_emissions?.['2030'] || scenario.baseline_emissions)?.toLocaleString()}
                       </div>
                       <div className="text-xs text-muted-foreground">tCO₂e</div>
                     </div>
                     <div className="p-2 bg-blue-50 rounded">
                       <div className="text-sm font-bold text-blue-600">
-                        ${scenario.impact.cost.toLocaleString()}K
+                        ${((scenario.projected_costs?.total || 0) / 1000).toLocaleString()}K
                       </div>
                       <div className="text-xs text-muted-foreground">cost</div>
                     </div>
@@ -164,6 +169,7 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
             </motion.div>
           ))}
         </div>
+        )}
       </motion.div>
 
       {/* Detailed Analysis */}
@@ -291,23 +297,29 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
 
           <TabsContent value="actions">
             <GlassmorphismCard variant="light" className="p-6">
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold mb-2">
-                  Action Plan: {selectedScenario.scenario}
-                </h4>
-                <p className="text-muted-foreground">
-                  {selectedScenario.description}
-                </p>
-              </div>
+              {!selectedScenario ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  Select a scenario to view action plans
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold mb-2">
+                      Action Plan: {selectedScenario.scenario_name}
+                    </h4>
+                    <p className="text-muted-foreground">
+                      {selectedScenario.description}
+                    </p>
+                  </div>
 
-              <div className="space-y-4">
-                {selectedScenario.actions.map((action, index) => (
+                  <div className="space-y-4">
+                    {(selectedScenario.interventions || []).map((intervention: any, index: number) => (
                   <div key={index} className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
                     <div className="p-2 bg-blue-500 rounded-full">
                       <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
-                      <span className="font-medium">{action}</span>
+                      <span className="font-medium">{typeof intervention === 'string' ? intervention : intervention.name || 'Unnamed intervention'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
@@ -315,29 +327,31 @@ const AdvancedScenarioPlanning: React.FC<AdvancedScenarioPlanningProps> = ({ sce
                       </Badge>
                     </div>
                   </div>
-                ))}
-              </div>
+                    ))}
+                  </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {selectedScenario.impact.emissions.toLocaleString()}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">
+                        {(selectedScenario.projected_emissions?.['2030'] || selectedScenario.baseline_emissions)?.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">2030 Emissions (tCO₂e)</div>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        ${((selectedScenario.projected_costs?.total || 0) / 1000).toLocaleString()}K
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Investment</div>
+                    </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {selectedScenario.target_year - selectedScenario.baseline_year} years
+                      </div>
+                      <div className="text-sm text-muted-foreground">Implementation</div>
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">2030 Emissions (tCO₂e)</div>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    ${selectedScenario.impact.cost.toLocaleString()}K
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Investment</div>
-                </div>
-                <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {selectedScenario.impact.timeline}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Implementation</div>
-                </div>
-              </div>
+                </>
+              )}
             </GlassmorphismCard>
           </TabsContent>
 
