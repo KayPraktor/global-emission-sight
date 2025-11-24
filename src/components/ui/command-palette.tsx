@@ -37,13 +37,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const navigationCommands = [
     { id: 'nav-dashboard', label: 'Go to Dashboard', icon: Home, action: () => navigate('/') },
-    { id: 'nav-enterprise', label: 'Go to Enterprise', icon: Building2, action: () => navigate('/enterprise') },
+    { id: 'nav-enterprise', label: 'Go to Executive Dashboard', icon: Building2, action: () => navigate('/enterprise') },
     { id: 'nav-data-entry', label: 'Go to Data Entry', icon: ClipboardList, action: () => navigate('/data-entry') },
-    { id: 'nav-reports', label: 'Go to Reports', icon: FileSpreadsheet, action: () => navigate('/reports') },
+    { id: 'nav-facilities', label: 'Go to Facilities', icon: Building2, action: () => navigate('/facilities') },
     { id: 'nav-analytics', label: 'Go to Analytics', icon: BarChart3, action: () => navigate('/analytics') },
+    { id: 'nav-scenario', label: 'Go to Scenario Planning', icon: Target, action: () => navigate('/scenario-planning') },
     { id: 'nav-goals', label: 'Go to Goals', icon: Target, action: () => navigate('/goals') },
-    { id: 'nav-monitoring', label: 'Go to Monitoring', icon: MonitorSmartphone, action: () => navigate('/monitoring') },
-    { id: 'nav-ai', label: 'Go to AI Assistant', icon: Zap, action: () => navigate('/ai-assistant') },
+    { id: 'nav-reports', label: 'Go to Reports', icon: FileSpreadsheet, action: () => navigate('/reports') },
     { id: 'nav-settings', label: 'Go to Settings', icon: Settings, action: () => navigate('/settings') },
   ];
 

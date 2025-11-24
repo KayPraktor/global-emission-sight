@@ -14,14 +14,17 @@ import { ChevronRight, Home } from 'lucide-react';
 
 const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
-  '/enterprise': 'Enterprise',
+  '/enterprise': 'Executive',
   '/data-entry': 'Data Entry',
+  '/facilities': 'Facilities',
+  '/emission-factors': 'Emission Factors',
+  '/scenario-planning': 'Scenario Planning',
   '/reports': 'Reports',
   '/analytics': 'Analytics',
+  '/advanced-analytics': 'Analytics', // Legacy route
   '/goals': 'Goals',
-  '/monitoring': 'Monitoring',
-  '/ai-assistant': 'AI Assistant',
   '/settings': 'Settings',
+  '/admin': 'Admin',
 };
 
 export function BreadcrumbNav() {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Progress } from '@/components/ui/progress';
-import { Wrench, Sparkles, BarChart3, Shield, Target, Loader2 } from 'lucide-react';
+import { Wrench, Sparkles, BarChart3, Shield, Target, Loader2, ChevronRight } from 'lucide-react';
 import ExecutiveCommandCenter from '@/components/Enterprise/ExecutiveCommandCenter';
 import AIInsightsPanel from '@/components/Enterprise/AIInsightsPanel';
 import AdvancedScenarioPlanning from '@/components/Enterprise/AdvancedScenarioPlanning';
@@ -23,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const EnterpriseIndex = () => {
+  const navigate = useNavigate();
   const { organization } = useAuth();
   const [customizeMode, setCustomizeMode] = useState(false);
   const [currentView, setCurrentView] = useState<DashboardPreference | null>(null);
@@ -278,27 +280,19 @@ const EnterpriseIndex = () => {
         onSelectTemplate={handleApplyTemplate}
       />
 
-      <Tabs defaultValue="executive" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="executive">
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-6 grid grid-cols-2">
+          <TabsTrigger value="overview">
             <Target className="w-4 h-4 mr-2" />
-            Executive Command
+            Executive Overview
           </TabsTrigger>
-          <TabsTrigger value="ai-insights">
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Insights
-          </TabsTrigger>
-          <TabsTrigger value="scenarios">
+          <TabsTrigger value="progress">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Scenario Planning
-          </TabsTrigger>
-          <TabsTrigger value="compliance">
-            <Shield className="w-4 h-4 mr-2" />
-            Compliance Intelligence
+            Net Zero Progress
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="executive" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -309,8 +303,8 @@ const EnterpriseIndex = () => {
                 <GlassmorphismCard variant="light" className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-xl font-semibold mb-2">Executive Command Center</h3>
-                      <p className="text-muted-foreground">&nbsp;</p>
+                      <h3 className="text-xl font-semibold mb-2">Key Performance Indicators</h3>
+                      <p className="text-muted-foreground">Track your organization's emissions metrics</p>
                     </div>
                   </div>
 
@@ -324,6 +318,80 @@ const EnterpriseIndex = () => {
                 </GlassmorphismCard>
               </motion.div>
 
+              {/* AI Insights Summary */}
+              <motion.div variants={fadeInUp}>
+                <GlassmorphismCard variant="light" className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Top AI Insights</h3>
+                        <p className="text-sm text-muted-foreground">Priority recommendations for your organization</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/analytics?tab=insights')}
+                    >
+                      View All Insights →
+                    </Button>
+                  </div>
+
+                  {insights && insights.length > 0 ? (
+                    <div className="space-y-3">
+                      {insights.slice(0, 3).map((insight) => (
+                        <div
+                          key={insight.id}
+                          className="p-4 bg-background/50 rounded-lg border border-border/50 hover:border-primary/50 transition-all"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                                  insight.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                  insight.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {insight.priority}
+                                </span>
+                                <span className="text-xs text-muted-foreground">{insight.category}</span>
+                              </div>
+                              <h4 className="font-medium mb-1">{insight.title}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{insight.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No insights available. Visit Analytics to generate AI insights.
+                    </div>
+                  )}
+                </GlassmorphismCard>
+              </motion.div>
+
+              {/* Compliance Intelligence */}
+              <motion.div variants={fadeInUp}>
+                <ComplianceIntelligence 
+                  frameworks={complianceData?.frameworks || []} 
+                  deadlines={complianceData?.deadlines || []} 
+                />
+              </motion.div>
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="progress" className="space-y-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
               <motion.div variants={fadeInUp}>
                 <GlassmorphismCard variant="light" className="p-6">
                   <h4 className="text-lg font-semibold mb-4 flex items-center">
@@ -366,40 +434,12 @@ const EnterpriseIndex = () => {
                   </div>
                 </GlassmorphismCard>
               </motion.div>
+
+              {/* Scenario Planning */}
+              <motion.div variants={fadeInUp}>
+                <AdvancedScenarioPlanning scenarios={scenarios} />
+              </motion.div>
             </>
-          )}
-        </TabsContent>
-
-        <TabsContent value="ai-insights">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <AIInsightsPanel insights={insights} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="scenarios">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <AdvancedScenarioPlanning scenarios={scenarios} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="compliance">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <ComplianceIntelligence 
-              frameworks={complianceData?.frameworks || []} 
-              deadlines={complianceData?.deadlines || []} 
-            />
           )}
         </TabsContent>
       </Tabs>

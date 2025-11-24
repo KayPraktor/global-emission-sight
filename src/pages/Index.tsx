@@ -463,18 +463,34 @@ const Index = () => {
         </GlassmorphismCard>
       </StaggeredList>
 
-      {/* Data Quality Section */}
+      {/* Data Quality Section - High-Level Summary Only */}
       <SectionHeader
         icon={Shield}
-        title="Data Quality & Validation"
-        subtitle="Monitor data integrity and address quality issues"
-        helpText="Track the quality of your emissions data and receive alerts for validation issues to ensure accurate reporting."
-        lastUpdated={new Date().toISOString()}
+        title="Data Quality Overview"
+        subtitle="Monitor your data completeness and accuracy"
+        helpText="Track high-level data quality metrics. For detailed analysis and validation, visit the Analytics page."
+        lastUpdated="2025-01-15T14:30:00Z"
       />
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
         <DataQualityWidget />
-        <QualityAlertsWidget />
+        <GlassmorphismCard variant="light" className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Detailed Quality Analysis</h3>
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Access comprehensive data quality metrics, validation rules, quality trends, and improvement recommendations.
+            </p>
+            <Button 
+              onClick={() => navigate('/analytics?tab=quality')} 
+              className="w-full"
+            >
+              View Full Quality Dashboard
+            </Button>
+          </div>
+        </GlassmorphismCard>
       </StaggeredList>
 
       {/* Toggle Button for Advanced Analytics */}
