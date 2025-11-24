@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -18,7 +18,10 @@ const routeLabels: Record<string, string> = {
   '/data-entry': 'Data Entry',
   '/reports': 'Reports',
   '/analytics': 'Analytics',
+  '/advanced-analytics': 'Advanced Analytics',
   '/goals': 'Goals',
+  '/facilities': 'Facilities',
+  '/scenario-planning': 'Scenario Planning',
   '/monitoring': 'Monitoring',
   '/ai-assistant': 'AI Assistant',
   '/settings': 'Settings',
@@ -26,18 +29,35 @@ const routeLabels: Record<string, string> = {
 
 export function BreadcrumbNav() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const pathSegments = location.pathname.split('/').filter(Boolean);
+  
+  // Check if user came from Enterprise dashboard
+  const fromEnterprise = searchParams.get('from') === 'enterprise';
   
   // Build breadcrumb items
   const breadcrumbItems = [
     { path: '/', label: 'Dashboard', isHome: true }
   ];
 
+  // If coming from Enterprise, add Enterprise breadcrumb
+  if (fromEnterprise && location.pathname !== '/enterprise') {
+    breadcrumbItems.push({ 
+      path: '/enterprise', 
+      label: 'Enterprise', 
+      isHome: false 
+    });
+  }
+
   let currentPath = '';
   pathSegments.forEach(segment => {
     currentPath += `/${segment}`;
     const label = routeLabels[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1);
-    breadcrumbItems.push({ path: currentPath, label, isHome: false });
+    
+    // Don't duplicate Enterprise if already added
+    if (!(fromEnterprise && currentPath === '/enterprise')) {
+      breadcrumbItems.push({ path: currentPath, label, isHome: false });
+    }
   });
 
   // Don't show breadcrumb on home page

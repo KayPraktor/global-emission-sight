@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { AnomalyDetectionPanel } from '@/components/Analytics/AnomalyDetectionPanel';
@@ -10,14 +11,24 @@ import { LineChart, AlertTriangle, Sparkles, Target, Download, Shield } from 'lu
 import { supabase } from '@/integrations/supabase/client';
 import { exportForecastsToCSV, exportAnomaliesToCSV, exportInsightsToCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
+import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 
 const AdvancedAnalyticsPage = () => {
-  const [activeTab, setActiveTab] = useState('forecasting');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'forecasting';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     document.title = 'Advanced Analytics | Carbon Emissions Tracker';
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -67,6 +78,7 @@ const AdvancedAnalyticsPage = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <BreadcrumbNav />
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Advanced Analytics</h1>
