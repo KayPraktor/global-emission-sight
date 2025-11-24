@@ -36,16 +36,25 @@ export function AppSidebar() {
   const { user, signOut, isAdmin, organization } = useAuth();
   
   const navItems = [
-    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/' },
-    { name: 'Enterprise', icon: <Building2 className="h-4 w-4" />, path: '/enterprise' },
-    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry' },
-    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities' },
-    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors' },
-    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning' },
-    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports' },
-    { name: 'Advanced Analytics', icon: <LineChart className="h-4 w-4" />, path: '/advanced-analytics' },
-    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals' },
-    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings' },
+    // OVERVIEW
+    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', section: 'overview' },
+    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview' },
+    
+    // DATA MANAGEMENT
+    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data' },
+    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data' },
+    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data' },
+    
+    // ANALYSIS & PLANNING
+    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis' },
+    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
+    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
+    
+    // REPORTING
+    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
+    
+    // ADMINISTRATION
+    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
   ];
 
   const adminNavItems = [
@@ -69,7 +78,88 @@ export function AppSidebar() {
       
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) => (
+          {/* Overview Section */}
+          {navItems.filter(item => item.section === 'overview').map((item) => (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive(item.path)}
+                tooltip={item.name}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+          <div className="px-2 py-2">
+            <div className="h-px bg-border/50" />
+          </div>
+          
+          {/* Data Management Section */}
+          {navItems.filter(item => item.section === 'data').map((item) => (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive(item.path)}
+                tooltip={item.name}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+          <div className="px-2 py-2">
+            <div className="h-px bg-border/50" />
+          </div>
+          
+          {/* Analysis & Planning Section */}
+          {navItems.filter(item => item.section === 'analysis').map((item) => (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive(item.path)}
+                tooltip={item.name}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+          <div className="px-2 py-2">
+            <div className="h-px bg-border/50" />
+          </div>
+          
+          {/* Reporting Section */}
+          {navItems.filter(item => item.section === 'reporting').map((item) => (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton 
+                asChild 
+                isActive={isActive(item.path)}
+                tooltip={item.name}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+          <div className="px-2 py-2">
+            <div className="h-px bg-border/50" />
+          </div>
+          
+          {/* Administration Section */}
+          {navItems.filter(item => item.section === 'admin').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 

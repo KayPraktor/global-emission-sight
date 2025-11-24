@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { AnomalyDetectionPanel } from '@/components/Analytics/AnomalyDetectionPanel';
@@ -12,12 +13,27 @@ import { exportForecastsToCSV, exportAnomaliesToCSV, exportInsightsToCSV } from 
 import { toast } from 'sonner';
 
 const AdvancedAnalyticsPage = () => {
-  const [activeTab, setActiveTab] = useState('forecasting');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'forecasting');
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    document.title = 'Advanced Analytics | Carbon Emissions Tracker';
+    document.title = 'Analytics | Carbon Emissions Tracker';
   }, []);
+
+  // Update active tab when URL param changes
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -69,9 +85,9 @@ const AdvancedAnalyticsPage = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Advanced Analytics</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground">
-            Predictive insights, anomaly detection, and AI-powered recommendations for emissions management
+            Predictive insights, anomaly detection, AI-powered recommendations, and data quality management
           </p>
         </div>
         <Button onClick={handleExport} disabled={exporting} variant="outline">
@@ -80,7 +96,7 @@ const AdvancedAnalyticsPage = () => {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="forecasting" className="gap-2">
             <LineChart className="h-4 w-4" />

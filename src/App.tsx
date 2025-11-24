@@ -49,7 +49,8 @@ function App() {
                           <Route path="/facilities" element={<FacilitiesPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
                           
-                          <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
+                <Route path="/analytics" element={<AdvancedAnalyticsPage />} />
+                <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} /> {/* Legacy redirect */}
                           <Route path="/goals" element={<GoalsPage />} />
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
