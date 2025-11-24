@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, BarChart3 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/ui/page-header';
-import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 import GoalsDashboard from '@/components/Goals/GoalsDashboard';
 import EnhancedGoalForm from '@/components/Goals/EnhancedGoalForm';
 import ProfessionalGoalsList from '@/components/Goals/ProfessionalGoalsList';
@@ -17,8 +16,7 @@ const GoalsPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <BreadcrumbNav />
-        <PageHeader
+        <PageHeader 
           title="Sustainability Goals & Targets" 
           subtitle="Comprehensive goal management with advanced tracking, analytics, and professional workflows"
           actions={

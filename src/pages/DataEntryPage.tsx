@@ -3,7 +3,6 @@ import EmissionsForm from '@/components/EmissionsForm/EmissionsForm';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { EmissionsCSVImportDialog } from '@/components/EmissionsForm/EmissionsCSVImportDialog';
-import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 
 const DataEntryPage = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -11,7 +10,6 @@ const DataEntryPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <BreadcrumbNav />
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Emissions Data Entry</h1>

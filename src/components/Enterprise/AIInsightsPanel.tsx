@@ -32,18 +32,18 @@ const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
     const category = insight.category.toLowerCase();
     
     if (category.includes('anomaly') || category.includes('detection')) {
-      return '/advanced-analytics?from=enterprise&tab=anomalies';
+      return '/advanced-analytics?tab=anomalies';
     } else if (category.includes('quality') || category.includes('validation')) {
-      return '/advanced-analytics?from=enterprise&tab=quality';
+      return '/advanced-analytics?tab=quality';
     } else if (category.includes('reduction') || category.includes('optimization')) {
-      return '/data-entry?from=enterprise';
+      return '/data-entry';
     } else if (category.includes('compliance') || category.includes('reporting')) {
-      return '/reports?from=enterprise';
+      return '/reports';
     } else if (category.includes('forecast') || category.includes('prediction')) {
-      return '/advanced-analytics?from=enterprise&tab=forecasts';
+      return '/advanced-analytics?tab=forecasts';
     }
     
-    return '/advanced-analytics?from=enterprise';
+    return '/advanced-analytics';
   };
 
   const handleInsightClick = (insight: AIInsight) => {

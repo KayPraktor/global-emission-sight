@@ -11,7 +11,6 @@ import { CostBenefitAnalysis } from '@/components/Scenarios/CostBenefitAnalysis'
 import { SensitivityAnalysis } from '@/components/Scenarios/SensitivityAnalysis';
 import { Plus, TrendingUp, GitCompare, LineChart } from 'lucide-react';
 import { toast } from 'sonner';
-import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 
 const ScenarioPlanningPage = () => {
   const { user } = useAuth();
@@ -56,7 +55,6 @@ const ScenarioPlanningPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full space-y-6">
-        <BreadcrumbNav />
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-foreground">Scenario Planning</h1>
