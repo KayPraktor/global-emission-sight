@@ -35,6 +35,9 @@ import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 
 import { Button } from '@/components/ui/button';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
+import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
+import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
+import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -255,6 +258,9 @@ const Index = () => {
       {/* Performance Monitor */}
       <PerformanceMonitor componentName="Dashboard" />
       
+      {/* Personalized Welcome Message */}
+      <PersonalizedWelcome />
+
       <FadeIn>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -325,6 +331,12 @@ const Index = () => {
         <div className="hidden" aria-hidden />
       </SlideIn>
       
+      {/* Quick Wins & Live Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <QuickWinsSection />
+        <RealtimeNotificationsPanel />
+      </div>
+
       {/* Primary Actions Section */}
       <SectionHeader
         icon={Shield}
