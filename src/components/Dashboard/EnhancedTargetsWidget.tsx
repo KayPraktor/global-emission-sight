@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Target, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { DataFreshness } from '@/components/ui/data-freshness';
+import { supabase } from '@/integrations/supabase/client';
+import { format, subMonths } from 'date-fns';
 
 interface TargetData {
   period: string;
@@ -21,26 +23,116 @@ interface TargetData {
 
 const EnhancedTargetsWidget: React.FC = () => {
   const [selectedView, setSelectedView] = useState<string>('overall');
+  const [overallData, setOverallData] = useState<TargetData[]>([]);
+  const [facilityData, setFacilityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Enhanced sample data with scope breakdowns
-  const overallData: TargetData[] = [
-    { period: 'Jan', actual: 980, predicted: 980, upperBound: 1050, lowerBound: 910, target: 900, scope1: 320, scope2: 450, scope3: 210 },
-    { period: 'Feb', actual: 960, predicted: 950, upperBound: 1020, lowerBound: 880, target: 880, scope1: 310, scope2: 440, scope3: 210 },
-    { period: 'Mar', actual: 940, predicted: 930, upperBound: 1000, lowerBound: 860, target: 860, scope1: 300, scope2: 430, scope3: 210 },
-    { period: 'Apr', actual: 920, predicted: 910, upperBound: 980, lowerBound: 840, target: 840, scope1: 290, scope2: 420, scope3: 210 },
-    { period: 'May', actual: 900, predicted: 890, upperBound: 960, lowerBound: 820, target: 820, scope1: 280, scope2: 410, scope3: 210 },
-    { period: 'Jun', predicted: 870, upperBound: 940, lowerBound: 800, target: 800, scope1: 270, scope2: 400, scope3: 200 },
-    { period: 'Jul', predicted: 850, upperBound: 920, lowerBound: 780, target: 780, scope1: 260, scope2: 390, scope3: 200 },
-    { period: 'Aug', predicted: 830, upperBound: 900, lowerBound: 760, target: 760, scope1: 250, scope2: 380, scope3: 200 },
-  ];
+  useEffect(() => {
+    const fetchTargetData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-  const facilityData = [
-    { period: 'Jan', facility_a: 280, facility_b: 340, facility_c: 360, target_a: 270, target_b: 330, target_c: 350 },
-    { period: 'Feb', facility_a: 275, facility_b: 335, facility_c: 350, target_a: 265, target_b: 325, target_c: 340 },
-    { period: 'Mar', facility_a: 270, facility_b: 330, facility_c: 340, target_a: 260, target_b: 320, target_c: 330 },
-    { period: 'Apr', facility_a: 265, facility_b: 325, facility_c: 330, target_a: 255, target_b: 315, target_c: 320 },
-    { period: 'May', facility_a: 260, facility_b: 320, facility_c: 320, target_a: 250, target_b: 310, target_c: 310 },
-  ];
+        // Get organization
+        const { data: orgMember } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!orgMember) return;
+
+        // Fetch goals for targets
+        const { data: goals } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('organization_id', orgMember.organization_id)
+          .order('target_date', { ascending: false })
+          .limit(1);
+
+        const activeGoal = goals?.[0];
+
+        // Fetch emissions data for last 8 months
+        const { data: emissions } = await supabase
+          .from('emissions_entries')
+          .select('entry_date, quantity, scope, category')
+          .eq('organization_id', orgMember.organization_id)
+          .gte('entry_date', format(subMonths(new Date(), 8), 'yyyy-MM-dd'))
+          .order('entry_date', { ascending: true });
+
+        // Fetch forecasts
+        const { data: forecasts } = await supabase
+          .from('emissions_forecasts')
+          .select('*')
+          .eq('organization_id', orgMember.organization_id)
+          .gte('period', format(subMonths(new Date(), 8), 'yyyy-MM-dd'))
+          .order('period', { ascending: true });
+
+        // Transform emissions data by month
+        const monthlyData: { [key: string]: { total: number; scope1: number; scope2: number; scope3: number } } = {};
+        
+        emissions?.forEach(entry => {
+          const month = format(new Date(entry.entry_date), 'MMM');
+          if (!monthlyData[month]) {
+            monthlyData[month] = { total: 0, scope1: 0, scope2: 0, scope3: 0 };
+          }
+          monthlyData[month].total += entry.quantity;
+          if (entry.scope === 'S1') monthlyData[month].scope1 += entry.quantity;
+          if (entry.scope === 'S2') monthlyData[month].scope2 += entry.quantity;
+          if (entry.scope === 'S3') monthlyData[month].scope3 += entry.quantity;
+        });
+
+        // Create target data array
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+        const targetValue = activeGoal?.target_emissions || 900;
+        const transformed: TargetData[] = months.map((month, idx) => {
+          const actual = monthlyData[month]?.total || undefined;
+          const forecast = forecasts?.find(f => format(new Date(f.period), 'MMM') === month);
+          const predicted = forecast?.predicted_emissions || (targetValue - idx * 20);
+          
+          return {
+            period: month,
+            actual,
+            predicted,
+            upperBound: predicted * 1.1,
+            lowerBound: predicted * 0.9,
+            target: targetValue - idx * 15,
+            scope1: monthlyData[month]?.scope1,
+            scope2: monthlyData[month]?.scope2,
+            scope3: monthlyData[month]?.scope3
+          };
+        });
+
+        setOverallData(transformed);
+
+        // Fetch facility data
+        const { data: facilities } = await supabase
+          .from('facilities')
+          .select('id, name')
+          .eq('organization_id', orgMember.organization_id)
+          .limit(3);
+
+        if (facilities && facilities.length > 0) {
+          const facilityEmissions = months.slice(0, 5).map(month => {
+            const facilityData: any = { period: month };
+            facilities.forEach((facility, idx) => {
+              const value = monthlyData[month]?.total / facilities.length || 300 - idx * 10;
+              facilityData[`facility_${String.fromCharCode(97 + idx)}`] = value;
+              facilityData[`target_${String.fromCharCode(97 + idx)}`] = value * 0.95;
+            });
+            return facilityData;
+          });
+          setFacilityData(facilityEmissions);
+        }
+      } catch (error) {
+        console.error('Error fetching target data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTargetData();
+  }, []);
 
   // Performance metrics calculation
   const latestActual = overallData.find(d => d.actual !== undefined)?.actual || 0;
@@ -58,6 +150,19 @@ const EnhancedTargetsWidget: React.FC = () => {
     { name: 'Mid-year', value: 4800, current: latestActual * 5, status: 'at-risk' },
     { name: 'Annual Goal', value: 9600, current: latestActual * 12, status: 'on-track' }
   ];
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <GlassmorphismCard variant="light" className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 bg-muted rounded w-1/3"></div>
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </GlassmorphismCard>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
