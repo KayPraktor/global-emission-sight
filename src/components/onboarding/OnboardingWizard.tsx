@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,9 @@ import {
   Upload,
   MessageSquare,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Star,
+  Send
 } from 'lucide-react';
 
 interface OnboardingWizardProps {
@@ -34,6 +36,12 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     reasoning: string;
     keywords: string[];
   } | null>(null);
+  const [rating, setRating] = useState<number>(0);
+  const [feedbackText, setFeedbackText] = useState<string>('');
+  const [improvements, setImprovements] = useState<string>('');
+  const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const navigate = useNavigate();
 
   const challenges = [
@@ -67,13 +75,54 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   ];
 
-  const handleChallengeSelect = (challengeId: string) => {
+  // Track analytics when component mounts
+  useEffect(() => {
+    const trackOnboardingStart = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('onboarding_analytics')
+        .insert({
+          user_id: user.id,
+          step_reached: 1,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setAnalyticsId(data.id);
+      }
+    };
+
+    trackOnboardingStart();
+  }, []);
+
+  // Update analytics when step changes
+  const updateAnalytics = async (updates: any) => {
+    if (!analyticsId) return;
+
+    await supabase
+      .from('onboarding_analytics')
+      .update(updates)
+      .eq('id', analyticsId);
+  };
+
+  const handleChallengeSelect = async (challengeId: string) => {
     if (challengeId === 'custom') {
       setSelectedChallenge(challengeId);
+      await updateAnalytics({ 
+        challenge_selected: 'custom',
+        step_reached: 1 
+      });
       return;
     }
     setSelectedChallenge(challengeId);
     setAiRecommendation(null);
+    await updateAnalytics({ 
+      challenge_selected: challengeId,
+      step_reached: 2 
+    });
     setStep(2);
   };
 
@@ -98,6 +147,15 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
       setAiRecommendation(data);
       setSelectedChallenge(data.recommendedPath === 'net-zero' ? 'netzero' : data.recommendedPath);
+      
+      await updateAnalytics({ 
+        challenge_selected: 'custom',
+        custom_input: customInput,
+        ai_recommended_path: data.recommendedPath,
+        ai_confidence: data.confidence,
+        step_reached: 2 
+      });
+      
       setStep(2);
     } catch (error) {
       console.error('Analysis error:', error);
@@ -117,7 +175,62 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   };
 
-  const handleComplete = () => {
+  const handleQuickStartSelection = async () => {
+    await updateAnalytics({ step_reached: 3 });
+    setStep(3);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (rating === 0) {
+      toast.error('Please provide a rating');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Save feedback
+      await supabase.from('onboarding_feedback').insert({
+        user_id: user.id,
+        rating,
+        feedback_text: feedbackText,
+        improvements_suggested: improvements,
+        would_recommend: wouldRecommend,
+      });
+
+      // Complete analytics
+      const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      await updateAnalytics({ 
+        completed: true,
+        completed_at: new Date().toISOString(),
+        time_spent_seconds: timeSpent
+      });
+
+      toast.success('Thank you for your feedback!');
+      
+      const challenge = challenges.find(c => c.id === selectedChallenge);
+      if (challenge && challenge.route) {
+        onComplete();
+        navigate(challenge.route);
+      } else {
+        onComplete();
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Feedback error:', error);
+      toast.error('Failed to save feedback');
+    }
+  };
+
+  const handleSkipFeedback = async () => {
+    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    await updateAnalytics({ 
+      completed: true,
+      completed_at: new Date().toISOString(),
+      time_spent_seconds: timeSpent
+    });
+
     const challenge = challenges.find(c => c.id === selectedChallenge);
     if (challenge && challenge.route) {
       onComplete();
@@ -128,7 +241,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   };
 
-  const progress = (step / 2) * 100;
+  const progress = (step / 3) * 100;
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -141,7 +254,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
         <Card className="p-8">
           <div className="mb-8">
             <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground mt-2">Step {step} of 2</p>
+            <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
           </div>
 
           <AnimatePresence mode="wait">
@@ -272,7 +385,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 </p>
 
                 <div className="space-y-4">
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleComplete}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-primary/10 rounded-lg">
                         <Upload className="h-6 w-6 text-primary" />
@@ -292,7 +405,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                     </div>
                   </Card>
 
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleComplete}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-secondary/10 rounded-lg">
                         <Target className="h-6 w-6 text-secondary" />
@@ -312,7 +425,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                     </div>
                   </Card>
 
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleComplete}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-accent/10 rounded-lg">
                         <CheckCircle2 className="h-6 w-6 text-accent" />
@@ -337,8 +450,106 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   <Button variant="ghost" onClick={() => setStep(1)}>
                     Back
                   </Button>
-                  <Button variant="ghost" onClick={handleComplete}>
+                  <Button variant="ghost" onClick={handleQuickStartSelection}>
                     Skip for now
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h2 className="text-3xl font-bold mb-4">
+                  How was your experience?
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  Your feedback helps us improve the onboarding experience for everyone.
+                </p>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium mb-3 block">
+                      Rate your onboarding experience *
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setRating(star)}
+                          className="transition-colors"
+                        >
+                          <Star
+                            className={`h-8 w-8 ${
+                              star <= rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-muted-foreground'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      What did you think of the onboarding? (Optional)
+                    </label>
+                    <Textarea
+                      placeholder="Tell us about your experience..."
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      What could we improve? (Optional)
+                    </label>
+                    <Textarea
+                      placeholder="Share your suggestions for improvement..."
+                      value={improvements}
+                      onChange={(e) => setImprovements(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-3 block">
+                      Would you recommend CarbonTrack to a colleague?
+                    </label>
+                    <div className="flex gap-3">
+                      <Button
+                        variant={wouldRecommend === true ? "default" : "outline"}
+                        onClick={() => setWouldRecommend(true)}
+                        className="flex-1"
+                      >
+                        👍 Yes
+                      </Button>
+                      <Button
+                        variant={wouldRecommend === false ? "default" : "outline"}
+                        onClick={() => setWouldRecommend(false)}
+                        className="flex-1"
+                      >
+                        👎 No
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-between">
+                  <Button variant="ghost" onClick={handleSkipFeedback}>
+                    Skip Feedback
+                  </Button>
+                  <Button onClick={handleSubmitFeedback} disabled={rating === 0}>
+                    Submit & Continue
+                    <Send className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </motion.div>
