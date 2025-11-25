@@ -1276,6 +1276,78 @@ export type Database = {
           },
         ]
       }
+      onboarding_analytics: {
+        Row: {
+          ai_confidence: number | null
+          ai_recommended_path: string | null
+          challenge_selected: string | null
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          custom_input: string | null
+          id: string
+          step_reached: number
+          time_spent_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_recommended_path?: string | null
+          challenge_selected?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          custom_input?: string | null
+          id?: string
+          step_reached?: number
+          time_spent_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_recommended_path?: string | null
+          challenge_selected?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          custom_input?: string | null
+          id?: string
+          step_reached?: number
+          time_spent_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      onboarding_feedback: {
+        Row: {
+          created_at: string
+          feedback_text: string | null
+          id: string
+          improvements_suggested: string | null
+          rating: number
+          user_id: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          improvements_suggested?: string | null
+          rating: number
+          user_id: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          improvements_suggested?: string | null
+          rating?: number
+          user_id?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
