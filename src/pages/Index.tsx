@@ -34,6 +34,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -547,6 +548,15 @@ const Index = () => {
                 />
                 <SampleDataBadge className="ml-auto" />
               </div>
+
+              {/* Value Tracking Widget */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <ValueTrackingWidget />
+              </motion.div>
 
               {/* Top row: Key Drivers Analysis */}
               <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
