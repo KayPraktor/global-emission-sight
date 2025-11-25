@@ -1,9 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+  const { showOnboarding, completeOnboarding } = useOnboarding();
 
   if (loading) {
     return (
@@ -18,8 +21,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/landing" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {showOnboarding && <OnboardingWizard onComplete={completeOnboarding} />}
+      {children}
+    </>
+  );
 };

@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import Index from "./pages/Index";
@@ -20,6 +21,7 @@ import AdminPage from "./pages/AdminPage";
 import ROICalculator from "./pages/ROICalculator";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,8 +36,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <AuthProvider>
+          <OnboardingProvider>
           <Router>
             <Routes>
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/roi-calculator" element={<ROICalculator />} />
               <Route
@@ -46,6 +50,7 @@ function App() {
                       <DashboardLayout>
                         <Routes>
                           <Route path="/" element={<Index />} />
+                          <Route path="/enterprise" element={<EnterpriseIndex />} />
                           <Route path="/enterprise" element={<EnterpriseIndex />} />
                           <Route path="/data-entry" element={<DataEntryPage />} />
                           <Route path="/facilities" element={<FacilitiesPage />} />
@@ -67,6 +72,7 @@ function App() {
             </Routes>
           </Router>
           <Toaster />
+          </OnboardingProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

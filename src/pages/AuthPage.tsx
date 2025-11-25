@@ -76,6 +76,8 @@ export default function AuthPage() {
     setIsLoading(false);
     
     if (!error) {
+      // Clear onboarding flag for new users
+      localStorage.removeItem('onboarding_completed');
       navigate('/', { replace: true });
     }
   };
