@@ -1,5 +1,8 @@
 project_id = "gohgrsbrvlwnffufkkhn"
 
+[functions.analyze-onboarding-input]
+verify_jwt = false
+
 [functions.generate-emissions-insights]
 verify_jwt = true
 
