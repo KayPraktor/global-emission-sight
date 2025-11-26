@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, BarChart3, CloudRain, Factory, Truck } from 'lucide-react';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+import { Sparkline } from './Sparkline';
 
 interface EmissionsOverviewProps {
   totalEmissions: number;
@@ -12,6 +13,7 @@ interface EmissionsOverviewProps {
   previousPeriodTotal: number;
   changePercentage: number;
   hasData: boolean;
+  monthlyData?: Array<{ month: string; scope1: number; scope2: number; scope3: number; total: number }>;
 }
 
 const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
@@ -21,8 +23,15 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
   scope3Total,
   previousPeriodTotal,
   changePercentage,
-  hasData
+  hasData,
+  monthlyData = []
 }) => {
+  // Extract last 7 data points for sparklines
+  const recentData = monthlyData.slice(-7);
+  const totalTrend = recentData.map(d => d.total || 0);
+  const scope1Trend = recentData.map(d => d.scope1 || 0);
+  const scope2Trend = recentData.map(d => d.scope2 || 0);
+  const scope3Trend = recentData.map(d => d.scope3 || 0);
   // Calculate previous period scope totals based on the same ratio
   const totalCurrent = totalEmissions || 1;
   const previousScope1 = scope1Total > 0 && previousPeriodTotal > 0 
@@ -73,12 +82,20 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="stat-card">
-        <CardContent className="p-6">
+        <CardContent className="p-6 space-y-3">
           <div className="flex items-center justify-between">
             <span className="stat-label">Total Emissions</span>
             <BarChart3 className="text-carbon h-5 w-5" />
           </div>
           <p className="stat-value">{formatNumber(totalEmissions)} tCO₂e</p>
+          {totalTrend.length > 0 && (
+            <Sparkline 
+              data={totalTrend} 
+              color="hsl(var(--carbon))"
+              height={32}
+              className="w-full"
+            />
+          )}
           <div className="stat-trend-down">
             <ArrowDownRight className="h-4 w-4 mr-1" />
             {Math.abs(changePercentage).toFixed(1)}% from previous period
@@ -87,12 +104,20 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
       </Card>
       
       <Card className="stat-card">
-        <CardContent className="p-6">
+        <CardContent className="p-6 space-y-3">
           <div className="flex items-center justify-between">
             <span className="stat-label">Scope 1 Emissions</span>
             <Factory className="text-carbon h-5 w-5" />
           </div>
           <p className="stat-value">{formatNumber(scope1Total)} tCO₂e</p>
+          {scope1Trend.length > 0 && (
+            <Sparkline 
+              data={scope1Trend} 
+              color="hsl(var(--destructive))"
+              height={32}
+              className="w-full"
+            />
+          )}
           <div className="stat-trend-down">
             <ArrowDownRight className="h-4 w-4 mr-1" />
             {Math.abs(calculateChange(scope1Total, previousScope1)).toFixed(1)}% from previous period
@@ -101,12 +126,20 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
       </Card>
       
       <Card className="stat-card">
-        <CardContent className="p-6">
+        <CardContent className="p-6 space-y-3">
           <div className="flex items-center justify-between">
             <span className="stat-label">Scope 2 Emissions</span>
             <CloudRain className="text-carbon h-5 w-5" />
           </div>
           <p className="stat-value">{formatNumber(scope2Total)} tCO₂e</p>
+          {scope2Trend.length > 0 && (
+            <Sparkline 
+              data={scope2Trend} 
+              color="hsl(var(--primary))"
+              height={32}
+              className="w-full"
+            />
+          )}
           <div className="stat-trend-down">
             <ArrowDownRight className="h-4 w-4 mr-1" />
             {Math.abs(calculateChange(scope2Total, previousScope2)).toFixed(1)}% from previous period
@@ -115,12 +148,20 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
       </Card>
       
       <Card className="stat-card">
-        <CardContent className="p-6">
+        <CardContent className="p-6 space-y-3">
           <div className="flex items-center justify-between">
             <span className="stat-label">Scope 3 Emissions</span>
             <Truck className="text-carbon h-5 w-5" />
           </div>
           <p className="stat-value">{formatNumber(scope3Total)} tCO₂e</p>
+          {scope3Trend.length > 0 && (
+            <Sparkline 
+              data={scope3Trend} 
+              color="hsl(var(--accent))"
+              height={32}
+              className="w-full"
+            />
+          )}
           <div className="stat-trend-up">
             <ArrowUpRight className="h-4 w-4 mr-1" />
             {Math.abs(calculateChange(scope3Total, previousScope3)).toFixed(1)}% from previous period

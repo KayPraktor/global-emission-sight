@@ -121,7 +121,8 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
         <div className="container mx-auto px-4 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -129,11 +130,11 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
               Stop Spending 40 Hours/Month on{' '}
               <span className="gradient-heading">Carbon Compliance</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+            <p className="text-xl md:text-2xl text-foreground/80 mb-8 font-medium">
               Automate reporting, prevent audit failures, track Net Zero progress - all in one platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
