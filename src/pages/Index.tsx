@@ -299,6 +299,7 @@ const Index = () => {
             previousPeriodTotal={analyticsData?.previousPeriodTotal || 0}
             changePercentage={analyticsData?.changePercentage || 0}
             hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+            monthlyData={analyticsData?.monthlyData}
           />
         )}
       </SlideIn>
@@ -506,60 +507,57 @@ const Index = () => {
         </GlassmorphismCard>
       </StaggeredList>
 
-      {/* Toggle Button for Advanced Analytics */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.5 }}
-        className="flex justify-center"
-      >
-        <Button
-          onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
-          variant="outline"
-          size="lg"
-          className="group relative overflow-hidden border-2 hover:border-primary transition-all duration-300"
-        >
-          <motion.div
-            animate={{ rotate: showAdvancedAnalytics ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="mr-2"
-          >
-            {showAdvancedAnalytics ? (
-              <ChevronUp className="h-5 w-5" />
-            ) : (
-              <ChevronDown className="h-5 w-5" />
-            )}
-          </motion.div>
-          <span className="font-medium">
-            {showAdvancedAnalytics ? 'Hide' : 'Show'} Performance Intelligence
-          </span>
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-            4 Sections
-          </span>
-        </Button>
-      </motion.div>
-
       {/* Performance Intelligence Section - Collapsible */}
-      <AnimatePresence>
-        {showAdvancedAnalytics && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className="space-y-6 pt-6">
-              <div className="flex items-center gap-3">
-                <SectionHeader
-                  icon={BarChart3}
-                  title="Performance Intelligence"
-                  subtitle="Advanced analytics and strategic insights for carbon management excellence"
-                  helpText="Comprehensive performance tracking with AI-powered recommendations and multi-dimensional analysis capabilities."
-                  lastUpdated="2025-01-15T12:15:00Z"
-                />
-                <SampleDataBadge className="ml-auto" />
-              </div>
+      <motion.div 
+        initial={false}
+        className="space-y-4"
+      >
+        <div 
+          className="flex items-center justify-between cursor-pointer group p-4 rounded-lg hover:bg-muted/50 transition-colors"
+          onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setShowAdvancedAnalytics(!showAdvancedAnalytics);
+            }
+          }}
+          aria-expanded={showAdvancedAnalytics}
+          aria-controls="performance-intelligence-content"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
+              <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <SampleDataBadge />
+            <span className="text-sm text-muted-foreground">
+              {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
+            </span>
+            {showAdvancedAnalytics ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            )}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {showAdvancedAnalytics && (
+            <motion.div
+              id="performance-intelligence-content"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="space-y-6 overflow-hidden"
+            >
 
               {/* Value Tracking Widget */}
               <motion.div
@@ -593,10 +591,10 @@ const Index = () => {
               >
                 <StrategicIntelligencePanel />
               </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Empty state example (conditionally shown) */}
       {sampleTableData.length === 0 && <EmptyState icon={FileSpreadsheet} title="No emissions data found" description="Start by adding your first emissions record to see analytics and insights." action={{
