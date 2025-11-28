@@ -10,6 +10,7 @@ import { FacilityForm } from '@/components/Facilities/FacilityForm';
 import { FacilitiesMap } from '@/components/Facilities/FacilitiesMap';
 import { CSVImportDialog } from '@/components/Facilities/CSVImportDialog';
 import { FacilityService } from '@/services/facilityService';
+import { createPersonalOrganization } from '@/services/organizationService';
 import { Facility } from '@/types/database';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -29,6 +30,8 @@ export default function FacilitiesPage() {
   const [isLoadingEmissions, setIsLoadingEmissions] = useState(false);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [noOrganization, setNoOrganization] = useState(false);
+  const [isCreatingOrg, setIsCreatingOrg] = useState(false);
 
   // SEO
   useEffect(() => {
@@ -43,15 +46,36 @@ export default function FacilitiesPage() {
 
   const loadFacilities = async () => {
     setIsLoading(true);
+    setNoOrganization(false);
     const { data, error } = await FacilityService.getFacilities();
     
     if (error) {
-      toast.error('Failed to load facilities', { description: error });
+      // Check if error is about missing organization
+      if (error.includes('organization')) {
+        setNoOrganization(true);
+      } else {
+        toast.error('Failed to load facilities', { description: error });
+      }
     } else if (data) {
       setFacilities(data);
     }
     
     setIsLoading(false);
+  };
+
+  const handleCreateOrganization = async () => {
+    setIsCreatingOrg(true);
+    const { data, error } = await createPersonalOrganization();
+    
+    if (error) {
+      toast.error('Failed to create organization', { description: error });
+    } else {
+      toast.success('Organization created successfully! You can now add facilities.');
+      setNoOrganization(false);
+      loadFacilities();
+    }
+    
+    setIsCreatingOrg(false);
   };
 
   const handleCreateFacility = () => {
@@ -196,8 +220,34 @@ export default function FacilitiesPage() {
         </div>
       </div>
 
+      {/* No Organization State */}
+      {!isLoading && noOrganization && (
+        <Card className="border-warning">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-warning mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Organization Required</h3>
+            <p className="text-muted-foreground text-center mb-4 max-w-md">
+              To manage facilities, you need to be part of an organization. Create your organization to get started.
+            </p>
+            <Button onClick={handleCreateOrganization} disabled={isCreatingOrg}>
+              {isCreatingOrg ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Organization...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create My Organization
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Empty State */}
-      {!isLoading && facilities.length === 0 && (
+      {!isLoading && !noOrganization && facilities.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
