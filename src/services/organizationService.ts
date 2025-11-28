@@ -71,32 +71,20 @@ export async function getCurrentUserOrganizationDetails() {
  */
 export async function createPersonalOrganization(organizationName?: string) {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated');
-    }
+    const { data: orgId, error } = await supabase.rpc('create_user_organization', {
+      org_name: organizationName || null
+    });
 
-    // Create the organization
-    const { data: org, error: orgError } = await supabase
+    if (error) throw error;
+
+    // Fetch the created organization details
+    const { data: org, error: fetchError } = await supabase
       .from('organizations')
-      .insert({
-        name: organizationName || `${user.email}'s Organization`,
-      })
-      .select()
+      .select('*')
+      .eq('id', orgId)
       .single();
 
-    if (orgError) throw orgError;
-
-    // Add user as owner of the organization
-    const { error: memberError } = await supabase
-      .from('organization_members')
-      .insert({
-        organization_id: org.id,
-        user_id: user.id,
-        role: 'owner',
-      });
-
-    if (memberError) throw memberError;
+    if (fetchError) throw fetchError;
 
     return { data: org, error: null };
   } catch (error) {
