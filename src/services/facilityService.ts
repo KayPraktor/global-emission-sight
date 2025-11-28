@@ -1,9 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Facility, FacilityInsert } from '@/types/database';
+import { getCurrentUserOrganization } from './organizationService';
 
 export class FacilityService {
   /**
-   * Fetches all facilities for the current user
+   * Fetches all facilities for the current user's organization
    */
   static async getFacilities(): Promise<{ data: Facility[] | null; error: string | null }> {
     try {
@@ -12,10 +13,15 @@ export class FacilityService {
         throw new Error('User not authenticated');
       }
 
+      const organizationId = await getCurrentUserOrganization();
+      if (!organizationId) {
+        throw new Error('Please create or join an organization first');
+      }
+
       const { data, error } = await supabase
         .from('facilities')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -62,11 +68,16 @@ export class FacilityService {
   /**
    * Creates a new facility
    */
-  static async createFacility(facilityData: Omit<FacilityInsert, 'user_id'>): Promise<{ data: Facility | null; error: string | null }> {
+  static async createFacility(facilityData: Omit<FacilityInsert, 'user_id' | 'organization_id'>): Promise<{ data: Facility | null; error: string | null }> {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error('User not authenticated');
+      }
+
+      const organizationId = await getCurrentUserOrganization();
+      if (!organizationId) {
+        throw new Error('Please create or join an organization first');
       }
 
       const { data, error } = await supabase
@@ -74,6 +85,7 @@ export class FacilityService {
         .insert({
           ...facilityData,
           user_id: user.id,
+          organization_id: organizationId,
         })
         .select()
         .single();
@@ -93,18 +105,23 @@ export class FacilityService {
   /**
    * Updates an existing facility
    */
-  static async updateFacility(id: string, facilityData: Partial<Omit<FacilityInsert, 'user_id'>>): Promise<{ data: Facility | null; error: string | null }> {
+  static async updateFacility(id: string, facilityData: Partial<Omit<FacilityInsert, 'user_id' | 'organization_id'>>): Promise<{ data: Facility | null; error: string | null }> {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error('User not authenticated');
       }
 
+      const organizationId = await getCurrentUserOrganization();
+      if (!organizationId) {
+        throw new Error('Please create or join an organization first');
+      }
+
       const { data, error } = await supabase
         .from('facilities')
         .update(facilityData)
         .eq('id', id)
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .select()
         .single();
 
@@ -130,11 +147,16 @@ export class FacilityService {
         throw new Error('User not authenticated');
       }
 
+      const organizationId = await getCurrentUserOrganization();
+      if (!organizationId) {
+        throw new Error('Please create or join an organization first');
+      }
+
       const { error } = await supabase
         .from('facilities')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 
