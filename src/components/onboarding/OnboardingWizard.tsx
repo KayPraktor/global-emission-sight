@@ -175,9 +175,27 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   };
 
-  const handleQuickStartSelection = async () => {
+  const handleQuickStartSelection = async (action: 'import' | 'sample' | 'manual' | 'skip') => {
     await updateAnalytics({ step_reached: 3 });
-    setStep(3);
+    
+    if (action === 'import') {
+      // Navigate to data entry with import flag
+      onComplete();
+      navigate('/data-entry?action=import');
+    } else if (action === 'sample') {
+      // Set flag to show sample data and navigate to dashboard
+      localStorage.setItem('show_sample_data', 'true');
+      onComplete();
+      navigate('/');
+      toast.success('Loaded sample data! Explore the dashboard to see what BARYON can do.');
+    } else if (action === 'manual') {
+      // Navigate to data entry for manual wizard
+      onComplete();
+      navigate('/data-entry');
+    } else {
+      // Skip action - go to feedback
+      setStep(3);
+    }
   };
 
   const handleSubmitFeedback = async () => {
@@ -267,7 +285,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 transition={{ duration: 0.3 }}
               >
                 <h2 className="text-3xl font-bold mb-4">
-                  Welcome to CarbonTrack!
+                  Welcome to BARYON!
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8">
                   Let's get you started. What's your biggest challenge right now?
@@ -385,7 +403,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 </p>
 
                 <div className="space-y-4">
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('import')}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-primary/10 rounded-lg">
                         <Upload className="h-6 w-6 text-primary" />
@@ -405,7 +423,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                     </div>
                   </Card>
 
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('sample')}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-secondary/10 rounded-lg">
                         <Target className="h-6 w-6 text-secondary" />
@@ -425,7 +443,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                     </div>
                   </Card>
 
-                  <Card className="p-6 card-hover cursor-pointer" onClick={handleQuickStartSelection}>
+                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('manual')}>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-accent/10 rounded-lg">
                         <CheckCircle2 className="h-6 w-6 text-accent" />
@@ -450,7 +468,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   <Button variant="ghost" onClick={() => setStep(1)}>
                     Back
                   </Button>
-                  <Button variant="ghost" onClick={handleQuickStartSelection}>
+                  <Button variant="ghost" onClick={() => handleQuickStartSelection('skip')}>
                     Skip for now
                   </Button>
                 </div>
