@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import EmissionsForm from '@/components/EmissionsForm/EmissionsForm';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { EmissionsCSVImportDialog } from '@/components/EmissionsForm/EmissionsCSVImportDialog';
 
 const DataEntryPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showImportDialog, setShowImportDialog] = useState(false);
+
+  // Auto-open CSV import dialog if coming from onboarding
+  useEffect(() => {
+    if (searchParams.get('action') === 'import') {
+      setShowImportDialog(true);
+      // Clean up the URL
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
