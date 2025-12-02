@@ -79,6 +79,9 @@ export function AppSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {/* Overview Section */}
+          <div className="px-3 py-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Overview</span>
+          </div>
           {navItems.filter(item => item.section === 'overview').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
@@ -94,11 +97,10 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           
-          <div className="px-2 py-2">
-            <div className="h-px bg-border/50" />
-          </div>
-          
           {/* Data Management Section */}
+          <div className="px-3 py-2 mt-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Data Management</span>
+          </div>
           {navItems.filter(item => item.section === 'data').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
@@ -114,11 +116,10 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           
-          <div className="px-2 py-2">
-            <div className="h-px bg-border/50" />
-          </div>
-          
           {/* Analysis & Planning Section */}
+          <div className="px-3 py-2 mt-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Analysis & Planning</span>
+          </div>
           {navItems.filter(item => item.section === 'analysis').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
@@ -134,11 +135,10 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           
-          <div className="px-2 py-2">
-            <div className="h-px bg-border/50" />
-          </div>
-          
           {/* Reporting Section */}
+          <div className="px-3 py-2 mt-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Reporting</span>
+          </div>
           {navItems.filter(item => item.section === 'reporting').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
@@ -154,11 +154,10 @@ export function AppSidebar() {
             </SidebarMenuItem>
           ))}
           
-          <div className="px-2 py-2">
-            <div className="h-px bg-border/50" />
-          </div>
-          
           {/* Administration Section */}
+          <div className="px-3 py-2 mt-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Administration</span>
+          </div>
           {navItems.filter(item => item.section === 'admin').map((item) => (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
