@@ -38,7 +38,6 @@ import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
 import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
-import { QuickActionsPanel } from '@/components/Dashboard/QuickActionsPanel';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -261,9 +260,6 @@ const Index = () => {
       
       {/* Personalized Welcome Message */}
       <PersonalizedWelcome />
-      
-      {/* Quick Actions Panel */}
-      <QuickActionsPanel />
 
       <FadeIn>
         <div className="space-y-3">
