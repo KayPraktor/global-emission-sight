@@ -38,8 +38,6 @@ import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
 import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
-import { EmptyStateDashboard } from '@/components/Dashboard/EmptyStateDashboard';
-import { QuickActionsBar } from '@/components/Dashboard/QuickActionsBar';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -256,20 +254,6 @@ const Index = () => {
       navigate(route);
     }
   };
-
-  // Check if user has no data - show empty state
-  const hasNoData = !isLoading && (!analyticsData || analyticsData.totalEmissions === 0);
-
-  // Show empty state for new users
-  if (hasNoData) {
-    return (
-      <div className="space-y-6">
-        <PerformanceMonitor componentName="Dashboard" />
-        <EmptyStateDashboard />
-      </div>
-    );
-  }
-
   return <div className="space-y-6">
       {/* Performance Monitor */}
       <PerformanceMonitor componentName="Dashboard" />
@@ -302,9 +286,6 @@ const Index = () => {
           </div>
         </div>
       </FadeIn>
-
-      {/* Quick Actions Bar */}
-      <QuickActionsBar />
       
       <SlideIn direction="up" delay={0.1}>
         {isLoading ? (
