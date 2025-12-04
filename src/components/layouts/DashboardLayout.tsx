@@ -1,9 +1,9 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AppSidebar } from '@/components/navigation/AppSidebar';
 import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
-import { EnhancedNavigation } from '@/components/navigation/EnhancedNavigation';
 import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { Sidebar, SidebarContent, SidebarInset, SidebarRail, useSidebar } from '@/components/ui/sidebar';
@@ -47,12 +47,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Atom className="h-6 w-6 mr-2" />
                 BARYON
               </Link>
-              
-              {!isMobile && (
-                <div className="hidden md:flex">
-                  <EnhancedNavigation />
-                </div>
-              )}
             </div>
             
             <div className="flex items-center gap-2">
