@@ -45,13 +45,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
               <Link to="/" className="text-primary text-xl font-bold flex items-center">
                 <Atom className="h-6 w-6 mr-2" />
-                <span>
-                  BARY
-                  <span className="inline-block w-0 relative">
-                    <span className="absolute top-1/2 left-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-subtle" />
-                  </span>
-                  ON
-                </span>
+                BARYON
               </Link>
             </div>
             
