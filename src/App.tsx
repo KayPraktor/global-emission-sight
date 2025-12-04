@@ -18,6 +18,7 @@ import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
 import ScenarioPlanningPage from "./pages/ScenarioPlanningPage";
 import EmissionFactorsPage from "./pages/EmissionFactorsPage";
 import AdminPage from "./pages/AdminPage";
+import SettingsPage from "./pages/SettingsPage";
 import ROICalculator from "./pages/ROICalculator";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
@@ -62,6 +63,7 @@ function App() {
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
                           <Route path="/admin" element={<AdminPage />} />
+                          <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
