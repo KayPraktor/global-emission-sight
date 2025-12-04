@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
 import { NotificationPreferences } from '@/components/settings/NotificationPreferences';
@@ -8,8 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User, Building2, Bell, Palette, FileText } from 'lucide-react';
 
 const SettingsPage = () => {
+  const [searchParams] = useSearchParams();
   const { organization } = useAuth();
   const isOrgAdminOrOwner = organization?.role === 'owner' || organization?.role === 'admin';
+  const defaultTab = searchParams.get('tab') || 'profile';
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -20,7 +23,7 @@ const SettingsPage = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-transparent p-0">
           <TabsTrigger 
             value="profile" 

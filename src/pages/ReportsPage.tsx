@@ -1,12 +1,13 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import EmissionsReport from '@/components/Reports/EmissionsReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
-import { BrandingSettings } from '@/components/Reports/BrandingSettings';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
+import { Settings } from 'lucide-react';
 
 const ReportsPage = () => {
   return (
@@ -26,17 +27,25 @@ const ReportsPage = () => {
           </TabsList>
           
           <TabsContent value="monthly" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <MonthlyReportGenerator />
-              <BrandingSettings />
-            </div>
+            <MonthlyReportGenerator />
+            <Link 
+              to="/settings?tab=branding" 
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Customize report branding in Settings
+            </Link>
           </TabsContent>
           
           <TabsContent value="comprehensive" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <ComprehensiveReportGenerator />
-              <BrandingSettings />
-            </div>
+            <ComprehensiveReportGenerator />
+            <Link 
+              to="/settings?tab=branding" 
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Customize report branding in Settings
+            </Link>
           </TabsContent>
           
           <TabsContent value="data">
