@@ -82,7 +82,7 @@ export const QualityAlertsWidget: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/advanced-analytics?tab=quality')}
+              onClick={() => navigate('/analytics?tab=quality')}
             >
               View All
               <ArrowRight className="h-4 w-4 ml-1" />
@@ -168,7 +168,7 @@ export const QualityAlertsWidget: React.FC = () => {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => navigate('/advanced-analytics?tab=quality')}
+              onClick={() => navigate('/analytics?tab=quality')}
             >
               Review & Fix Issues
             </Button>

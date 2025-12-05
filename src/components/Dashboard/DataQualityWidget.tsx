@@ -106,7 +106,7 @@ export const DataQualityWidget: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/advanced-analytics?tab=quality')}
+            onClick={() => navigate('/analytics?tab=quality')}
           >
             View Details
             <ArrowRight className="h-4 w-4 ml-1" />

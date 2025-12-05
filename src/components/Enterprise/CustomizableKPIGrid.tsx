@@ -46,7 +46,7 @@ export const CustomizableKPIGrid: React.FC<CustomizableKPIGridProps> = ({
     if (title.includes('emissions') || title.includes('carbon intensity')) {
       return '/data-entry';
     } else if (title.includes('compliance') || title.includes('data quality')) {
-      return '/advanced-analytics?tab=quality';
+      return '/analytics?tab=quality';
     } else if (title.includes('cost') || title.includes('risk')) {
       return '/reports';
     } else if (title.includes('net zero') || title.includes('target')) {
