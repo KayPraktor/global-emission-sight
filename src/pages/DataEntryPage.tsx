@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import EmissionsForm from '@/components/EmissionsForm/EmissionsForm';
+import { IndustryAwareWizard } from '@/components/EmissionsForm/IndustryAwareWizard';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { EmissionsCSVImportDialog } from '@/components/EmissionsForm/EmissionsCSVImportDialog';
@@ -36,7 +36,7 @@ const DataEntryPage = () => {
           </Button>
         </div>
         
-        <EmissionsForm />
+        <IndustryAwareWizard />
 
         <EmissionsCSVImportDialog
           open={showImportDialog}
