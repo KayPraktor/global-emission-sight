@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Target, Shield, TrendingUp, ChevronRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, Target, Shield, TrendingUp, ChevronRight, Sparkles, Factory, Zap, Landmark, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { industries, getIndustryTip } from '@/data/industryConfig';
 
 interface WelcomeMessage {
   priority: 'compliance' | 'quality' | 'goal' | 'default';
@@ -22,6 +23,8 @@ interface WelcomeMessage {
 const PersonalizedWelcome: React.FC = () => {
   const [welcomeMessage, setWelcomeMessage] = useState<WelcomeMessage | null>(null);
   const [userName, setUserName] = useState<string>('');
+  const [industryTip, setIndustryTip] = useState<string | null>(null);
+  const [industryName, setIndustryName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -47,6 +50,20 @@ const PersonalizedWelcome: React.FC = () => {
           .single();
 
         if (!orgMember) return;
+
+        // Get organization industry for personalized tips
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('industry, sub_industry')
+          .eq('id', orgMember.organization_id)
+          .single();
+
+        if (orgData?.industry) {
+          const tip = getIndustryTip(orgData.industry);
+          setIndustryTip(tip);
+          const industryConfig = industries.find(i => i.id === orgData.industry);
+          setIndustryName(industryConfig?.name || null);
+        }
 
         // Check 1: Urgent compliance deadlines (within 7 days)
         const { data: urgentDeadlines } = await supabase
@@ -165,22 +182,22 @@ const PersonalizedWelcome: React.FC = () => {
   const getBgGradient = () => {
     switch (welcomeMessage.severity) {
       case 'error':
-        return 'from-red-50 to-red-100/50';
+        return 'from-red-50 to-red-100/50 dark:from-red-950/30 dark:to-red-900/20';
       case 'warning':
-        return 'from-amber-50 to-amber-100/50';
+        return 'from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20';
       default:
-        return 'from-blue-50 to-blue-100/50';
+        return 'from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20';
     }
   };
 
   const getIconColor = () => {
     switch (welcomeMessage.severity) {
       case 'error':
-        return 'text-red-600';
+        return 'text-red-600 dark:text-red-400';
       case 'warning':
-        return 'text-amber-600';
+        return 'text-amber-600 dark:text-amber-400';
       default:
-        return 'text-blue-600';
+        return 'text-blue-600 dark:text-blue-400';
     }
   };
 
@@ -189,6 +206,7 @@ const PersonalizedWelcome: React.FC = () => {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="space-y-3"
     >
       <GlassmorphismCard variant="light" className={`p-6 bg-gradient-to-r ${getBgGradient()} border-2`}>
         <div className="flex items-start justify-between gap-4">
@@ -226,6 +244,23 @@ const PersonalizedWelcome: React.FC = () => {
           </Button>
         </div>
       </GlassmorphismCard>
+
+      {/* Industry Tip */}
+      {industryTip && industryName && welcomeMessage.severity === 'info' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+            <Factory className="h-5 w-5 text-muted-foreground" />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-muted-foreground">{industryName} Tip</p>
+              <p className="text-sm">{industryTip}</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
