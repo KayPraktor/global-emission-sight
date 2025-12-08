@@ -159,3 +159,8 @@ export const industryTips: Record<string, string[]> = {
     'Engage stakeholders in your climate journey'
   ]
 };
+
+export const getIndustryTip = (industryId: string): string => {
+  const tips = industryTips[industryId] || industryTips.other;
+  return tips[Math.floor(Math.random() * tips.length)];
+};

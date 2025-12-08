@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Building2 } from 'lucide-react';
+import { getOrganizationIndustry } from '@/services/industryService';
 
 interface Benchmark {
   industry: string;
@@ -24,6 +25,8 @@ export function BenchmarkingDashboard() {
   const [selectedMetric, setSelectedMetric] = useState<string>('per_revenue');
   const [userValue, setUserValue] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userIndustry, setUserIndustry] = useState<string | null>(null);
+  const [orgData, setOrgData] = useState<{ employee_count?: number; annual_revenue_usd?: number; square_footage?: number } | null>(null);
 
   useEffect(() => {
     loadBenchmarks();
@@ -33,10 +36,32 @@ export function BenchmarkingDashboard() {
     if (selectedIndustry) {
       calculateUserValue();
     }
-  }, [selectedIndustry, selectedMetric]);
+  }, [selectedIndustry, selectedMetric, orgData]);
 
   const loadBenchmarks = async () => {
     try {
+      // First, get user's organization industry
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: orgMember } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (orgMember) {
+          const industryData = await getOrganizationIndustry(orgMember.organization_id);
+          if (industryData) {
+            setUserIndustry(industryData.industry);
+            setOrgData({
+              employee_count: industryData.employee_count ?? undefined,
+              annual_revenue_usd: industryData.annual_revenue_usd ?? undefined,
+              square_footage: industryData.square_footage ?? undefined,
+            });
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from('industry_benchmarks')
         .select('*')
@@ -45,7 +70,11 @@ export function BenchmarkingDashboard() {
       if (error) throw error;
       
       const industries = Array.from(new Set(data?.map(b => b.industry) || []));
-      if (industries.length > 0 && !selectedIndustry) {
+      
+      // Auto-select user's industry if available, otherwise first industry
+      if (userIndustry && industries.includes(userIndustry)) {
+        setSelectedIndustry(userIndustry);
+      } else if (industries.length > 0 && !selectedIndustry) {
         setSelectedIndustry(industries[0]);
       }
       
@@ -56,6 +85,16 @@ export function BenchmarkingDashboard() {
       setLoading(false);
     }
   };
+
+  // Update selected industry when user industry is loaded
+  useEffect(() => {
+    if (userIndustry && benchmarks.length > 0) {
+      const industries = Array.from(new Set(benchmarks.map(b => b.industry)));
+      if (industries.includes(userIndustry)) {
+        setSelectedIndustry(userIndustry);
+      }
+    }
+  }, [userIndustry, benchmarks]);
 
   const calculateUserValue = async () => {
     try {
@@ -73,19 +112,18 @@ export function BenchmarkingDashboard() {
         0
       ) || 0;
 
-      // Get facility data for normalization
-      const { data: facilities } = await supabase
-        .from('facilities')
-        .select('*')
-        .eq('user_id', user.id);
+      // Use actual organization data if available
+      const revenue = orgData?.annual_revenue_usd || 10000000; // Default $10M
+      const employees = orgData?.employee_count || 100; // Default 100
+      const sqft = orgData?.square_footage || 50000; // Default 50,000 sq ft
 
-      // For now, use a simple estimate (revenue $10M, 100 employees)
-      // In production, this would come from facility/organization data
       let normalizedValue = 0;
       if (selectedMetric === 'per_revenue') {
-        normalizedValue = (totalEmissions / 1000) / 10; // tCO2e per $M
+        normalizedValue = (totalEmissions / 1000) / (revenue / 1000000); // tCO2e per $M
       } else if (selectedMetric === 'per_employee') {
-        normalizedValue = (totalEmissions / 1000) / 100; // tCO2e per FTE
+        normalizedValue = (totalEmissions / 1000) / employees; // tCO2e per FTE
+      } else if (selectedMetric === 'per_sqft') {
+        normalizedValue = (totalEmissions / 1000) / (sqft / 1000); // tCO2e per 1000 sq ft
       }
 
       setUserValue(normalizedValue);
@@ -135,13 +173,15 @@ export function BenchmarkingDashboard() {
     ? getPercentileRank(userValue, currentBenchmark) 
     : null;
 
+  const isUserIndustry = selectedIndustry === userIndustry;
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-500" />
+              <Target className="h-5 w-5 text-primary" />
               Industry Benchmarking
             </CardTitle>
             <CardDescription>
@@ -176,11 +216,25 @@ export function BenchmarkingDashboard() {
               <SelectContent>
                 {industries.map(industry => (
                   <SelectItem key={industry} value={industry}>
-                    {industry}
+                    <div className="flex items-center gap-2">
+                      {industry}
+                      {industry === userIndustry && (
+                        <Badge variant="outline" className="text-xs ml-2">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          Your Industry
+                        </Badge>
+                      )}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {isUserIndustry && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                Showing benchmarks for your industry
+              </p>
+            )}
           </div>
           <div>
             <label className="text-sm font-medium mb-2 block">Metric</label>
