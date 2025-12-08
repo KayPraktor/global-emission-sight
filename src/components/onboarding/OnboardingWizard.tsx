@@ -20,13 +20,18 @@ import {
   Star,
   Send
 } from 'lucide-react';
+import { IndustrySelector } from './IndustrySelector';
+import { SubIndustrySelector } from './SubIndustrySelector';
+import { updateOrganizationIndustry } from '@/services/industryService';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
 }
 
 export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at step 0 (industry selection)
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const [selectedSubIndustry, setSelectedSubIndustry] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const [customInput, setCustomInput] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -41,6 +46,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
   const [improvements, setImprovements] = useState<string>('');
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const navigate = useNavigate();
 
@@ -81,11 +87,22 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get organization ID
+      const { data: orgMember } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (orgMember) {
+        setOrganizationId(orgMember.organization_id);
+      }
+
       const { data, error } = await supabase
         .from('onboarding_analytics')
         .insert({
           user_id: user.id,
-          step_reached: 1,
+          step_reached: 0,
         })
         .select()
         .single();
@@ -97,6 +114,27 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
     trackOnboardingStart();
   }, []);
+
+  const handleIndustrySelect = async (industryId: string) => {
+    setSelectedIndustry(industryId);
+    setSelectedSubIndustry(null);
+  };
+
+  const handleIndustryContinue = async () => {
+    if (!selectedIndustry || !organizationId) {
+      toast.error('Please select an industry');
+      return;
+    }
+
+    try {
+      await updateOrganizationIndustry(organizationId, selectedIndustry, selectedSubIndustry);
+      await updateAnalytics({ step_reached: 1 });
+      setStep(1);
+    } catch (error) {
+      console.error('Error saving industry:', error);
+      toast.error('Failed to save industry selection');
+    }
+  };
 
   // Update analytics when step changes
   const updateAnalytics = async (updates: any) => {
@@ -259,7 +297,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
   };
 
-  const progress = (step / 3) * 100;
+  const progress = (step / 4) * 100;
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -272,10 +310,51 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
         <Card className="p-8">
           <div className="mb-8">
             <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
+            <p className="text-sm text-muted-foreground mt-2">Step {step + 1} of 4</p>
           </div>
 
           <AnimatePresence mode="wait">
+            {step === 0 && (
+              <motion.div
+                key="step0"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h2 className="text-3xl font-bold mb-4">Welcome to BARYON!</h2>
+                <p className="text-lg text-muted-foreground mb-6">
+                  First, tell us about your industry so we can personalize your experience.
+                </p>
+
+                <IndustrySelector
+                  selectedIndustry={selectedIndustry}
+                  onSelect={handleIndustrySelect}
+                />
+
+                {selectedIndustry && (
+                  <div className="mt-6">
+                    <SubIndustrySelector
+                      industry={selectedIndustry}
+                      selectedSubIndustry={selectedSubIndustry}
+                      onSelect={setSelectedSubIndustry}
+                    />
+                  </div>
+                )}
+
+                <div className="mt-8 flex justify-end">
+                  <Button 
+                    onClick={handleIndustryContinue}
+                    disabled={!selectedIndustry}
+                    size="lg"
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
             {step === 1 && (
               <motion.div
                 key="step1"

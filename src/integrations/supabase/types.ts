@@ -1211,6 +1211,180 @@ export type Database = {
         }
         Relationships: []
       }
+      industry_compliance_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          framework_name: string
+          id: string
+          industry: string
+          jurisdiction: string | null
+          key_requirements: string[] | null
+          reporting_frequency: string | null
+          required_scopes: string[] | null
+          typical_deadlines: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          framework_name: string
+          id?: string
+          industry: string
+          jurisdiction?: string | null
+          key_requirements?: string[] | null
+          reporting_frequency?: string | null
+          required_scopes?: string[] | null
+          typical_deadlines?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          framework_name?: string
+          id?: string
+          industry?: string
+          jurisdiction?: string | null
+          key_requirements?: string[] | null
+          reporting_frequency?: string | null
+          required_scopes?: string[] | null
+          typical_deadlines?: Json | null
+        }
+        Relationships: []
+      }
+      industry_emission_factors: {
+        Row: {
+          activity_type: string
+          category: string
+          created_at: string | null
+          factor_value: number
+          id: string
+          industry: string
+          methodology: string | null
+          name: string
+          notes: string | null
+          region: string | null
+          scope: string
+          source: string
+          sub_industry: string | null
+          uncertainty: number | null
+          unit: string
+          updated_at: string | null
+          year: number | null
+        }
+        Insert: {
+          activity_type: string
+          category: string
+          created_at?: string | null
+          factor_value: number
+          id?: string
+          industry: string
+          methodology?: string | null
+          name: string
+          notes?: string | null
+          region?: string | null
+          scope: string
+          source: string
+          sub_industry?: string | null
+          uncertainty?: number | null
+          unit: string
+          updated_at?: string | null
+          year?: number | null
+        }
+        Update: {
+          activity_type?: string
+          category?: string
+          created_at?: string | null
+          factor_value?: number
+          id?: string
+          industry?: string
+          methodology?: string | null
+          name?: string
+          notes?: string | null
+          region?: string | null
+          scope?: string
+          source?: string
+          sub_industry?: string | null
+          uncertainty?: number | null
+          unit?: string
+          updated_at?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
+      industry_kpi_presets: {
+        Row: {
+          benchmark_high: number | null
+          benchmark_low: number | null
+          benchmark_medium: number | null
+          calculation_method: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          industry: string
+          kpi_key: string
+          kpi_name: string
+          unit: string
+        }
+        Insert: {
+          benchmark_high?: number | null
+          benchmark_low?: number | null
+          benchmark_medium?: number | null
+          calculation_method?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          industry: string
+          kpi_key: string
+          kpi_name: string
+          unit: string
+        }
+        Update: {
+          benchmark_high?: number | null
+          benchmark_low?: number | null
+          benchmark_medium?: number | null
+          calculation_method?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          industry?: string
+          kpi_key?: string
+          kpi_name?: string
+          unit?: string
+        }
+        Relationships: []
+      }
+      industry_sub_industries: {
+        Row: {
+          created_at: string | null
+          display_name: string
+          emission_categories: string[] | null
+          id: string
+          industry: string
+          sub_industry: string
+          typical_scopes: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name: string
+          emission_categories?: string[] | null
+          id?: string
+          industry: string
+          sub_industry: string
+          typical_scopes?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string
+          emission_categories?: string[] | null
+          id?: string
+          industry?: string
+          sub_industry?: string
+          typical_scopes?: string[] | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -1382,25 +1556,79 @@ export type Database = {
       }
       organizations: {
         Row: {
+          annual_revenue_usd: number | null
           created_at: string
+          employee_count: number | null
           id: string
+          industry: string | null
           metadata: Json | null
           name: string
+          square_footage: number | null
+          sub_industry: string | null
           updated_at: string
         }
         Insert: {
+          annual_revenue_usd?: number | null
           created_at?: string
+          employee_count?: number | null
           id?: string
+          industry?: string | null
           metadata?: Json | null
           name: string
+          square_footage?: number | null
+          sub_industry?: string | null
           updated_at?: string
         }
         Update: {
+          annual_revenue_usd?: number | null
           created_at?: string
+          employee_count?: number | null
           id?: string
+          industry?: string | null
           metadata?: Json | null
           name?: string
+          square_footage?: number | null
+          sub_industry?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      process_calculators: {
+        Row: {
+          calculator_key: string
+          calculator_name: string
+          created_at: string | null
+          description: string | null
+          formula: string
+          id: string
+          industry: string
+          input_fields: Json
+          output_unit: string
+          sub_industry: string | null
+        }
+        Insert: {
+          calculator_key: string
+          calculator_name: string
+          created_at?: string | null
+          description?: string | null
+          formula: string
+          id?: string
+          industry: string
+          input_fields?: Json
+          output_unit: string
+          sub_industry?: string | null
+        }
+        Update: {
+          calculator_key?: string
+          calculator_name?: string
+          created_at?: string | null
+          description?: string | null
+          formula?: string
+          id?: string
+          industry?: string
+          input_fields?: Json
+          output_unit?: string
+          sub_industry?: string | null
         }
         Relationships: []
       }
@@ -1992,6 +2220,17 @@ export type Database = {
         | "at_risk"
         | "completed"
         | "overdue"
+      industry_type:
+        | "manufacturing"
+        | "energy_utilities"
+        | "financial_services"
+        | "technology"
+        | "healthcare_pharma"
+        | "retail_consumer"
+        | "transportation_logistics"
+        | "construction_real_estate"
+        | "agriculture_food"
+        | "other"
       org_role: "owner" | "admin" | "member"
       report_status: "draft" | "pending" | "approved" | "published"
     }
@@ -2161,6 +2400,18 @@ export const Constants = {
         "at_risk",
         "completed",
         "overdue",
+      ],
+      industry_type: [
+        "manufacturing",
+        "energy_utilities",
+        "financial_services",
+        "technology",
+        "healthcare_pharma",
+        "retail_consumer",
+        "transportation_logistics",
+        "construction_real_estate",
+        "agriculture_food",
+        "other",
       ],
       org_role: ["owner", "admin", "member"],
       report_status: ["draft", "pending", "approved", "published"],
