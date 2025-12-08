@@ -26,6 +26,7 @@ import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
+import { IndustryKPIPanel } from '@/components/Industry/IndustryKPIPanel';
 import StrategicIntelligencePanel from '@/components/Dashboard/StrategicIntelligencePanel';
 import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
 import { DataQualityWidget } from '@/components/Dashboard/DataQualityWidget';
@@ -506,6 +507,19 @@ const Index = () => {
           </div>
         </GlassmorphismCard>
       </StaggeredList>
+
+      {/* Industry-Specific KPIs */}
+      <SectionHeader
+        icon={BarChart3}
+        title="Industry KPIs"
+        subtitle="Performance metrics tailored to your industry"
+        helpText="These KPIs are automatically selected based on your organization's industry. Update your industry in Settings > Organization."
+        lastUpdated="2025-01-15T14:30:00Z"
+      />
+      
+      <SlideIn direction="up" delay={0.3}>
+        <IndustryKPIPanel />
+      </SlideIn>
 
       {/* Performance Intelligence Section - Collapsible */}
       <motion.div 
