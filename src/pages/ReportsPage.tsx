@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import EmissionsReport from '@/components/Reports/EmissionsReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
+import IndustryReportTemplates from '@/components/Reports/IndustryReportTemplates';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
@@ -23,7 +24,8 @@ const ReportsPage = () => {
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
             <TabsTrigger value="comprehensive">Quarterly & Annual</TabsTrigger>
             <TabsTrigger value="data">Data Reports</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="industry">Industry Templates</TabsTrigger>
+            <TabsTrigger value="templates">All Templates</TabsTrigger>
           </TabsList>
           
           <TabsContent value="monthly" className="space-y-6">
@@ -56,6 +58,10 @@ const ReportsPage = () => {
               </div>
               <EmissionsReport />
             </div>
+          </TabsContent>
+
+          <TabsContent value="industry">
+            <IndustryReportTemplates />
           </TabsContent>
           
           <TabsContent value="templates">

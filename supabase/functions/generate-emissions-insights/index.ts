@@ -17,6 +17,47 @@ interface Insight {
   timeframe: string;
 }
 
+// Industry-specific guidance for AI recommendations
+function getIndustrySpecificGuidance(industry: string | null, subIndustry: string | null): string {
+  if (!industry) return '';
+
+  const guidance: Record<string, Record<string, string>> = {
+    manufacturing: {
+      cement: 'Consider clinker-to-cement ratio optimization, alternative fuels in kilns, carbon capture technologies, and waste heat recovery systems.',
+      steel: 'Evaluate transition from BF-BOF to EAF pathway, scrap utilization rates, hydrogen-based reduction technologies, and renewable electricity procurement.',
+      automotive: 'Focus on paint booth efficiency, compressed air optimization, electrification of material handling, and supply chain Scope 3 reduction.',
+      chemicals: 'Analyze feedstock alternatives, steam cracker efficiency, process heat electrification, and methane leak detection programs.',
+      food_beverage: 'Prioritize refrigeration system upgrades, cold chain optimization, boiler efficiency, and agricultural supply chain engagement.',
+      textiles: 'Consider dyeing process optimization, waterless dyeing technologies, renewable thermal energy, and fiber sourcing sustainability.',
+      default: 'Focus on process efficiency improvements, equipment upgrades, energy management systems, and supply chain engagement for Scope 3.'
+    },
+    energy: {
+      default: 'Prioritize renewable energy transition, grid efficiency, methane leak reduction, and carbon capture deployment.'
+    },
+    financial_services: {
+      default: 'Focus on financed emissions (Scope 3 Category 15), office energy efficiency, business travel reduction, and sustainable investment policies.'
+    },
+    healthcare: {
+      default: 'Prioritize anesthetic gas management, medical equipment efficiency, building energy optimization, and pharmaceutical supply chain.'
+    },
+    technology: {
+      default: 'Focus on data center efficiency (PUE optimization), renewable energy procurement, product lifecycle emissions, and remote work policies.'
+    },
+    retail: {
+      default: 'Prioritize store energy efficiency, refrigeration optimization, logistics emissions, and product lifecycle/supply chain engagement.'
+    }
+  };
+
+  const industryGuidance = guidance[industry.toLowerCase()];
+  if (!industryGuidance) return '';
+
+  if (subIndustry && industryGuidance[subIndustry.toLowerCase()]) {
+    return industryGuidance[subIndustry.toLowerCase()];
+  }
+
+  return industryGuidance.default || '';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -44,6 +85,41 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Fetch user's organization and industry context
+    const { data: orgMembership } = await supabaseClient
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .single();
+
+    let industryContext = { industry: null as string | null, subIndustry: null as string | null };
+    let industryBenchmarks: { metric_type: string; p50: number; unit: string }[] = [];
+
+    if (orgMembership?.organization_id) {
+      const { data: org } = await supabaseClient
+        .from('organizations')
+        .select('industry, sub_industry')
+        .eq('id', orgMembership.organization_id)
+        .single();
+
+      if (org) {
+        industryContext = { industry: org.industry, subIndustry: org.sub_industry };
+
+        // Fetch industry benchmarks for comparison
+        if (org.industry) {
+          const { data: benchmarks } = await supabaseClient
+            .from('industry_benchmarks')
+            .select('metric_type, p50, unit')
+            .eq('industry', org.industry)
+            .limit(5);
+          
+          if (benchmarks) {
+            industryBenchmarks = benchmarks;
+          }
+        }
+      }
     }
 
     // Fetch emissions data for analysis
@@ -110,8 +186,20 @@ serve(async (req) => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
+    // Build industry context for AI prompt
+    const industryInfo = industryContext.industry 
+      ? `\nIndustry Context:
+- Industry: ${industryContext.industry}${industryContext.subIndustry ? `\n- Sub-Industry: ${industryContext.subIndustry}` : ''}
+${industryBenchmarks.length > 0 ? `\nIndustry Benchmarks:
+${industryBenchmarks.map(b => `- ${b.metric_type}: ${b.p50} ${b.unit} (median)`).join('\n')}` : ''}`
+      : '';
+
+    const industryRecommendations = getIndustrySpecificGuidance(industryContext.industry, industryContext.subIndustry);
+
     // Call Lovable AI
-    const systemPrompt = `You are an expert carbon management consultant analyzing emissions data. 
+    const systemPrompt = `You are an expert carbon management consultant analyzing emissions data.
+${industryContext.industry ? `You are specifically advising a ${industryContext.industry}${industryContext.subIndustry ? ` (${industryContext.subIndustry})` : ''} company.` : ''}
+
 Provide actionable insights based on the data provided.
 
 Format your response using the generate_insights function with structured recommendations that include:
@@ -119,6 +207,8 @@ Format your response using the generate_insights function with structured recomm
 2. Impact (why it matters)
 3. Recommendation (specific action to take)
 4. Expected outcome (quantified benefit)
+
+${industryRecommendations ? `Industry-specific considerations:\n${industryRecommendations}` : ''}
 
 Focus on the most impactful opportunities for emission reductions.`;
 
@@ -132,12 +222,13 @@ Scope Breakdown:
 
 Top Emission Categories:
 ${topCategories.map(([cat, val]) => `- ${cat}: ${val.toFixed(2)} tCO2e`).join('\n')}
+${industryInfo}
 
 Number of Facilities: ${facilities?.length || 0}
 Number of Goals: ${goals?.length || 0}
 Data Points: ${emissions.length}
 
-Provide insights focusing on efficiency improvements, reduction opportunities, and risk mitigation.`;
+Provide insights focusing on efficiency improvements, reduction opportunities, and risk mitigation.${industryContext.industry ? ` Prioritize industry-specific recommendations for ${industryContext.industry}.` : ''}`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
