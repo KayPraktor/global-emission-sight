@@ -16,8 +16,19 @@ import {
   Zap,
   Building2,
   Target,
-  ArrowRight
+  ArrowLeft
 } from 'lucide-react';
+
+// Helper to convert numbers to Persian numerals
+const toPersianNumber = (num: number | string): string => {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return num.toString().replace(/\d/g, (d) => persianDigits[parseInt(d)]);
+};
+
+// Format currency in Persian
+const formatPersianCurrency = (num: number): string => {
+  return toPersianNumber(num.toLocaleString()) + ' دلار';
+};
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -29,10 +40,10 @@ export default function LandingPage() {
 
   const calculateROI = () => {
     const consultantSavings = roiInputs.consultantFees * 0.6;
-    const timeSavings = roiInputs.fteHours * 52 * 75 * 0.6; // weekly hours * weeks * hourly rate * efficiency gain
+    const timeSavings = roiInputs.fteHours * 52 * 75 * 0.6;
     const penaltyAvoidance = roiInputs.missedDeadlines * 50000;
     const totalAnnualSavings = consultantSavings + timeSavings + penaltyAvoidance;
-    const platformCost = 25000; // estimated annual platform cost
+    const platformCost = 25000;
     const netSavings = totalAnnualSavings - platformCost;
     const roi = ((netSavings / platformCost) * 100).toFixed(0);
     const paybackMonths = ((platformCost / totalAnnualSavings) * 12).toFixed(1);
@@ -45,26 +56,26 @@ export default function LandingPage() {
   const painPoints = [
     {
       icon: Clock,
-      title: "Drowning in spreadsheets?",
-      description: "VP of Sustainability teams spend 40+ hours/month on manual data consolidation and reporting",
+      title: "غرق در صفحات اکسل هستید؟",
+      description: "تیم‌های معاونت پایداری بیش از ۴۰ ساعت در ماه را صرف تجمیع دستی داده‌ها و گزارش‌گیری می‌کنند",
       color: "text-destructive"
     },
     {
       icon: AlertCircle,
-      title: "Terrified of missing CDP deadlines?",
-      description: "Failed audits and compliance penalties can cost $100K+ and damage stakeholder trust",
+      title: "از دست دادن ددلاین‌های CDP نگرانتان می‌کند؟",
+      description: "شکست ممیزی و جریمه‌های عدم انطباق می‌تواند بیش از ۱۰۰ هزار دلار هزینه و اعتماد ذینفعان را خدشه‌دار کند",
       color: "text-orange-500"
     },
     {
       icon: DollarSign,
-      title: "Consultant fees eating your budget?",
-      description: "External consultants charge $120K-250K annually for what our platform automates",
+      title: "هزینه‌های مشاوران بودجه‌تان را می‌بلعد؟",
+      description: "مشاوران خارجی سالانه ۱۲۰ تا ۲۵۰ هزار دلار برای کاری که پلتفرم ما خودکار انجام می‌دهد، هزینه می‌کنند",
       color: "text-destructive"
     },
     {
       icon: Target,
-      title: "CEO asking for Net Zero progress?",
-      description: "Executive dashboards that answer leadership questions in seconds, not weeks",
+      title: "مدیرعامل از پیشرفت Net Zero می‌پرسد؟",
+      description: "داشبوردهای مدیریتی که به سوالات مدیران در چند ثانیه پاسخ می‌دهند، نه چند هفته",
       color: "text-primary"
     }
   ];
@@ -72,47 +83,47 @@ export default function LandingPage() {
   const features = [
     {
       icon: Clock,
-      title: "Reduce reporting time by 60%",
-      description: "Automated data validation and report generation"
+      title: "کاهش ۶۰٪ زمان گزارش‌گیری",
+      description: "اعتبارسنجی خودکار داده‌ها و تولید گزارش"
     },
     {
       icon: Shield,
-      title: "Never miss a compliance deadline",
-      description: "Automated tracking for CDP, TCFD, CSRD, SBTi"
+      title: "هرگز یک ددلاین انطباق را از دست ندهید",
+      description: "پیگیری خودکار CDP، TCFD، CSRD، SBTi"
     },
     {
       icon: Zap,
-      title: "AI-powered anomaly detection",
-      description: "Catch data errors before they become audit issues"
+      title: "تشخیص ناهنجاری با هوش مصنوعی",
+      description: "کشف خطاهای داده قبل از تبدیل شدن به مشکلات ممیزی"
     },
     {
       icon: LineChart,
-      title: "Executive dashboards",
-      description: "Real-time visibility into Net Zero progress and KPIs"
+      title: "داشبوردهای مدیریتی",
+      description: "دید لحظه‌ای به پیشرفت Net Zero و شاخص‌های کلیدی عملکرد"
     }
   ];
 
   const complianceLogos = ['CDP', 'TCFD', 'CSRD', 'SBTi', 'GRI', 'ISO 14064'];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div dir="rtl" className="min-h-screen bg-background font-persian">
       {/* Navigation */}
       <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Building2 className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold gradient-heading">CarbonTrack</span>
+              <span className="text-2xl font-bold gradient-heading">کربن‌ترک</span>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="ghost" onClick={() => navigate('/roi-calculator')}>
-                ROI Calculator
+                محاسبه‌گر بازگشت سرمایه
               </Button>
               <Button variant="outline" onClick={() => navigate('/auth')}>
-                Sign In
+                ورود
               </Button>
               <Button onClick={() => navigate('/auth')}>
-                Start Free Trial
+                شروع دوره آزمایشی رایگان
               </Button>
             </div>
           </div>
@@ -121,7 +132,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
+        <div className="absolute inset-0 bg-gradient-to-bl from-primary/10 via-background to-secondary/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
         <div className="container mx-auto px-4 relative">
           <motion.div
@@ -130,24 +141,25 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-              Stop Spending 40 Hours/Month on{' '}
-              <span className="gradient-heading">Carbon Compliance</span>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground leading-relaxed">
+              دیگر {toPersianNumber(40)} ساعت در ماه برای{' '}
+              <span className="gradient-heading">انطباق کربنی</span>
+              {' '}وقت نگذارید
             </h1>
-            <p className="text-xl md:text-2xl text-foreground/80 mb-8 font-medium">
-              Automate reporting, prevent audit failures, track Net Zero progress - all in one platform
+            <p className="text-xl md:text-2xl text-foreground/80 mb-8 font-medium leading-relaxed">
+              گزارش‌گیری خودکار، جلوگیری از شکست ممیزی، پیگیری پیشرفت Net Zero - همه در یک پلتفرم
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg h-12 px-8" onClick={() => navigate('/auth')}>
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+                شروع دوره آزمایشی رایگان
+                <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" className="text-lg h-12 px-8" onClick={() => navigate('/roi-calculator')}>
-                Calculate Your ROI
+                محاسبه بازگشت سرمایه
               </Button>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              No credit card required • 14-day free trial
+              بدون نیاز به کارت اعتباری • {toPersianNumber(14)} روز دوره آزمایشی رایگان
             </p>
           </motion.div>
         </div>
@@ -164,10 +176,10 @@ export default function LandingPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              The Problems We Solve
+              مشکلاتی که حل می‌کنیم
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Manufacturing VPs of Sustainability face critical challenges that drain resources and create risk
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              معاونین پایداری در صنایع تولیدی با چالش‌های حیاتی مواجه هستند که منابع را هدر می‌دهد و ریسک ایجاد می‌کند
             </p>
           </motion.div>
 
@@ -182,8 +194,8 @@ export default function LandingPage() {
               >
                 <Card className="p-6 h-full card-hover">
                   <pain.icon className={`h-12 w-12 mb-4 ${pain.color}`} />
-                  <h3 className="text-xl font-semibold mb-3">{pain.title}</h3>
-                  <p className="text-muted-foreground">{pain.description}</p>
+                  <h3 className="text-xl font-semibold mb-3 leading-relaxed">{pain.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{pain.description}</p>
                 </Card>
               </motion.div>
             ))}
@@ -203,10 +215,10 @@ export default function LandingPage() {
           >
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Calculate Your Potential Savings
+                صرفه‌جویی بالقوه خود را محاسبه کنید
               </h2>
               <p className="text-lg text-muted-foreground">
-                Companies like yours save $80K+/year on average
+                شرکت‌هایی مانند شما به طور میانگین سالانه بیش از {toPersianNumber(80)} هزار دلار صرفه‌جویی می‌کنند
               </p>
             </div>
 
@@ -214,62 +226,65 @@ export default function LandingPage() {
               <div className="grid md:grid-cols-2 gap-8 mb-8">
                 <div className="space-y-6">
                   <div>
-                    <Label htmlFor="consultantFees">Annual Consultant Fees ($)</Label>
+                    <Label htmlFor="consultantFees">هزینه سالانه مشاوران (دلار)</Label>
                     <Input
                       id="consultantFees"
                       type="number"
                       value={roiInputs.consultantFees}
                       onChange={(e) => setRoiInputs({ ...roiInputs, consultantFees: Number(e.target.value) })}
-                      className="mt-2"
+                      className="mt-2 text-left"
+                      dir="ltr"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="fteHours">Weekly FTE Hours on Compliance</Label>
+                    <Label htmlFor="fteHours">ساعات هفتگی کار تمام‌وقت برای انطباق</Label>
                     <Input
                       id="fteHours"
                       type="number"
                       value={roiInputs.fteHours}
                       onChange={(e) => setRoiInputs({ ...roiInputs, fteHours: Number(e.target.value) })}
-                      className="mt-2"
+                      className="mt-2 text-left"
+                      dir="ltr"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="missedDeadlines">Missed Deadlines/Year</Label>
+                    <Label htmlFor="missedDeadlines">ددلاین‌های از دست رفته در سال</Label>
                     <Input
                       id="missedDeadlines"
                       type="number"
                       value={roiInputs.missedDeadlines}
                       onChange={(e) => setRoiInputs({ ...roiInputs, missedDeadlines: Number(e.target.value) })}
-                      className="mt-2"
+                      className="mt-2 text-left"
+                      dir="ltr"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-6">
                   <div className="p-6 bg-primary/5 rounded-lg border border-primary/20">
-                    <div className="text-sm text-muted-foreground mb-2">Annual Savings</div>
+                    <div className="text-sm text-muted-foreground mb-2">صرفه‌جویی سالانه</div>
                     <div className="text-4xl font-bold text-primary">
-                      ${totalAnnualSavings.toLocaleString()}
+                      {formatPersianCurrency(totalAnnualSavings)}
                     </div>
                   </div>
                   <div className="p-6 bg-secondary/5 rounded-lg border border-secondary/20">
-                    <div className="text-sm text-muted-foreground mb-2">3-Year ROI</div>
+                    <div className="text-sm text-muted-foreground mb-2">بازگشت سرمایه ۳ ساله</div>
                     <div className="text-4xl font-bold text-secondary">
-                      {roi}%
+                      {toPersianNumber(roi)}٪
                     </div>
                   </div>
                   <div className="p-6 bg-muted rounded-lg">
-                    <div className="text-sm text-muted-foreground mb-2">Payback Period</div>
+                    <div className="text-sm text-muted-foreground mb-2">دوره بازگشت سرمایه</div>
                     <div className="text-4xl font-bold">
-                      {paybackMonths} months
+                      {toPersianNumber(paybackMonths)} ماه
                     </div>
                   </div>
                 </div>
               </div>
 
               <Button size="lg" className="w-full" onClick={() => navigate('/roi-calculator')}>
-                View Detailed ROI Analysis
-                <ArrowRight className="ml-2 h-5 w-5" />
+                مشاهده تحلیل کامل بازگشت سرمایه
+                <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
             </Card>
           </motion.div>
@@ -287,7 +302,7 @@ export default function LandingPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Leading Manufacturers Choose Us
+              چرا تولیدکنندگان پیشرو ما را انتخاب می‌کنند
             </h2>
           </motion.div>
 
@@ -302,8 +317,8 @@ export default function LandingPage() {
               >
                 <Card className="p-6 h-full card-hover">
                   <feature.icon className="h-10 w-10 mb-4 text-primary" />
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <h3 className="text-lg font-semibold mb-2 leading-relaxed">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                 </Card>
               </motion.div>
             ))}
@@ -322,7 +337,7 @@ export default function LandingPage() {
             className="text-center"
           >
             <p className="text-lg text-muted-foreground mb-8">
-              Trusted by 50+ manufacturing companies
+              مورد اعتماد بیش از {toPersianNumber(50)} شرکت تولیدی
             </p>
             <div className="flex flex-wrap justify-center items-center gap-8">
               {complianceLogos.map((logo) => (
@@ -333,14 +348,14 @@ export default function LandingPage() {
               ))}
             </div>
             <p className="mt-8 text-muted-foreground">
-              Supporting compliance with all major frameworks
+              پشتیبانی از انطباق با تمام چارچوب‌های اصلی
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      <section className="py-20 bg-gradient-to-bl from-primary/10 via-background to-secondary/10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -350,18 +365,18 @@ export default function LandingPage() {
             className="max-w-3xl mx-auto text-center"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Transform Your Carbon Management?
+              آماده تحول در مدیریت کربن خود هستید؟
             </h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Join leading manufacturers in automating compliance and accelerating Net Zero progress
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              به تولیدکنندگان پیشرو بپیوندید و انطباق را خودکار و پیشرفت Net Zero را تسریع کنید
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg h-12 px-8" onClick={() => navigate('/auth')}>
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+                شروع دوره آزمایشی رایگان
+                <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" className="text-lg h-12 px-8" onClick={() => navigate('/roi-calculator')}>
-                Calculate Your ROI
+                محاسبه بازگشت سرمایه
               </Button>
             </div>
           </motion.div>
@@ -374,10 +389,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-primary" />
-              <span className="font-semibold">CarbonTrack</span>
+              <span className="font-semibold">کربن‌ترک</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 CarbonTrack. Empowering sustainable manufacturing.
+              © {toPersianNumber(2024)} کربن‌ترک. توانمندسازی تولید پایدار.
             </p>
           </div>
         </div>

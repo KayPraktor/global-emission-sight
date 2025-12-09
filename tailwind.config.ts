@@ -23,6 +23,7 @@ export default {
 				sans: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
 				heading: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['JetBrains Mono', 'monospace'],
+				persian: ['Vazirmatn', 'Tahoma', 'Arial', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
