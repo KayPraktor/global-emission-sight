@@ -1,14 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Download, AlertCircle, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload, Download, AlertCircle, CheckCircle, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { parseEmissionsCSV, generateEmissionsCSVTemplate, detectDuplicates, EmissionsCSVRow } from '@/utils/emissionsCsvParser';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getIndustryMapping, getAllMappingsForIndustry, IndustryColumnMapping } from '@/data/industryCsvMappings';
 
 interface EmissionsCSVImportDialogProps {
   open: boolean;
@@ -27,7 +29,53 @@ export const EmissionsCSVImportDialog: React.FC<EmissionsCSVImportDialogProps> =
   const [parseResult, setParseResult] = useState<ReturnType<typeof parseEmissionsCSV> | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<{ duplicates: number[]; potentialDuplicates: number[] } | null>(null);
+  const [userIndustry, setUserIndustry] = useState<{ industry: string | null; subIndustry: string | null }>({ industry: null, subIndustry: null });
+  const [selectedMapping, setSelectedMapping] = useState<string>('standard');
+  const [availableMappings, setAvailableMappings] = useState<IndustryColumnMapping[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      fetchUserIndustry();
+    }
+  }, [open]);
+
+  const fetchUserIndustry = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (membership?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('industry, sub_industry')
+          .eq('id', membership.organization_id)
+          .single();
+
+        if (org?.industry) {
+          setUserIndustry({ industry: org.industry, subIndustry: org.sub_industry });
+          
+          // Get available mappings for user's industry
+          const mappings = getAllMappingsForIndustry(org.industry);
+          setAvailableMappings(mappings);
+          
+          // Auto-select the best matching mapping
+          const bestMatch = getIndustryMapping(org.industry, org.sub_industry);
+          if (bestMatch) {
+            setSelectedMapping(bestMatch.subIndustry || bestMatch.industry);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user industry:', error);
+    }
+  };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -186,6 +234,36 @@ export const EmissionsCSVImportDialog: React.FC<EmissionsCSVImportDialogProps> =
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-auto">
+          {/* Industry Mapping Selection */}
+          {availableMappings.length > 0 && (
+            <Alert className="bg-primary/5 border-primary/20">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <AlertDescription>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">
+                    Industry-specific format detected for <strong>{userIndustry.industry?.replace(/_/g, ' ')}</strong>
+                  </span>
+                  <Select value={selectedMapping} onValueChange={setSelectedMapping}>
+                    <SelectTrigger className="w-48 h-8">
+                      <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard Format</SelectItem>
+                      {availableMappings.map((mapping) => (
+                        <SelectItem 
+                          key={mapping.subIndustry || mapping.industry} 
+                          value={mapping.subIndustry || mapping.industry}
+                        >
+                          {mapping.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Template Download */}
           <div className="flex items-center gap-2">
             <Button
@@ -197,6 +275,11 @@ export const EmissionsCSVImportDialog: React.FC<EmissionsCSVImportDialogProps> =
               <Download className="h-4 w-4" />
               Download Template
             </Button>
+            {selectedMapping !== 'standard' && (
+              <Badge variant="secondary" className="text-xs">
+                Using {availableMappings.find(m => (m.subIndustry || m.industry) === selectedMapping)?.displayName || 'Custom'} format
+              </Badge>
+            )}
           </div>
 
           {/* File Upload */}
