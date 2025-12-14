@@ -3,29 +3,14 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Breadcrumb,
-  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { ChevronRight, Home } from 'lucide-react';
-
-const routeLabels: Record<string, string> = {
-  '/': 'Dashboard',
-  '/enterprise': 'Executive',
-  '/data-entry': 'Data Entry',
-  '/facilities': 'Facilities',
-  '/emission-factors': 'Emission Factors',
-  '/scenario-planning': 'Scenario Planning',
-  '/reports': 'Reports',
-  '/analytics': 'Analytics',
-  '/advanced-analytics': 'Analytics', // Legacy route
-  '/goals': 'Goals',
-  '/settings': 'Settings',
-  '/admin': 'Admin',
-};
+import { ChevronLeft, Home } from 'lucide-react';
+import { translations as t } from '@/lib/translations';
 
 export function BreadcrumbNav() {
   const location = useLocation();
@@ -33,13 +18,13 @@ export function BreadcrumbNav() {
   
   // Build breadcrumb items
   const breadcrumbItems = [
-    { path: '/', label: 'Dashboard', isHome: true }
+    { path: '/', label: t.routes['/'], isHome: true }
   ];
 
   let currentPath = '';
   pathSegments.forEach(segment => {
     currentPath += `/${segment}`;
-    const label = routeLabels[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1);
+    const label = t.routes[currentPath as keyof typeof t.routes] || segment.charAt(0).toUpperCase() + segment.slice(1);
     breadcrumbItems.push({ path: currentPath, label, isHome: false });
   });
 
@@ -70,7 +55,7 @@ export function BreadcrumbNav() {
             </BreadcrumbItem>
             {index < breadcrumbItems.length - 1 && (
               <BreadcrumbSeparator>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
               </BreadcrumbSeparator>
             )}
           </React.Fragment>
