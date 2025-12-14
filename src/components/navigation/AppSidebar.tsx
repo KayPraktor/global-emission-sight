@@ -19,7 +19,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { translations as t } from '@/lib/translations';
 
 import { 
   Sidebar,
@@ -38,28 +37,28 @@ export function AppSidebar() {
   
   const navItems = [
     // OVERVIEW
-    { name: t.navItems.dashboard, icon: <Home className="h-4 w-4" />, path: '/', section: 'overview' },
-    { name: t.navItems.executive, icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview' },
+    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', section: 'overview' },
+    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview' },
     
     // DATA MANAGEMENT
-    { name: t.navItems.dataEntry, icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data' },
-    { name: t.navItems.facilities, icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data' },
-    { name: t.navItems.emissionFactors, icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data' },
+    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data' },
+    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data' },
+    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data' },
     
     // ANALYSIS & PLANNING
-    { name: t.navItems.analytics, icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis' },
-    { name: t.navItems.scenarioPlanning, icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
-    { name: t.navItems.goals, icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
+    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis' },
+    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
+    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
     
     // REPORTING
-    { name: t.navItems.reports, icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
+    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
     
     // ADMINISTRATION
-    { name: t.navItems.settings, icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
+    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
   ];
 
   const adminNavItems = [
-    { name: t.navItems.admin, icon: <Shield className="h-4 w-4" />, path: '/admin' },
+    { name: 'Admin', icon: <Shield className="h-4 w-4" />, path: '/admin' },
   ];
 
   const isActive = (path: string) => {
@@ -68,11 +67,11 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar side="right">
+    <Sidebar>
       <SidebarHeader className="flex items-center justify-between p-4">
-        <div className="flex items-center space-x-2 space-x-reverse">
+        <div className="flex items-center space-x-2">
           <Atom className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-xl">{t.brand}</span>
+          <span className="font-semibold text-xl">BARYON</span>
         </div>
         <SidebarTrigger />
       </SidebarHeader>
@@ -81,10 +80,10 @@ export function AppSidebar() {
         <SidebarMenu>
           {/* Overview Section */}
           <div className="px-3 py-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t.nav.overview}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Overview</span>
           </div>
           {navItems.filter(item => item.section === 'overview').map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -100,10 +99,10 @@ export function AppSidebar() {
           
           {/* Data Management Section */}
           <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t.nav.dataManagement}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Data Management</span>
           </div>
           {navItems.filter(item => item.section === 'data').map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -119,10 +118,10 @@ export function AppSidebar() {
           
           {/* Analysis & Planning Section */}
           <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t.nav.analysisPlanning}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Analysis & Planning</span>
           </div>
           {navItems.filter(item => item.section === 'analysis').map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -138,10 +137,10 @@ export function AppSidebar() {
           
           {/* Reporting Section */}
           <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t.nav.reporting}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Reporting</span>
           </div>
           {navItems.filter(item => item.section === 'reporting').map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -157,10 +156,10 @@ export function AppSidebar() {
           
           {/* Administration Section */}
           <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t.nav.administration}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Administration</span>
           </div>
           {navItems.filter(item => item.section === 'admin').map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -175,7 +174,7 @@ export function AppSidebar() {
           ))}
           
           {isAdmin && adminNavItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.name}>
               <SidebarMenuButton 
                 asChild 
                 isActive={isActive(item.path)}
@@ -194,7 +193,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 mt-auto border-t">
         {user && (
           <div className="space-y-3 mb-3">
-            <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="flex items-center space-x-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
                   {user.email?.charAt(0).toUpperCase() || 'U'}
@@ -213,14 +212,14 @@ export function AppSidebar() {
               className="w-full justify-start"
               onClick={signOut}
             >
-              <LogOut className="h-4 w-4 ml-2" />
-              {t.actions.signOut}
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
             </Button>
           </div>
         )}
-        <div className="flex items-center space-x-2 space-x-reverse">
+        <div className="flex items-center space-x-2">
           <HelpCircle className="h-4 w-4 text-sidebar-foreground/70" />
-          <span className="text-sm text-sidebar-foreground/70">{t.actions.helpSupport}</span>
+          <span className="text-sm text-sidebar-foreground/70">Help & Support</span>
         </div>
       </SidebarFooter>
     </Sidebar>

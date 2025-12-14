@@ -1,11 +1,12 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AppSidebar } from '@/components/navigation/AppSidebar';
 import { BreadcrumbNav } from '@/components/navigation/BreadcrumbNav';
 import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
-import { SidebarInset, SidebarRail, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarInset, SidebarRail, useSidebar } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Separator } from '@/components/ui/separator';
@@ -18,7 +19,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { translations as t } from '@/lib/translations';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,7 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { open, setOpen } = useCommandPalette();
   
   return (
-    <div dir="rtl" className="flex min-h-screen w-full bg-sidebar font-persian">
+    <div className="flex min-h-screen w-full bg-sidebar">
       <AppSidebar />
       <SidebarRail />
       
@@ -39,13 +39,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
             <div className="flex items-center gap-4">
               {isMobile && (
-                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="ml-2">
+                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
                   <Menu className="h-5 w-5" />
                 </Button>
               )}
               <Link to="/" className="text-primary text-xl font-bold flex items-center">
-                <Atom className="h-6 w-6 ml-2" />
-                {t.brand}
+                <Atom className="h-6 w-6 mr-2" />
+                BARYON
               </Link>
             </div>
             
@@ -63,12 +63,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>پالت فرمان (⌘K)</p>
+                    <p>Command Palette (⌘K)</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               
-              <Button variant="ghost" size="icon" aria-label={t.actions.help}>
+              <Button variant="ghost" size="icon" aria-label="Help">
                 <HelpCircle className="h-5 w-5" />
               </Button>
               <NotificationBell />
@@ -88,11 +88,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           
           <footer className="border-t border-border py-4 px-6 bg-background">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm text-muted-foreground">{t.footer.copyright}</p>
-              <div className="flex space-x-4 space-x-reverse mt-2 md:mt-0">
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.footer.privacyPolicy}</a>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.footer.termsOfService}</a>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.footer.contact}</a>
+              <p className="text-sm text-muted-foreground">© 2025 BARYON. All rights reserved.</p>
+              <div className="flex space-x-4 mt-2 md:mt-0">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Privacy Policy</a>
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Service</a>
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact</a>
               </div>
             </div>
           </footer>

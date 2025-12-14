@@ -17,6 +17,8 @@ import {
   FileSpreadsheet,
   BarChart3,
   Target,
+  MonitorSmartphone,
+  Zap,
   Settings,
   PlusCircle,
   Download,
@@ -24,7 +26,6 @@ import {
   Search,
   Calendar,
 } from 'lucide-react';
-import { translations as t } from '@/lib/translations';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -35,23 +36,23 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
 
   const navigationCommands = [
-    { id: 'nav-dashboard', label: `${t.commands.goTo} ${t.navItems.dashboard}`, icon: Home, action: () => navigate('/') },
-    { id: 'nav-enterprise', label: `${t.commands.goTo} ${t.navItems.executive}`, icon: Building2, action: () => navigate('/enterprise') },
-    { id: 'nav-data-entry', label: `${t.commands.goTo} ${t.navItems.dataEntry}`, icon: ClipboardList, action: () => navigate('/data-entry') },
-    { id: 'nav-facilities', label: `${t.commands.goTo} ${t.navItems.facilities}`, icon: Building2, action: () => navigate('/facilities') },
-    { id: 'nav-analytics', label: `${t.commands.goTo} ${t.navItems.analytics}`, icon: BarChart3, action: () => navigate('/analytics') },
-    { id: 'nav-scenario', label: `${t.commands.goTo} ${t.navItems.scenarioPlanning}`, icon: Target, action: () => navigate('/scenario-planning') },
-    { id: 'nav-goals', label: `${t.commands.goTo} ${t.navItems.goals}`, icon: Target, action: () => navigate('/goals') },
-    { id: 'nav-reports', label: `${t.commands.goTo} ${t.navItems.reports}`, icon: FileSpreadsheet, action: () => navigate('/reports') },
-    { id: 'nav-settings', label: `${t.commands.goTo} ${t.navItems.settings}`, icon: Settings, action: () => navigate('/settings') },
+    { id: 'nav-dashboard', label: 'Go to Dashboard', icon: Home, action: () => navigate('/') },
+    { id: 'nav-enterprise', label: 'Go to Executive Dashboard', icon: Building2, action: () => navigate('/enterprise') },
+    { id: 'nav-data-entry', label: 'Go to Data Entry', icon: ClipboardList, action: () => navigate('/data-entry') },
+    { id: 'nav-facilities', label: 'Go to Facilities', icon: Building2, action: () => navigate('/facilities') },
+    { id: 'nav-analytics', label: 'Go to Analytics', icon: BarChart3, action: () => navigate('/analytics') },
+    { id: 'nav-scenario', label: 'Go to Scenario Planning', icon: Target, action: () => navigate('/scenario-planning') },
+    { id: 'nav-goals', label: 'Go to Goals', icon: Target, action: () => navigate('/goals') },
+    { id: 'nav-reports', label: 'Go to Reports', icon: FileSpreadsheet, action: () => navigate('/reports') },
+    { id: 'nav-settings', label: 'Go to Settings', icon: Settings, action: () => navigate('/settings') },
   ];
 
   const actionCommands = [
-    { id: 'action-new-report', label: t.commands.createNewReport, icon: PlusCircle, action: () => console.log('New report') },
-    { id: 'action-export-data', label: t.commands.exportData, icon: Download, action: () => console.log('Export data') },
-    { id: 'action-import-data', label: t.commands.importData, icon: Upload, action: () => console.log('Import data') },
-    { id: 'action-search', label: t.commands.advancedSearch, icon: Search, action: () => console.log('Search') },
-    { id: 'action-calendar', label: t.commands.viewCalendar, icon: Calendar, action: () => console.log('Calendar') },
+    { id: 'action-new-report', label: 'Create New Report', icon: PlusCircle, action: () => console.log('New report') },
+    { id: 'action-export-data', label: 'Export Data', icon: Download, action: () => console.log('Export data') },
+    { id: 'action-import-data', label: 'Import Data', icon: Upload, action: () => console.log('Import data') },
+    { id: 'action-search', label: 'Advanced Search', icon: Search, action: () => console.log('Search') },
+    { id: 'action-calendar', label: 'View Calendar', icon: Calendar, action: () => console.log('Calendar') },
   ];
 
   const handleCommand = (command: typeof navigationCommands[0]) => {
@@ -61,11 +62,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder={t.commands.placeholder} />
+      <CommandInput placeholder="Type a command or search..." />
       <CommandList>
-        <CommandEmpty>{t.commands.noResults}</CommandEmpty>
+        <CommandEmpty>No results found.</CommandEmpty>
         
-        <CommandGroup heading={t.commands.navigation}>
+        <CommandGroup heading="Navigation">
           {navigationCommands.map((command) => (
             <CommandItem
               key={command.id}
@@ -80,7 +81,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         
         <CommandSeparator />
         
-        <CommandGroup heading={t.commands.actions}>
+        <CommandGroup heading="Actions">
           {actionCommands.map((command) => (
             <CommandItem
               key={command.id}

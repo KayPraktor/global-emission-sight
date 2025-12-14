@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -93,15 +92,6 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-  }
-  
-  /* Persian/RTL Support */
-  .font-persian {
-    font-family: 'Vazirmatn', system-ui, sans-serif;
-  }
-  
-  [dir="rtl"] {
-    font-family: 'Vazirmatn', system-ui, sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {

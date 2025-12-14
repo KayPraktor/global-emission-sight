@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,20 +14,23 @@ import {
   FileSpreadsheet,
   BarChart3,
   Target,
+  MonitorSmartphone,
+  Zap,
   Settings,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { translations as t } from '@/lib/translations';
 
 const navigationItems = [
-  { name: t.navItems.dashboard, icon: Home, path: '/', color: 'text-blue-500' },
-  { name: t.navItems.executive, icon: Building2, path: '/enterprise', color: 'text-purple-500' },
-  { name: t.navItems.dataEntry, icon: ClipboardList, path: '/data-entry', color: 'text-green-500' },
-  { name: t.navItems.reports, icon: FileSpreadsheet, path: '/reports', color: 'text-orange-500' },
-  { name: t.navItems.analytics, icon: BarChart3, path: '/analytics', color: 'text-red-500' },
-  { name: t.navItems.goals, icon: Target, path: '/goals', color: 'text-pink-500' },
-  { name: t.navItems.settings, icon: Settings, path: '/settings', color: 'text-gray-500' },
+  { name: 'Dashboard', icon: Home, path: '/', color: 'text-blue-500' },
+  { name: 'Enterprise', icon: Building2, path: '/enterprise', color: 'text-purple-500' },
+  { name: 'Data Entry', icon: ClipboardList, path: '/data-entry', color: 'text-green-500' },
+  { name: 'Reports', icon: FileSpreadsheet, path: '/reports', color: 'text-orange-500' },
+  { name: 'Analytics', icon: BarChart3, path: '/analytics', color: 'text-red-500' },
+  { name: 'Goals', icon: Target, path: '/goals', color: 'text-pink-500' },
+  { name: 'Monitoring', icon: MonitorSmartphone, path: '/monitoring', color: 'text-cyan-500' },
+  { name: 'AI Assistant', icon: Zap, path: '/ai-assistant', color: 'text-yellow-500' },
+  { name: 'Settings', icon: Settings, path: '/settings', color: 'text-gray-500' },
 ];
 
 export function MobileNavigation() {
@@ -46,14 +49,14 @@ export function MobileNavigation() {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-80 p-0">
+      <SheetContent side="left" className="w-80 p-0">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">ک</span>
+                <span className="text-primary-foreground font-bold text-sm">B</span>
               </div>
-              <span className="font-semibold text-xl">{t.brand}</span>
+              <span className="font-semibold text-xl">BARYON</span>
             </div>
             <Button 
               variant="ghost" 
@@ -69,7 +72,7 @@ export function MobileNavigation() {
               {navigationItems.map((item, index) => (
                 <motion.div
                   key={item.name}
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
@@ -77,9 +80,9 @@ export function MobileNavigation() {
                     to={item.path}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      'flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-all duration-200',
+                      'flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200',
                       isActive(item.path)
-                        ? 'bg-primary/10 text-primary border-r-4 border-primary'
+                        ? 'bg-primary/10 text-primary border-l-4 border-primary'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
@@ -88,7 +91,7 @@ export function MobileNavigation() {
                     {isActive(item.path) && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="mr-auto w-2 h-2 bg-primary rounded-full"
+                        className="ml-auto w-2 h-2 bg-primary rounded-full"
                       />
                     )}
                   </Link>
@@ -101,30 +104,30 @@ export function MobileNavigation() {
             <div className="space-y-4">
               <div className="px-4">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                  {t.quickActions.title}
+                  Quick Actions
                 </h3>
               </div>
               <div className="space-y-2">
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  <ClipboardList className="ml-2 h-4 w-4" />
-                  {t.actions.newEntry}
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  New Entry
                 </Button>
                 <Button variant="outline" className="w-full justify-start" size="sm">
-                  <FileSpreadsheet className="ml-2 h-4 w-4" />
-                  {t.actions.generateReport}
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Generate Report
                 </Button>
               </div>
             </div>
           </ScrollArea>
           
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-3 space-x-reverse p-3 bg-muted rounded-lg">
+            <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-xs font-medium text-primary-foreground">
-                ک
+                U
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {t.mobile.userAccount}
+                  User Account
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   admin@company.com
@@ -143,11 +146,11 @@ export function MobileBottomNav() {
   const location = useLocation();
 
   const bottomNavItems = [
-    { name: t.mobile.home, icon: Home, path: '/' },
-    { name: t.mobile.data, icon: ClipboardList, path: '/data-entry' },
-    { name: t.navItems.reports, icon: FileSpreadsheet, path: '/reports' },
-    { name: t.navItems.analytics, icon: BarChart3, path: '/analytics' },
-    { name: t.mobile.more, icon: Menu, path: '/more' },
+    { name: 'Home', icon: Home, path: '/' },
+    { name: 'Data', icon: ClipboardList, path: '/data-entry' },
+    { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
+    { name: 'Analytics', icon: BarChart3, path: '/analytics' },
+    { name: 'More', icon: Menu, path: '/more' },
   ];
 
   const isActive = (path: string) => {

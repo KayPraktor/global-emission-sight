@@ -6,7 +6,7 @@ import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
@@ -39,7 +39,6 @@ import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
 import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
-import { translations as t, toPersianNumber } from '@/lib/translations';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -267,21 +266,21 @@ const Index = () => {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-tight">{t.dashboard.title}</h1>
-              <p className="text-muted-foreground mt-1">{t.dashboard.subtitle}</p>
+              <h1 className="text-2xl font-bold tracking-tight">Carbon Emissions Dashboard</h1>
+              <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
             </div>
             <div className="flex items-center gap-3">
-              <PageHeaderDateFilter defaultValue="فروردین - خرداد ۱۴۰۴" />
+              <PageHeaderDateFilter defaultValue="Jan - May 2025" />
               <PageHeaderExport />
               <HoverScale>
                 <InteractiveButton onClick={handleNewReport} loading={isLoading} className="bg-primary hover:bg-primary/90">
-                  <PlusCircle className="ml-2 h-4 w-4" />
-                  {isLoading ? t.newReport.creating : t.newReport.button}
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Creating...' : 'New Report'}
                 </InteractiveButton>
               </HoverScale>
-              <Tooltip content="شروع تور راهنما">
+              <Tooltip content="Start interactive tour">
                 <InteractiveButton variant="outline" onClick={startOnboarding}>
-                  {t.actions.help}
+                  Help
                 </InteractiveButton>
               </Tooltip>
             </div>
@@ -343,9 +342,9 @@ const Index = () => {
       {/* Primary Actions Section */}
       <SectionHeader
         icon={Shield}
-        title={t.primaryActions.title}
-        subtitle={t.primaryActions.subtitle}
-        helpText={t.primaryActions.helpText}
+        title="Primary Actions"
+        subtitle="Critical compliance and deadline management"
+        helpText="Monitor your organization's compliance status and upcoming regulatory deadlines to ensure continuous adherence to carbon reporting standards."
         lastUpdated="2025-01-15T14:30:00Z"
       />
       
@@ -360,10 +359,10 @@ const Index = () => {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-foreground">{t.compliance.status}</h4>
+                <h4 className="font-semibold text-foreground">Compliance Status</h4>
                 <SampleDataBadge />
               </div>
-              <p className="text-xs text-muted-foreground">{t.compliance.regulatoryAdherence}</p>
+              <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
             </div>
           </div>
           <div className="space-y-3 flex-1">
@@ -427,10 +426,10 @@ const Index = () => {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-foreground">{t.deadlines.title}</h4>
+                <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
                 <SampleDataBadge />
               </div>
-              <p className="text-xs text-muted-foreground">{t.deadlines.subtitle}</p>
+              <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
             </div>
           </div>
           <div className="space-y-3 flex-1">
@@ -463,14 +462,14 @@ const Index = () => {
                       <span className="text-sm font-medium text-foreground group-hover/deadline:text-primary transition-colors">
                         {item.task}
                       </span>
-                      <div className="text-xs text-muted-foreground">{toPersianNumber(item.days)} {t.deadlines.daysLeft}</div>
+                      <div className="text-xs text-muted-foreground">{item.days} days left</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">
                       {item.date}
                     </span>
-                    <ChevronLeft className="h-3 w-3 text-muted-foreground group-hover/deadline:text-primary transition-colors" />
+                    <ChevronRight className="h-3 w-3 text-muted-foreground group-hover/deadline:text-primary transition-colors" />
                   </div>
                 </motion.div>
               </Tooltip>
@@ -482,39 +481,39 @@ const Index = () => {
       {/* Data Quality Section - High-Level Summary Only */}
       <SectionHeader
         icon={Shield}
-        title={t.quality.title}
-        subtitle="نظارت بر کامل بودن و صحت داده‌ها"
-        helpText="معیارهای سطح بالای کیفیت داده را ردیابی کنید. برای تحلیل دقیق‌تر، به صفحه تحلیل‌ها مراجعه کنید."
+        title="Data Quality Overview"
+        subtitle="Monitor your data completeness and accuracy"
+        helpText="Track high-level data quality metrics. For detailed analysis and validation, visit the Analytics page."
         lastUpdated="2025-01-15T14:30:00Z"
       />
       
       <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
         <DataQualityWidget />
         <GlassmorphismCard variant="light" className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">تحلیل کامل کیفیت</h3>
-                <Shield className="h-5 w-5 text-primary" />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                دسترسی به معیارهای جامع کیفیت داده، قوانین اعتبارسنجی، روند کیفیت و توصیه‌های بهبود.
-              </p>
-              <Button 
-                onClick={() => navigate('/analytics?tab=quality')} 
-                className="w-full"
-              >
-                مشاهده داشبورد کامل کیفیت
-              </Button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Detailed Quality Analysis</h3>
+              <Shield className="h-5 w-5 text-primary" />
             </div>
+            <p className="text-sm text-muted-foreground">
+              Access comprehensive data quality metrics, validation rules, quality trends, and improvement recommendations.
+            </p>
+            <Button 
+              onClick={() => navigate('/analytics?tab=quality')} 
+              className="w-full"
+            >
+              View Full Quality Dashboard
+            </Button>
+          </div>
         </GlassmorphismCard>
       </StaggeredList>
 
       {/* Industry-Specific KPIs */}
       <SectionHeader
         icon={BarChart3}
-        title="شاخص‌های کلیدی صنعت"
-        subtitle="معیارهای عملکرد متناسب با صنعت شما"
-        helpText="این شاخص‌ها بر اساس صنعت سازمان شما انتخاب شده‌اند. صنعت خود را در تنظیمات > سازمان به‌روزرسانی کنید."
+        title="Industry KPIs"
+        subtitle="Performance metrics tailored to your industry"
+        helpText="These KPIs are automatically selected based on your organization's industry. Update your industry in Settings > Organization."
         lastUpdated="2025-01-15T14:30:00Z"
       />
       
@@ -546,14 +545,14 @@ const Index = () => {
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">هوش عملکردی</h3>
-              <p className="text-sm text-muted-foreground">ردیابی ارزش و بینش‌های استراتژیک</p>
+              <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
+              <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <SampleDataBadge />
             <span className="text-sm text-muted-foreground">
-              {showAdvancedAnalytics ? 'بستن' : 'باز کردن'}
+              {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
             </span>
             {showAdvancedAnalytics ? (
               <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -612,8 +611,8 @@ const Index = () => {
       </motion.div>
 
       {/* Empty state example (conditionally shown) */}
-      {sampleTableData.length === 0 && <EmptyState icon={FileSpreadsheet} title="داده انتشاراتی یافت نشد" description="با افزودن اولین رکورد انتشارات، تحلیل‌ها و بینش‌ها را مشاهده کنید." action={{
-      label: "افزودن داده انتشارات",
+      {sampleTableData.length === 0 && <EmptyState icon={FileSpreadsheet} title="No emissions data found" description="Start by adding your first emissions record to see analytics and insights." action={{
+      label: "Add Emissions Data",
       onClick: handleNewReport
     }} />}
     </div>;

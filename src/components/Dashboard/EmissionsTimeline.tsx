@@ -4,7 +4,6 @@ import { MonthlyEmissions } from '@/services/analyticsService';
 import { ChevronDown, ChevronUp, TrendingDown, TrendingUp, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { translations as t, formatPersianNumber, toPersianNumber } from '@/lib/translations';
 
 interface EmissionsTimelineProps {
   monthlyData: MonthlyEmissions[];
@@ -58,9 +57,9 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{t.timeline.title}</span>
+            <span className="text-sm font-medium text-foreground">Emissions Timeline</span>
           </div>
-          <span className="text-xs text-muted-foreground">{t.timeline.noData}</span>
+          <span className="text-xs text-muted-foreground">No data yet</span>
         </div>
       </GlassmorphismCard>
     );
@@ -75,7 +74,7 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
       >
         <div className="flex items-center gap-3">
           <Activity className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">{t.timeline.title}</span>
+          <span className="text-sm font-medium text-foreground">Emissions Timeline</span>
         </div>
         
         <div className="flex items-center gap-4">
@@ -84,12 +83,12 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
           {latestMonth && (
             <div className="flex items-center gap-2 text-sm">
               <span className="font-semibold text-foreground">
-                {formatPersianNumber(latestMonth.total, 1)} <span className="text-xs font-normal text-muted-foreground">tCO₂e</span>
+                {latestMonth.total.toFixed(1)} <span className="text-xs font-normal text-muted-foreground">tCO₂e</span>
               </span>
               {previousMonth && (
                 <span className={`flex items-center gap-0.5 text-xs ${isIncrease ? 'text-destructive' : 'text-green-600'}`}>
                   {isIncrease ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {toPersianNumber(Math.abs(trendChange).toFixed(1))}%
+                  {Math.abs(trendChange).toFixed(1)}%
                 </span>
               )}
             </div>
@@ -126,14 +125,14 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
                   >
                     <span className="text-muted-foreground w-20">{item.month}</span>
                     <span className="font-medium text-foreground">
-                      {formatPersianNumber(item.total, 1)} tCO₂e
+                      {item.total.toFixed(1)} tCO₂e
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {t.dashboard.scope1.slice(0, 2)}: {toPersianNumber(item.scope1.toFixed(0))} • {t.dashboard.scope2.slice(0, 2)}: {toPersianNumber(item.scope2.toFixed(0))} • {t.dashboard.scope3.slice(0, 2)}: {toPersianNumber(item.scope3.toFixed(0))}
+                      S1: {item.scope1.toFixed(0)} • S2: {item.scope2.toFixed(0)} • S3: {item.scope3.toFixed(0)}
                     </span>
                     {prevMonth && (
                       <span className={`flex items-center gap-0.5 text-xs w-12 justify-end ${itemIncrease ? 'text-destructive' : 'text-green-600'}`}>
-                        {itemIncrease ? '↑' : '↓'}{toPersianNumber(Math.abs(change).toFixed(0))}%
+                        {itemIncrease ? '↑' : '↓'}{Math.abs(change).toFixed(0)}%
                       </span>
                     )}
                     {!prevMonth && <span className="w-12" />}
@@ -148,7 +147,7 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
                 }}
                 className="w-full text-center text-xs text-primary hover:underline pt-2"
               >
-                {t.timeline.viewAllAnalytics}
+                View all in Analytics →
               </button>
             </div>
           </motion.div>
