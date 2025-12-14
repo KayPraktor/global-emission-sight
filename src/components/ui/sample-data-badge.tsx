@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { translations as t } from '@/lib/translations';
 
 interface SampleDataBadgeProps {
   text?: string;
@@ -10,7 +11,7 @@ interface SampleDataBadgeProps {
 }
 
 export const SampleDataBadge: React.FC<SampleDataBadgeProps> = ({ 
-  text = "Sample Data",
+  text = t.sampleData.badge,
   showTooltip = true,
   className = ""
 }) => {
@@ -29,7 +30,7 @@ export const SampleDataBadge: React.FC<SampleDataBadgeProps> = ({
             {badge}
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-xs">This data is for demonstration purposes. Add real data to see your actual metrics.</p>
+            <p className="text-xs">{t.sampleData.tooltip}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

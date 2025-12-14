@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Target, Shield, TrendingUp, ChevronRight, Sparkles, Factory, Zap, Landmark, Building2 } from 'lucide-react';
+import { AlertTriangle, Target, Shield, TrendingUp, ChevronLeft, Sparkles, Factory } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { faIR } from 'date-fns/locale';
 import { industries, getIndustryTip } from '@/data/industryConfig';
+import { translations as t, toPersianNumber } from '@/lib/translations';
 
 interface WelcomeMessage {
   priority: 'compliance' | 'quality' | 'goal' | 'default';
@@ -41,7 +43,7 @@ const PersonalizedWelcome: React.FC = () => {
           .eq('id', user.id)
           .single();
 
-        setUserName(profile?.full_name?.split(' ')[0] || 'there');
+        setUserName(profile?.full_name?.split(' ')[0] || 'کاربر');
 
         const { data: orgMember } = await supabase
           .from('organization_members')
@@ -78,13 +80,13 @@ const PersonalizedWelcome: React.FC = () => {
 
         if (urgentDeadlines && urgentDeadlines.length > 0) {
           const deadline = urgentDeadlines[0];
-          const daysUntil = formatDistanceToNow(new Date(deadline.due_date), { addSuffix: false });
+          const daysUntil = formatDistanceToNow(new Date(deadline.due_date), { addSuffix: false, locale: faIR });
           setWelcomeMessage({
             priority: 'compliance',
-            greeting: `Urgent: Compliance Deadline Approaching`,
-            message: `Your ${deadline.title} deadline is coming up in ${daysUntil}. Let's make sure you're on track.`,
+            greeting: t.welcome.urgentCompliance,
+            message: `مهلت ${deadline.title} در ${daysUntil} دیگر به پایان می‌رسد. بیایید مطمئن شویم که در مسیر درست هستید.`,
             urgentItem: deadline.title,
-            actionLabel: 'Review Compliance',
+            actionLabel: t.welcome.reviewCompliance,
             actionUrl: '/enterprise',
             icon: Shield,
             severity: 'error'
@@ -105,10 +107,10 @@ const PersonalizedWelcome: React.FC = () => {
         if (qualityData && (qualityData.overall_score < 70 || (qualityData.critical_issues || 0) > 0)) {
           setWelcomeMessage({
             priority: 'quality',
-            greeting: `Data Quality Needs Attention`,
-            message: `Your data quality score is at ${qualityData.overall_score}%. ${qualityData.critical_issues || 0} critical issues need immediate attention to ensure accurate reporting.`,
-            urgentItem: `${qualityData.critical_issues || 0} critical issues`,
-            actionLabel: 'Fix Quality Issues',
+            greeting: t.welcome.dataQualityNeeds,
+            message: `امتیاز کیفیت داده شما ${toPersianNumber(qualityData.overall_score)}% است. ${toPersianNumber(qualityData.critical_issues || 0)} مشکل حیاتی نیاز به توجه فوری دارد تا گزارش‌دهی دقیق تضمین شود.`,
+            urgentItem: `${toPersianNumber(qualityData.critical_issues || 0)} مشکل حیاتی`,
+            actionLabel: t.welcome.fixQualityIssues,
             actionUrl: '/analytics?tab=quality',
             icon: AlertTriangle,
             severity: 'warning'
@@ -130,10 +132,10 @@ const PersonalizedWelcome: React.FC = () => {
           const goal = atRiskGoals[0];
           setWelcomeMessage({
             priority: 'goal',
-            greeting: `Goal At Risk`,
-            message: `Your goal "${goal.title}" is at risk of missing its target. Current progress: ${goal.progress_percentage || 0}%. Let's get it back on track.`,
+            greeting: t.welcome.goalAtRisk,
+            message: `هدف "${goal.title}" در خطر عدم دستیابی است. پیشرفت فعلی: ${toPersianNumber(goal.progress_percentage || 0)}%. بیایید آن را به مسیر برگردانیم.`,
             urgentItem: goal.title,
-            actionLabel: 'Review Goals',
+            actionLabel: t.welcome.reviewGoals,
             actionUrl: '/goals',
             icon: Target,
             severity: 'warning'
@@ -150,9 +152,9 @@ const PersonalizedWelcome: React.FC = () => {
 
         setWelcomeMessage({
           priority: 'default',
-          greeting: `Everything's Looking Good`,
-          message: `You're tracking ${totalEmissions || 0} emissions entries. Keep up the great work on your carbon management journey!`,
-          actionLabel: 'View Dashboard',
+          greeting: t.welcome.everythingGood,
+          message: `شما ${toPersianNumber(totalEmissions || 0)} ورودی انتشارات را ردیابی می‌کنید. به کار عالی خود در مسیر مدیریت کربن ادامه دهید!`,
+          actionLabel: t.welcome.viewDashboard,
           actionUrl: '/',
           icon: TrendingUp,
           severity: 'info'
@@ -208,7 +210,7 @@ const PersonalizedWelcome: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="space-y-3"
     >
-      <GlassmorphismCard variant="light" className={`p-6 bg-gradient-to-r ${getBgGradient()} border-2`}>
+      <GlassmorphismCard variant="light" className={`p-6 bg-gradient-to-l ${getBgGradient()} border-2`}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 flex-1">
             <div className={`p-3 rounded-lg bg-background/50 ${getIconColor()}`}>
@@ -217,11 +219,11 @@ const PersonalizedWelcome: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-lg font-semibold">
-                  Welcome back, {userName}! <Sparkles className="h-4 w-4 inline text-primary" />
+                  {t.welcome.welcomeBack}، {userName}! <Sparkles className="h-4 w-4 inline text-primary" />
                 </h3>
                 {welcomeMessage.severity !== 'info' && (
                   <Badge variant={welcomeMessage.severity === 'error' ? 'destructive' : 'secondary'}>
-                    {welcomeMessage.severity === 'error' ? 'Urgent' : 'Attention Needed'}
+                    {welcomeMessage.severity === 'error' ? t.welcome.urgent : t.welcome.attentionNeeded}
                   </Badge>
                 )}
               </div>
@@ -229,7 +231,7 @@ const PersonalizedWelcome: React.FC = () => {
               <p className="text-sm text-muted-foreground">{welcomeMessage.message}</p>
               {welcomeMessage.urgentItem && (
                 <div className="mt-3 p-2 bg-background/50 rounded border inline-block">
-                  <p className="text-xs font-medium">Priority: {welcomeMessage.urgentItem}</p>
+                  <p className="text-xs font-medium">{t.welcome.priority}: {welcomeMessage.urgentItem}</p>
                 </div>
               )}
             </div>
@@ -240,7 +242,7 @@ const PersonalizedWelcome: React.FC = () => {
             className="flex-shrink-0"
           >
             {welcomeMessage.actionLabel}
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <ChevronLeft className="h-4 w-4 mr-1" />
           </Button>
         </div>
       </GlassmorphismCard>
@@ -255,7 +257,7 @@ const PersonalizedWelcome: React.FC = () => {
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
             <Factory className="h-5 w-5 text-muted-foreground" />
             <div className="flex-1">
-              <p className="text-xs font-medium text-muted-foreground">{industryName} Tip</p>
+              <p className="text-xs font-medium text-muted-foreground">{t.welcome.tip} {industryName}</p>
               <p className="text-sm">{industryTip}</p>
             </div>
           </div>
