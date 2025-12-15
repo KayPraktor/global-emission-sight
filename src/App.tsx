@@ -23,6 +23,7 @@ import ROICalculator from "./pages/ROICalculator";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import LandingPage from "./pages/LandingPage";
+import ApprovalsPage from "./pages/ApprovalsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +63,7 @@ function App() {
                           <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                           <Route path="/scenario-planning" element={<ScenarioPlanningPage />} />
                           <Route path="/admin" element={<AdminPage />} />
+                          <Route path="/approvals" element={<ApprovalsPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>

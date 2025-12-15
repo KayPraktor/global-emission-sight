@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Atom,
@@ -14,11 +14,14 @@ import {
   Database,
   TrendingUp,
   LineChart,
-  Shield
+  Shield,
+  ClipboardCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { approvalService } from '@/services/approvalService';
 
 import { 
   Sidebar,
@@ -34,6 +37,26 @@ import {
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut, isAdmin, organization } = useAuth();
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [isSupervisor, setIsSupervisor] = useState(false);
+
+  useEffect(() => {
+    const checkSupervisorAndPending = async () => {
+      if (!user) return;
+      const supervisor = await approvalService.isCurrentUserSupervisor();
+      setIsSupervisor(supervisor);
+      
+      if (supervisor) {
+        const count = await approvalService.getPendingApprovalCount();
+        setPendingApprovals(count);
+      }
+    };
+
+    checkSupervisorAndPending();
+    // Refresh every 30 seconds
+    const interval = setInterval(checkSupervisorAndPending, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
   
   const navItems = [
     // OVERVIEW
@@ -42,6 +65,7 @@ export function AppSidebar() {
     
     // DATA MANAGEMENT
     { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data' },
+    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', section: 'data', badge: pendingApprovals, showBadge: isSupervisor },
     { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data' },
     { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data' },
     
@@ -66,6 +90,28 @@ export function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
+  const renderNavItem = (item: typeof navItems[0]) => (
+    <SidebarMenuItem key={item.name}>
+      <SidebarMenuButton 
+        asChild 
+        isActive={isActive(item.path)}
+        tooltip={item.name}
+      >
+        <Link to={item.path} className="flex items-center justify-between w-full">
+          <span className="flex items-center gap-2">
+            {item.icon}
+            <span>{item.name}</span>
+          </span>
+          {item.showBadge && item.badge && item.badge > 0 && (
+            <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs">
+              {item.badge > 99 ? '99+' : item.badge}
+            </Badge>
+          )}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+
   return (
     <Sidebar>
       <SidebarHeader className="flex items-center justify-between p-4">
@@ -82,96 +128,31 @@ export function AppSidebar() {
           <div className="px-3 py-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Overview</span>
           </div>
-          {navItems.filter(item => item.section === 'overview').map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
-              >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {navItems.filter(item => item.section === 'overview').map(renderNavItem)}
           
           {/* Data Management Section */}
           <div className="px-3 py-2 mt-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Data Management</span>
           </div>
-          {navItems.filter(item => item.section === 'data').map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
-              >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {navItems.filter(item => item.section === 'data').map(renderNavItem)}
           
           {/* Analysis & Planning Section */}
           <div className="px-3 py-2 mt-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Analysis & Planning</span>
           </div>
-          {navItems.filter(item => item.section === 'analysis').map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
-              >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {navItems.filter(item => item.section === 'analysis').map(renderNavItem)}
           
           {/* Reporting Section */}
           <div className="px-3 py-2 mt-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Reporting</span>
           </div>
-          {navItems.filter(item => item.section === 'reporting').map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
-              >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {navItems.filter(item => item.section === 'reporting').map(renderNavItem)}
           
           {/* Administration Section */}
           <div className="px-3 py-2 mt-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Administration</span>
           </div>
-          {navItems.filter(item => item.section === 'admin').map((item) => (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
-              >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {navItems.filter(item => item.section === 'admin').map(renderNavItem)}
           
           {isAdmin && adminNavItems.map((item) => (
             <SidebarMenuItem key={item.name}>
