@@ -6,8 +6,9 @@ import { AnomalyDetectionPanel } from '@/components/Analytics/AnomalyDetectionPa
 import { AIInsightsPanel } from '@/components/Analytics/AIInsightsPanel';
 import { BenchmarkingDashboard } from '@/components/Analytics/BenchmarkingDashboard';
 import { DataQualityDashboard } from '@/components/Analytics/DataQualityDashboard';
+import { IndustryComplianceCalendar } from '@/components/Industry/IndustryComplianceCalendar';
 import AnalyticsAdvanced from '@/components/Analytics/AnalyticsAdvanced';
-import { LineChart, AlertTriangle, Sparkles, Target, Download, Shield } from 'lucide-react';
+import { LineChart, AlertTriangle, Sparkles, Target, Download, Shield, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { exportForecastsToCSV, exportAnomaliesToCSV, exportInsightsToCSV } from '@/utils/csvExport';
 import { toast } from 'sonner';
@@ -97,7 +98,7 @@ const AdvancedAnalyticsPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="forecasting" className="gap-2">
             <LineChart className="h-4 w-4" />
             Forecasting
@@ -117,6 +118,10 @@ const AdvancedAnalyticsPage = () => {
           <TabsTrigger value="quality" className="gap-2">
             <Shield className="h-4 w-4" />
             Data Quality
+          </TabsTrigger>
+          <TabsTrigger value="compliance" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            Compliance
           </TabsTrigger>
         </TabsList>
 
@@ -138,6 +143,10 @@ const AdvancedAnalyticsPage = () => {
 
         <TabsContent value="quality" className="space-y-6">
           <DataQualityDashboard />
+        </TabsContent>
+
+        <TabsContent value="compliance" className="space-y-6">
+          <IndustryComplianceCalendar />
         </TabsContent>
       </Tabs>
     </div>
