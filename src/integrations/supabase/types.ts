@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_requests: {
+        Row: {
+          created_at: string | null
+          entry_id: string
+          id: string
+          metadata: Json | null
+          organization_id: string
+          request_message: string | null
+          requester_id: string
+          review_message: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: Database["public"]["Enums"]["approval_status"]
+        }
+        Insert: {
+          created_at?: string | null
+          entry_id: string
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          request_message?: string | null
+          requester_id: string
+          review_message?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+        }
+        Update: {
+          created_at?: string | null
+          entry_id?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          request_message?: string | null
+          requester_id?: string
+          review_message?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "emissions_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculations: {
         Row: {
           calculated_emissions: number
@@ -616,6 +673,8 @@ export type Database = {
       emissions_entries: {
         Row: {
           activity_type: string | null
+          approval_status: Database["public"]["Enums"]["approval_status"] | null
+          assigned_reviewer: string | null
           calculation_method: string | null
           category: string
           created_at: string
@@ -629,7 +688,10 @@ export type Database = {
           notes: string | null
           organization_id: string | null
           quantity: number
+          review_notes: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
+          submitted_at: string | null
+          submitted_by: string | null
           unit: Database["public"]["Enums"]["emission_unit"]
           updated_at: string
           user_id: string
@@ -638,6 +700,10 @@ export type Database = {
         }
         Insert: {
           activity_type?: string | null
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
+          assigned_reviewer?: string | null
           calculation_method?: string | null
           category: string
           created_at?: string
@@ -651,7 +717,10 @@ export type Database = {
           notes?: string | null
           organization_id?: string | null
           quantity: number
+          review_notes?: string | null
           scope: Database["public"]["Enums"]["emission_scope"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           unit: Database["public"]["Enums"]["emission_unit"]
           updated_at?: string
           user_id: string
@@ -660,6 +729,10 @@ export type Database = {
         }
         Update: {
           activity_type?: string | null
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
+          assigned_reviewer?: string | null
           calculation_method?: string | null
           category?: string
           created_at?: string
@@ -673,7 +746,10 @@ export type Database = {
           notes?: string | null
           organization_id?: string | null
           quantity?: number
+          review_notes?: string | null
           scope?: Database["public"]["Enums"]["emission_scope"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           unit?: Database["public"]["Enums"]["emission_unit"]
           updated_at?: string
           user_id?: string
@@ -2173,6 +2249,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_org_supervisor: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_organization_member: {
         Args: { _organization_id: string; _user_id: string }
         Returns: boolean
@@ -2184,6 +2264,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      approval_status:
+        | "draft"
+        | "pending_review"
+        | "changes_requested"
+        | "approved"
+        | "rejected"
       ef_unit:
         | "kgCO2e/kWh"
         | "kgCO2e/MWh"
@@ -2361,6 +2447,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      approval_status: [
+        "draft",
+        "pending_review",
+        "changes_requested",
+        "approved",
+        "rejected",
+      ],
       ef_unit: [
         "kgCO2e/kWh",
         "kgCO2e/MWh",
