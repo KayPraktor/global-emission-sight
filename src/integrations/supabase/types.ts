@@ -178,6 +178,119 @@ export type Database = {
           },
         ]
       }
+      carbon_credits: {
+        Row: {
+          created_at: string
+          credit_type: Database["public"]["Enums"]["carbon_credit_type"]
+          currency: string | null
+          current_price: number | null
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          project_location: string | null
+          project_name: string | null
+          project_type: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          quantity: number
+          registry: string | null
+          retirement_date: string | null
+          retirement_purpose: string | null
+          serial_numbers: string[] | null
+          status: Database["public"]["Enums"]["carbon_credit_status"]
+          updated_at: string
+          user_id: string
+          vintage_year: number
+        }
+        Insert: {
+          created_at?: string
+          credit_type?: Database["public"]["Enums"]["carbon_credit_type"]
+          currency?: string | null
+          current_price?: number | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          project_location?: string | null
+          project_name?: string | null
+          project_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity: number
+          registry?: string | null
+          retirement_date?: string | null
+          retirement_purpose?: string | null
+          serial_numbers?: string[] | null
+          status?: Database["public"]["Enums"]["carbon_credit_status"]
+          updated_at?: string
+          user_id: string
+          vintage_year: number
+        }
+        Update: {
+          created_at?: string
+          credit_type?: Database["public"]["Enums"]["carbon_credit_type"]
+          currency?: string | null
+          current_price?: number | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          project_location?: string | null
+          project_name?: string | null
+          project_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity?: number
+          registry?: string | null
+          retirement_date?: string | null
+          retirement_purpose?: string | null
+          serial_numbers?: string[] | null
+          status?: Database["public"]["Enums"]["carbon_credit_status"]
+          updated_at?: string
+          user_id?: string
+          vintage_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carbon_credits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carbon_prices: {
+        Row: {
+          created_at: string
+          currency: string | null
+          effective_date: string
+          id: string
+          metadata: Json | null
+          price_per_tonne: number
+          price_type: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          effective_date: string
+          id?: string
+          metadata?: Json | null
+          price_per_tonne: number
+          price_type: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          effective_date?: string
+          id?: string
+          metadata?: Json | null
+          price_per_tonne?: number
+          price_type?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       compliance_deadlines: {
         Row: {
           assignee_id: string | null
@@ -1977,6 +2090,92 @@ export type Database = {
           },
         ]
       }
+      roi_tracking: {
+        Row: {
+          carbon_credits_change: number | null
+          carbon_credits_value: number | null
+          compliance_savings: number | null
+          created_at: string
+          data_quality_savings: number | null
+          emissions_tracked: number | null
+          entries_processed: number | null
+          estimated_hourly_rate: number | null
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          penalty_avoidance: number | null
+          period: Database["public"]["Enums"]["roi_period_type"]
+          period_end: string
+          period_start: string
+          platform_cost: number | null
+          report_automation_savings: number | null
+          reports_generated: number | null
+          roi_percentage: number | null
+          time_saved_hours: number | null
+          time_savings_value: number | null
+          total_roi_value: number | null
+          user_id: string
+        }
+        Insert: {
+          carbon_credits_change?: number | null
+          carbon_credits_value?: number | null
+          compliance_savings?: number | null
+          created_at?: string
+          data_quality_savings?: number | null
+          emissions_tracked?: number | null
+          entries_processed?: number | null
+          estimated_hourly_rate?: number | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          penalty_avoidance?: number | null
+          period?: Database["public"]["Enums"]["roi_period_type"]
+          period_end: string
+          period_start: string
+          platform_cost?: number | null
+          report_automation_savings?: number | null
+          reports_generated?: number | null
+          roi_percentage?: number | null
+          time_saved_hours?: number | null
+          time_savings_value?: number | null
+          total_roi_value?: number | null
+          user_id: string
+        }
+        Update: {
+          carbon_credits_change?: number | null
+          carbon_credits_value?: number | null
+          compliance_savings?: number | null
+          created_at?: string
+          data_quality_savings?: number | null
+          emissions_tracked?: number | null
+          entries_processed?: number | null
+          estimated_hourly_rate?: number | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          penalty_avoidance?: number | null
+          period?: Database["public"]["Enums"]["roi_period_type"]
+          period_end?: string
+          period_start?: string
+          platform_cost?: number | null
+          report_automation_savings?: number | null
+          reports_generated?: number | null
+          roi_percentage?: number | null
+          time_saved_hours?: number | null
+          time_savings_value?: number | null
+          total_roi_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roi_tracking_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scenario_interventions: {
         Row: {
           affected_scope: string[]
@@ -2335,6 +2534,16 @@ export type Database = {
         | "changes_requested"
         | "approved"
         | "rejected"
+      carbon_credit_status: "active" | "retired" | "sold" | "pending"
+      carbon_credit_type:
+        | "VCU"
+        | "GCC"
+        | "CER"
+        | "EUA"
+        | "ACR"
+        | "CAR"
+        | "GS_VER"
+        | "OTHER"
       ef_unit:
         | "kgCO2e/kWh"
         | "kgCO2e/MWh"
@@ -2384,6 +2593,7 @@ export type Database = {
         | "other"
       org_role: "owner" | "admin" | "member"
       report_status: "draft" | "pending" | "approved" | "published"
+      roi_period_type: "monthly" | "quarterly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2519,6 +2729,17 @@ export const Constants = {
         "approved",
         "rejected",
       ],
+      carbon_credit_status: ["active", "retired", "sold", "pending"],
+      carbon_credit_type: [
+        "VCU",
+        "GCC",
+        "CER",
+        "EUA",
+        "ACR",
+        "CAR",
+        "GS_VER",
+        "OTHER",
+      ],
       ef_unit: [
         "kgCO2e/kWh",
         "kgCO2e/MWh",
@@ -2573,6 +2794,7 @@ export const Constants = {
       ],
       org_role: ["owner", "admin", "member"],
       report_status: ["draft", "pending", "approved", "published"],
+      roi_period_type: ["monthly", "quarterly", "yearly"],
     },
   },
 } as const

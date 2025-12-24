@@ -25,6 +25,7 @@ import AuthPage from "./pages/AuthPage";
 import LandingPage from "./pages/LandingPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
 import AuditPage from "./pages/AuditPage";
+import FinancialPage from "./pages/FinancialPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ function App() {
                           <Route path="/admin" element={<AdminPage />} />
                           <Route path="/approvals" element={<ApprovalsPage />} />
                           <Route path="/audit" element={<AuditPage />} />
+                          <Route path="/financial" element={<FinancialPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
