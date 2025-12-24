@@ -26,6 +26,8 @@ import LandingPage from "./pages/LandingPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
 import AuditPage from "./pages/AuditPage";
 import FinancialPage from "./pages/FinancialPage";
+import Scope3Page from "./pages/Scope3Page";
+import SuppliersPage from "./pages/SuppliersPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +70,8 @@ function App() {
                           <Route path="/approvals" element={<ApprovalsPage />} />
                           <Route path="/audit" element={<AuditPage />} />
                           <Route path="/financial" element={<FinancialPage />} />
+                          <Route path="/scope3" element={<Scope3Page />} />
+                          <Route path="/suppliers" element={<SuppliersPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>

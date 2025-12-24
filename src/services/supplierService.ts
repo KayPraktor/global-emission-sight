@@ -197,9 +197,23 @@ class SupplierService {
 
   // Create an engagement
   async createEngagement(engagement: Omit<SupplierEngagement, 'id' | 'created_at'>): Promise<SupplierEngagement> {
+    const insertData = {
+      supplier_id: engagement.supplier_id,
+      organization_id: engagement.organization_id,
+      engagement_type: engagement.engagement_type,
+      title: engagement.title,
+      description: engagement.description,
+      sent_date: engagement.sent_date,
+      due_date: engagement.due_date,
+      response_date: engagement.response_date,
+      status: engagement.status,
+      request_details: engagement.request_details ? JSON.parse(JSON.stringify(engagement.request_details)) : null,
+      response_data: engagement.response_data ? JSON.parse(JSON.stringify(engagement.response_data)) : null,
+    };
+    
     const { data, error } = await supabase
       .from('supplier_engagements')
-      .insert([engagement])
+      .insert([insertData])
       .select()
       .single();
     

@@ -375,7 +375,7 @@ class Scope3Service {
         reporting_year: year,
         category_number: categoryNumber,
         emissions_tco2e: data.emissions_tco2e || 0,
-        data_quality: data.data_quality || 'estimated',
+        data_quality: (data.data_quality || 'estimated') as 'primary' | 'secondary' | 'estimated' | 'spend_based',
         supplier_data_percentage: data.supplier_data_percentage || 0,
         spend_based_percentage: data.spend_based_percentage || 100,
         industry_average_percentage: data.industry_average_percentage || 0,
