@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Lightbulb, TrendingDown, AlertCircle, CheckCircle2, X, RefreshCw } from 'lucide-react';
+import { Sparkles, Lightbulb, TrendingDown, AlertCircle, CheckCircle2, X, RefreshCw, Bot, Calculator } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Insight {
   id: string;
@@ -21,12 +22,22 @@ interface Insight {
   timeframe: string;
   is_dismissed: boolean;
   is_actioned: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata?: any;
 }
+
+const getInsightSourceFromMetadata = (metadata: unknown): 'ai' | 'rule-based' => {
+  if (metadata && typeof metadata === 'object' && 'source' in metadata) {
+    return (metadata as { source?: string }).source === 'rule-based' ? 'rule-based' : 'ai';
+  }
+  return 'ai';
+};
 
 export function AIInsightsPanel() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [lastSource, setLastSource] = useState<'ai' | 'rule-based' | null>(null);
 
   useEffect(() => {
     loadInsights();
@@ -91,14 +102,26 @@ export function AIInsightsPanel() {
         throw new Error('Failed to generate insights');
       }
 
+      const data = await response.json();
+      setLastSource(data.source || 'ai');
+      
       await loadInsights();
-      toast.success('AI insights generated successfully');
+      
+      if (data.source === 'rule-based') {
+        toast.success('Insights generated using statistical analysis');
+      } else {
+        toast.success('AI insights generated successfully');
+      }
     } catch (error) {
       console.error('Error generating insights:', error);
       toast.error('Failed to generate insights');
     } finally {
       setGenerating(false);
     }
+  };
+
+  const getInsightSource = (insight: Insight): 'ai' | 'rule-based' => {
+    return getInsightSourceFromMetadata(insight.metadata);
   };
 
   const handleDismiss = async (insightId: string) => {
@@ -179,6 +202,26 @@ export function AIInsightsPanel() {
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-purple-500" />
               AI-Powered Insights
+              {lastSource && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {lastSource === 'ai' ? (
+                          <><Bot className="h-3 w-3 mr-1" /> AI</>
+                        ) : (
+                          <><Calculator className="h-3 w-3 mr-1" /> Statistical</>
+                        )}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {lastSource === 'ai' 
+                        ? 'Generated using AI analysis'
+                        : 'Generated using rule-based statistical analysis'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </CardTitle>
             <CardDescription>
               Personalized recommendations based on your emissions data
@@ -216,11 +259,29 @@ export function AIInsightsPanel() {
                             {getCategoryIcon(insight.category)}
                           </div>
                           <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={getPriorityColor(insight.priority)}>
                                 {insight.priority}
                               </Badge>
                               <Badge variant="outline">{insight.category}</Badge>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {getInsightSource(insight) === 'ai' ? (
+                                        <><Bot className="h-3 w-3 mr-1" /> AI</>
+                                      ) : (
+                                        <><Calculator className="h-3 w-3 mr-1" /> Stats</>
+                                      )}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {getInsightSource(insight) === 'ai'
+                                      ? 'AI-generated insight'
+                                      : 'Rule-based statistical insight'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               {insight.is_actioned && (
                                 <Badge variant="secondary">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />

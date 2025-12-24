@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
-import { Target, AlertTriangle, Info, ExternalLink, Lightbulb, TrendingDown, Activity } from 'lucide-react';
+import { Target, AlertTriangle, Info, ExternalLink, Lightbulb, TrendingDown, Activity, Bot, Calculator } from 'lucide-react';
 import { DataFreshness } from '@/components/ui/data-freshness';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,8 @@ interface Insight {
   finding: string | null;
   impact: string | null;
   recommendation: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata?: any;
 }
 
 const InsightsNextActions: React.FC = () => {
@@ -105,6 +107,13 @@ const InsightsNextActions: React.FC = () => {
     }
   };
 
+  const getInsightSource = (insight: Insight): 'ai' | 'rule-based' => {
+    if (insight.metadata && typeof insight.metadata === 'object' && 'source' in insight.metadata) {
+      return insight.metadata.source === 'rule-based' ? 'rule-based' : 'ai';
+    }
+    return 'ai';
+  };
+
   const handleViewAll = () => {
     navigate('/analytics?tab=insights');
   };
@@ -161,13 +170,13 @@ const InsightsNextActions: React.FC = () => {
                     <Badge variant={getPriorityColor(insight.priority)} className="flex-shrink-0">
                       {insight.priority}
                     </Badge>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="pt-2 border-t">
+                    <Badge variant="outline" className="flex-shrink-0 text-xs">
+                      {getInsightSource(insight) === 'ai' ? (
+                        <><Bot className="h-3 w-3 mr-1" /> AI</>
+                      ) : (
+                        <><Calculator className="h-3 w-3 mr-1" /> Stats</>
+                      )}
+                    </Badge>
             <Button variant="ghost" size="sm" className="w-full justify-between" onClick={handleViewAll}>
               View all {insights.length} recommendations
               <ExternalLink className="h-4 w-4" />
