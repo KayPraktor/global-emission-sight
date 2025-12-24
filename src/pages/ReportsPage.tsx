@@ -8,7 +8,6 @@ import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
 import { CBAMReportGenerator } from '@/components/Reports/CBAMReportGenerator';
-import { CBAMReportGeneratorPersian } from '@/components/Reports/CBAMReportGeneratorPersian';
 import { ISO14064ReportGenerator } from '@/components/Reports/ISO14064ReportGenerator';
 import { Settings } from 'lucide-react';
 
@@ -27,7 +26,6 @@ const ReportsPage = () => {
             <TabsTrigger value="comprehensive">Quarterly & Annual</TabsTrigger>
             <TabsTrigger value="iso14064">ISO 14064</TabsTrigger>
             <TabsTrigger value="cbam">EU CBAM</TabsTrigger>
-            <TabsTrigger value="cbam-persian">CBAM فارسی</TabsTrigger>
             <TabsTrigger value="data">Data Reports</TabsTrigger>
             <TabsTrigger value="industry">Industry Templates</TabsTrigger>
             <TabsTrigger value="templates">All Templates</TabsTrigger>
@@ -61,10 +59,6 @@ const ReportsPage = () => {
 
           <TabsContent value="cbam" className="space-y-6">
             <CBAMReportGenerator />
-          </TabsContent>
-
-          <TabsContent value="cbam-persian" className="space-y-6">
-            <CBAMReportGeneratorPersian />
           </TabsContent>
           
           <TabsContent value="data">
