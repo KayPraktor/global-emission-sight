@@ -1796,6 +1796,78 @@ export type Database = {
           },
         ]
       }
+      organization_scope3_summary: {
+        Row: {
+          category_number: number
+          created_at: string
+          data_quality:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          emissions_tco2e: number
+          id: string
+          industry_average_percentage: number | null
+          last_calculated: string | null
+          metadata: Json | null
+          methodology_notes: string | null
+          organization_id: string
+          reporting_year: number
+          spend_based_percentage: number | null
+          supplier_data_percentage: number | null
+          updated_at: string
+        }
+        Insert: {
+          category_number: number
+          created_at?: string
+          data_quality?:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          emissions_tco2e?: number
+          id?: string
+          industry_average_percentage?: number | null
+          last_calculated?: string | null
+          metadata?: Json | null
+          methodology_notes?: string | null
+          organization_id: string
+          reporting_year: number
+          spend_based_percentage?: number | null
+          supplier_data_percentage?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category_number?: number
+          created_at?: string
+          data_quality?:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          emissions_tco2e?: number
+          id?: string
+          industry_average_percentage?: number | null
+          last_calculated?: string | null
+          metadata?: Json | null
+          methodology_notes?: string | null
+          organization_id?: string
+          reporting_year?: number
+          spend_based_percentage?: number | null
+          supplier_data_percentage?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_scope3_summary_category_number_fkey"
+            columns: ["category_number"]
+            isOneToOne: false
+            referencedRelation: "scope3_categories"
+            referencedColumns: ["category_number"]
+          },
+          {
+            foreignKeyName: "organization_scope3_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           annual_revenue_usd: number | null
@@ -2288,6 +2360,402 @@ export type Database = {
           },
         ]
       }
+      scope3_categories: {
+        Row: {
+          category_number: number
+          created_at: string
+          data_sources: string[] | null
+          default_emission_factor: number | null
+          description: string | null
+          emission_factor_unit: string | null
+          id: string
+          is_upstream: boolean
+          methodology_guidance: string | null
+          name: string
+        }
+        Insert: {
+          category_number: number
+          created_at?: string
+          data_sources?: string[] | null
+          default_emission_factor?: number | null
+          description?: string | null
+          emission_factor_unit?: string | null
+          id?: string
+          is_upstream?: boolean
+          methodology_guidance?: string | null
+          name: string
+        }
+        Update: {
+          category_number?: number
+          created_at?: string
+          data_sources?: string[] | null
+          default_emission_factor?: number | null
+          description?: string | null
+          emission_factor_unit?: string | null
+          id?: string
+          is_upstream?: boolean
+          methodology_guidance?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      supplier_emissions: {
+        Row: {
+          allocated_emissions: number | null
+          allocation_method: string | null
+          created_at: string
+          data_source: string | null
+          emission_intensity: number | null
+          id: string
+          intensity_unit: string | null
+          metadata: Json | null
+          methodology: string | null
+          organization_id: string | null
+          reporting_period_end: string | null
+          reporting_period_start: string | null
+          reporting_year: number
+          revenue: number | null
+          revenue_currency: string | null
+          scope1_emissions: number | null
+          scope2_emissions: number | null
+          scope3_emissions: number | null
+          supplier_id: string
+          total_emissions: number | null
+          uncertainty_percentage: number | null
+          updated_at: string
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_name: string | null
+        }
+        Insert: {
+          allocated_emissions?: number | null
+          allocation_method?: string | null
+          created_at?: string
+          data_source?: string | null
+          emission_intensity?: number | null
+          id?: string
+          intensity_unit?: string | null
+          metadata?: Json | null
+          methodology?: string | null
+          organization_id?: string | null
+          reporting_period_end?: string | null
+          reporting_period_start?: string | null
+          reporting_year: number
+          revenue?: number | null
+          revenue_currency?: string | null
+          scope1_emissions?: number | null
+          scope2_emissions?: number | null
+          scope3_emissions?: number | null
+          supplier_id: string
+          total_emissions?: number | null
+          uncertainty_percentage?: number | null
+          updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_name?: string | null
+        }
+        Update: {
+          allocated_emissions?: number | null
+          allocation_method?: string | null
+          created_at?: string
+          data_source?: string | null
+          emission_intensity?: number | null
+          id?: string
+          intensity_unit?: string | null
+          metadata?: Json | null
+          methodology?: string | null
+          organization_id?: string | null
+          reporting_period_end?: string | null
+          reporting_period_start?: string | null
+          reporting_year?: number
+          revenue?: number | null
+          revenue_currency?: string | null
+          scope1_emissions?: number | null
+          scope2_emissions?: number | null
+          scope3_emissions?: number | null
+          supplier_id?: string
+          total_emissions?: number | null
+          uncertainty_percentage?: number | null
+          updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_emissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_emissions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_engagements: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          engagement_type: Database["public"]["Enums"]["supplier_engagement_type"]
+          id: string
+          organization_id: string | null
+          reminder_sent: boolean | null
+          request_details: Json | null
+          response_data: Json | null
+          response_date: string | null
+          sent_date: string | null
+          status: string | null
+          supplier_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          engagement_type: Database["public"]["Enums"]["supplier_engagement_type"]
+          id?: string
+          organization_id?: string | null
+          reminder_sent?: boolean | null
+          request_details?: Json | null
+          response_data?: Json | null
+          response_date?: string | null
+          sent_date?: string | null
+          status?: string | null
+          supplier_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          engagement_type?: Database["public"]["Enums"]["supplier_engagement_type"]
+          id?: string
+          organization_id?: string | null
+          reminder_sent?: boolean | null
+          request_details?: Json | null
+          response_data?: Json | null
+          response_date?: string | null
+          sent_date?: string | null
+          status?: string | null
+          supplier_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_engagements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_engagements_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          emission_factor: number | null
+          emission_factor_source: string | null
+          emission_factor_unit: string | null
+          id: string
+          lca_available: boolean | null
+          lca_data: Json | null
+          metadata: Json | null
+          organization_id: string | null
+          price_currency: string | null
+          product_code: string | null
+          product_name: string
+          quantity_purchased: number | null
+          scope3_category: number | null
+          supplier_id: string
+          total_emissions: number | null
+          unit: string
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          emission_factor?: number | null
+          emission_factor_source?: string | null
+          emission_factor_unit?: string | null
+          id?: string
+          lca_available?: boolean | null
+          lca_data?: Json | null
+          metadata?: Json | null
+          organization_id?: string | null
+          price_currency?: string | null
+          product_code?: string | null
+          product_name: string
+          quantity_purchased?: number | null
+          scope3_category?: number | null
+          supplier_id: string
+          total_emissions?: number | null
+          unit: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          emission_factor?: number | null
+          emission_factor_source?: string | null
+          emission_factor_unit?: string | null
+          id?: string
+          lca_available?: boolean | null
+          lca_data?: Json | null
+          metadata?: Json | null
+          organization_id?: string | null
+          price_currency?: string | null
+          product_code?: string | null
+          product_name?: string
+          quantity_purchased?: number | null
+          scope3_category?: number | null
+          supplier_id?: string
+          total_emissions?: number | null
+          unit?: string
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_products_scope3_category_fkey"
+            columns: ["scope3_category"]
+            isOneToOne: false
+            referencedRelation: "scope3_categories"
+            referencedColumns: ["category_number"]
+          },
+          {
+            foreignKeyName: "supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          annual_spend: number | null
+          cdp_score: string | null
+          city: string | null
+          contact_email: string | null
+          contact_name: string | null
+          country_code: string | null
+          created_at: string
+          data_validity_date: string | null
+          emissions_data_quality:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          engagement_status: Database["public"]["Enums"]["supplier_engagement_status"]
+          has_science_based_target: boolean | null
+          id: string
+          industry: string | null
+          last_data_submission: string | null
+          metadata: Json | null
+          name: string
+          notes: string | null
+          organization_id: string | null
+          spend_category: string | null
+          spend_currency: string | null
+          supplier_score: number | null
+          tier: Database["public"]["Enums"]["supplier_tier"]
+          updated_at: string
+        }
+        Insert: {
+          annual_spend?: number | null
+          cdp_score?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          data_validity_date?: string | null
+          emissions_data_quality?:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          engagement_status?: Database["public"]["Enums"]["supplier_engagement_status"]
+          has_science_based_target?: boolean | null
+          id?: string
+          industry?: string | null
+          last_data_submission?: string | null
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          spend_category?: string | null
+          spend_currency?: string | null
+          supplier_score?: number | null
+          tier?: Database["public"]["Enums"]["supplier_tier"]
+          updated_at?: string
+        }
+        Update: {
+          annual_spend?: number | null
+          cdp_score?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          data_validity_date?: string | null
+          emissions_data_quality?:
+            | Database["public"]["Enums"]["emissions_data_quality"]
+            | null
+          engagement_status?: Database["public"]["Enums"]["supplier_engagement_status"]
+          has_science_based_target?: boolean | null
+          id?: string
+          industry?: string | null
+          last_data_submission?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          spend_category?: string | null
+          spend_currency?: string | null
+          supplier_score?: number | null
+          tier?: Database["public"]["Enums"]["supplier_tier"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_emission_factor_versions: {
         Row: {
           auto_update: boolean | null
@@ -2567,6 +3035,11 @@ export type Database = {
         | "passenger_km"
         | "tonne_km"
         | "night"
+      emissions_data_quality:
+        | "primary"
+        | "secondary"
+        | "estimated"
+        | "spend_based"
       facility_type:
         | "office"
         | "warehouse"
@@ -2594,6 +3067,24 @@ export type Database = {
       org_role: "owner" | "admin" | "member"
       report_status: "draft" | "pending" | "approved" | "published"
       roi_period_type: "monthly" | "quarterly" | "yearly"
+      supplier_engagement_status:
+        | "pending"
+        | "invited"
+        | "active"
+        | "unresponsive"
+        | "declined"
+      supplier_engagement_type:
+        | "survey"
+        | "data_request"
+        | "training"
+        | "audit"
+        | "collaboration"
+      supplier_tier: "tier_1" | "tier_2" | "tier_3"
+      verification_status:
+        | "unverified"
+        | "self_declared"
+        | "third_party_verified"
+        | "audited"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2765,6 +3256,12 @@ export const Constants = {
         "tonne_km",
         "night",
       ],
+      emissions_data_quality: [
+        "primary",
+        "secondary",
+        "estimated",
+        "spend_based",
+      ],
       facility_type: [
         "office",
         "warehouse",
@@ -2795,6 +3292,27 @@ export const Constants = {
       org_role: ["owner", "admin", "member"],
       report_status: ["draft", "pending", "approved", "published"],
       roi_period_type: ["monthly", "quarterly", "yearly"],
+      supplier_engagement_status: [
+        "pending",
+        "invited",
+        "active",
+        "unresponsive",
+        "declined",
+      ],
+      supplier_engagement_type: [
+        "survey",
+        "data_request",
+        "training",
+        "audit",
+        "collaboration",
+      ],
+      supplier_tier: ["tier_1", "tier_2", "tier_3"],
+      verification_status: [
+        "unverified",
+        "self_declared",
+        "third_party_verified",
+        "audited",
+      ],
     },
   },
 } as const
