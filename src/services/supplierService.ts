@@ -113,7 +113,7 @@ class SupplierService {
       .from('suppliers')
       .select('*')
       .eq('id', supplierId)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data as Supplier | null;
