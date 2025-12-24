@@ -177,11 +177,15 @@ const InsightsNextActions: React.FC = () => {
                         <><Calculator className="h-3 w-3 mr-1" /> Stats</>
                       )}
                     </Badge>
-            <Button variant="ghost" size="sm" className="w-full justify-between" onClick={handleViewAll}>
-              View all {insights.length} recommendations
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <Button variant="ghost" size="sm" className="w-full justify-between" onClick={handleViewAll}>
+            View all {insights.length} recommendations
+            <ExternalLink className="h-4 w-4" />
+          </Button>
         </>
       )}
     </GlassmorphismCard>
