@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/ui/page-header';
 import { Scope3Dashboard } from '@/components/Scope3/Scope3Dashboard';
 import { SupplierDashboard } from '@/components/Suppliers/SupplierDashboard';
+import { Scope3ReductionPlanner } from '@/components/Scope3/Scope3ReductionPlanner';
 
 export default function Scope3Page() {
   return (
@@ -15,11 +16,16 @@ export default function Scope3Page() {
       <Tabs defaultValue="scope3" className="space-y-4">
         <TabsList>
           <TabsTrigger value="scope3">Scope 3 Emissions</TabsTrigger>
+          <TabsTrigger value="scenarios">Reduction Scenarios</TabsTrigger>
           <TabsTrigger value="suppliers">Supplier Engagement</TabsTrigger>
         </TabsList>
 
         <TabsContent value="scope3">
           <Scope3Dashboard />
+        </TabsContent>
+
+        <TabsContent value="scenarios">
+          <Scope3ReductionPlanner />
         </TabsContent>
 
         <TabsContent value="suppliers">
