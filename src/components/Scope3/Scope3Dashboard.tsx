@@ -23,6 +23,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { scope3Service, Scope3Summary } from '@/services/scope3Service';
+import { DEMO_SCOPE3_SUMMARY } from '@/utils/scope3DemoData';
+import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { HotspotAnalysis } from './HotspotAnalysis';
 import {
@@ -99,6 +101,11 @@ export function Scope3Dashboard() {
     queryFn: () => scope3Service.getCategories(),
   });
 
+  // Check if using demo data
+  const isUsingDemoData = summary.length > 0 && 
+    summary[0]?.category_name === DEMO_SCOPE3_SUMMARY[0]?.category_name &&
+    summary[0]?.emissions_tco2e === DEMO_SCOPE3_SUMMARY[0]?.emissions_tco2e;
+
   const upstreamData = summary.filter(s => s.category_number <= 8);
   const downstreamData = summary.filter(s => s.category_number > 8);
 
@@ -140,6 +147,11 @@ export function Scope3Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Sample Data Indicator */}
+      {isUsingDemoData && (
+        <SampleDataBadge text="Sample Scope 3 Data" />
+      )}
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

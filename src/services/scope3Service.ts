@@ -1,4 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  DEMO_SCOPE3_SUMMARY, 
+  getDemoScope3Totals, 
+  getDemoDataQualityScore, 
+  getDemoHotspots 
+} from "@/utils/scope3DemoData";
 
 // All 15 GHG Protocol Scope 3 categories
 export interface Scope3Category {
@@ -151,7 +157,7 @@ class Scope3Service {
     const categories = await this.getCategories();
     const categoryMap = new Map(categories.map(c => [c.category_number, c.name]));
 
-    return (data || []).map(item => ({
+    const realData = (data || []).map(item => ({
       category_number: item.category_number,
       category_name: categoryMap.get(item.category_number) || `Category ${item.category_number}`,
       emissions_tco2e: Number(item.emissions_tco2e) || 0,
@@ -160,6 +166,13 @@ class Scope3Service {
       spend_based_percentage: Number(item.spend_based_percentage) || 100,
       industry_average_percentage: Number(item.industry_average_percentage) || 0
     }));
+
+    // If no real data, return demo data
+    if (realData.length === 0 || realData.every(d => d.emissions_tco2e === 0)) {
+      return DEMO_SCOPE3_SUMMARY;
+    }
+
+    return realData;
   }
 
   // Calculate emissions for a category
@@ -215,8 +228,17 @@ class Scope3Service {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     const totalEmissions = summary.reduce((sum, cat) => sum + cat.emissions_tco2e, 0);
 
+    // Check if using demo data (by checking if data matches demo)
+    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
+      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
+       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
+
+    if (isUsingDemoData) {
+      return getDemoHotspots();
+    }
+
     if (totalEmissions === 0) {
-      return [];
+      return getDemoHotspots();
     }
 
     // Get suppliers for top contributors
@@ -394,6 +416,15 @@ class Scope3Service {
   ): Promise<{ total: number; upstream: number; downstream: number }> {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     
+    // Check if using demo data
+    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
+      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
+       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
+
+    if (isUsingDemoData) {
+      return getDemoScope3Totals();
+    }
+
     let upstream = 0;
     let downstream = 0;
 
@@ -419,8 +450,17 @@ class Scope3Service {
   ): Promise<{ score: number; breakdown: Record<string, number> }> {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     
+    // Check if using demo data
+    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
+      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
+       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
+
+    if (isUsingDemoData) {
+      return getDemoDataQualityScore();
+    }
+
     if (summary.length === 0) {
-      return { score: 0, breakdown: {} };
+      return getDemoDataQualityScore();
     }
 
     const qualityWeights: Record<string, number> = {
