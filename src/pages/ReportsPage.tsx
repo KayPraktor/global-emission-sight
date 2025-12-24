@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import EmissionsReport from '@/components/Reports/EmissionsReport';
@@ -8,6 +7,8 @@ import IndustryReportTemplates from '@/components/Reports/IndustryReportTemplate
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
+import { CBAMReportGenerator } from '@/components/Reports/CBAMReportGenerator';
+import { ISO14064ReportGenerator } from '@/components/Reports/ISO14064ReportGenerator';
 import { Settings } from 'lucide-react';
 
 const ReportsPage = () => {
@@ -20,9 +21,11 @@ const ReportsPage = () => {
         </div>
         
         <Tabs defaultValue="monthly" className="mb-6">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap h-auto gap-1">
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
             <TabsTrigger value="comprehensive">Quarterly & Annual</TabsTrigger>
+            <TabsTrigger value="iso14064">ISO 14064</TabsTrigger>
+            <TabsTrigger value="cbam">EU CBAM</TabsTrigger>
             <TabsTrigger value="data">Data Reports</TabsTrigger>
             <TabsTrigger value="industry">Industry Templates</TabsTrigger>
             <TabsTrigger value="templates">All Templates</TabsTrigger>
@@ -48,6 +51,14 @@ const ReportsPage = () => {
               <Settings className="h-4 w-4" />
               Customize report branding in Settings
             </Link>
+          </TabsContent>
+
+          <TabsContent value="iso14064" className="space-y-6">
+            <ISO14064ReportGenerator />
+          </TabsContent>
+
+          <TabsContent value="cbam" className="space-y-6">
+            <CBAMReportGenerator />
           </TabsContent>
           
           <TabsContent value="data">
