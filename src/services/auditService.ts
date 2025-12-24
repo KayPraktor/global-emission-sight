@@ -77,8 +77,9 @@ class AuditService {
 
       if (!orgMember) return null;
 
-      const { data, error } = await supabase
-        .from('audit_logs')
+      // Use type assertion since types may not be regenerated yet
+      const { data, error } = await (supabase
+        .from('audit_logs' as any)
         .insert({
           user_id: userData.user.id,
           organization_id: orgMember.organization_id,
@@ -92,9 +93,9 @@ class AuditService {
             timestamp: new Date().toISOString(),
             user_agent: navigator.userAgent,
           },
-        })
+        } as any)
         .select('id')
-        .single();
+        .single()) as { data: { id: string } | null; error: any };
 
       if (error) {
         console.error('Failed to log audit event:', error);
@@ -118,7 +119,7 @@ class AuditService {
   ): Promise<{ logs: AuditLog[]; total: number }> {
     try {
       let query = supabase
-        .from('audit_logs')
+        .from('audit_logs' as any)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
@@ -147,7 +148,7 @@ class AuditService {
       }
 
       const { data, error, count } = await query
-        .range(offset, offset + limit - 1);
+        .range(offset, offset + limit - 1) as { data: any[] | null; error: any; count: number | null };
 
       if (error) throw error;
 
