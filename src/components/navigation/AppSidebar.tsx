@@ -15,7 +15,8 @@ import {
   TrendingUp,
   LineChart,
   Shield,
-  ClipboardCheck
+  ClipboardCheck,
+  ScrollText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,7 @@ export function AppSidebar() {
     
     // REPORTING
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
+    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting' },
     
     // ADMINISTRATION
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
