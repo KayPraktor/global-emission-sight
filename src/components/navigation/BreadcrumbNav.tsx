@@ -69,9 +69,7 @@ export function BreadcrumbNav() {
               )}
             </BreadcrumbItem>
             {index < breadcrumbItems.length - 1 && (
-              <BreadcrumbSeparator>
-                <ChevronRight className="h-4 w-4" />
-              </BreadcrumbSeparator>
+              <BreadcrumbSeparator />
             )}
           </React.Fragment>
         ))}
