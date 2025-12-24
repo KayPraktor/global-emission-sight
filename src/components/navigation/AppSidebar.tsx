@@ -16,6 +16,7 @@ import {
   LineChart,
   Shield,
   ClipboardCheck,
+  Wallet,
   ScrollText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,6 +79,7 @@ export function AppSidebar() {
     // REPORTING
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
     { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting' },
+    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting' },
     
     // ADMINISTRATION
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
