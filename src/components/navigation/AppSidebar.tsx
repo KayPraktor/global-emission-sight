@@ -17,7 +17,9 @@ import {
   Shield,
   ClipboardCheck,
   Wallet,
-  ScrollText
+  ScrollText,
+  Link2,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -73,6 +75,8 @@ export function AppSidebar() {
     
     // ANALYSIS & PLANNING
     { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis' },
+    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', section: 'analysis' },
+    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', section: 'analysis' },
     { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
     

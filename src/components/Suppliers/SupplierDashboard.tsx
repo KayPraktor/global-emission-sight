@@ -206,7 +206,7 @@ export function SupplierDashboard() {
               {Object.entries(stats.byDataQuality).map(([quality, count]) => (
                 <div key={quality} className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${dataQualityColors[quality] || 'bg-slate-500'}`} />
-                  <span className="text-sm capitalize">{quality.replace('_', ' ')}: {count}</span>
+                  <span className="text-sm capitalize">{quality.replace('_', ' ')}: {String(count)}</span>
                 </div>
               ))}
             </div>
