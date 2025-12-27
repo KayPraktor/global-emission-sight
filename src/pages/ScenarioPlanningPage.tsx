@@ -9,7 +9,8 @@ import { ScenarioBuilder } from '@/components/Scenarios/ScenarioBuilder';
 import { ScenarioComparison } from '@/components/Scenarios/ScenarioComparison';
 import { CostBenefitAnalysis } from '@/components/Scenarios/CostBenefitAnalysis';
 import { SensitivityAnalysis } from '@/components/Scenarios/SensitivityAnalysis';
-import { Plus, TrendingUp, GitCompare, LineChart } from 'lucide-react';
+import { MultiParameterSensitivity } from '@/components/Scenarios/MultiParameterSensitivity';
+import { Plus, TrendingUp, GitCompare, LineChart, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ScenarioPlanningPage = () => {
@@ -69,7 +70,7 @@ const ScenarioPlanningPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6">
             <TabsTrigger value="scenarios" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               Scenarios
@@ -89,6 +90,10 @@ const ScenarioPlanningPage = () => {
             <TabsTrigger value="sensitivity" className="gap-2" disabled={!selectedScenario}>
               <LineChart className="h-4 w-4" />
               Sensitivity
+            </TabsTrigger>
+            <TabsTrigger value="multi-param" className="gap-2" disabled={!selectedScenario}>
+              <BarChart3 className="h-4 w-4" />
+              Tornado
             </TabsTrigger>
           </TabsList>
 
@@ -139,6 +144,23 @@ const ScenarioPlanningPage = () => {
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
                   Select a scenario to view sensitivity analysis
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="multi-param" className="mt-6">
+            {selectedScenario && selectedScenarioData ? (
+              <MultiParameterSensitivity
+                scenarioId={selectedScenario}
+                baselineYear={selectedScenarioData.baseline_year}
+                targetYear={selectedScenarioData.target_year}
+                baselineEmissions={Number(selectedScenarioData.baseline_emissions)}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Select a scenario to view multi-parameter sensitivity analysis
                 </CardContent>
               </Card>
             )}
