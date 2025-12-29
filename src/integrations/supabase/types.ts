@@ -652,6 +652,60 @@ export type Database = {
           },
         ]
       }
+      eeio_emission_factors: {
+        Row: {
+          applicable_scope3_categories: number[] | null
+          country_code: string | null
+          created_at: string | null
+          data_quality_tier: string | null
+          factor_value: number
+          id: string
+          industry: string
+          methodology: string | null
+          naics_code: string | null
+          region: string | null
+          sector: string
+          source: string
+          uncertainty: number | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          applicable_scope3_categories?: number[] | null
+          country_code?: string | null
+          created_at?: string | null
+          data_quality_tier?: string | null
+          factor_value: number
+          id?: string
+          industry: string
+          methodology?: string | null
+          naics_code?: string | null
+          region?: string | null
+          sector: string
+          source: string
+          uncertainty?: number | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          applicable_scope3_categories?: number[] | null
+          country_code?: string | null
+          created_at?: string | null
+          data_quality_tier?: string | null
+          factor_value?: number
+          id?: string
+          industry?: string
+          methodology?: string | null
+          naics_code?: string | null
+          region?: string | null
+          sector?: string
+          source?: string
+          uncertainty?: number | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       email_reports_log: {
         Row: {
           anomalies_count: number | null
