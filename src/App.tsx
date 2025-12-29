@@ -56,8 +56,7 @@ function App() {
                       <DashboardLayout>
                         <Routes>
                           <Route path="/" element={<Index />} />
-                          <Route path="/enterprise" element={<EnterpriseIndex />} />
-                          <Route path="/enterprise" element={<EnterpriseIndex />} />
+                  <Route path="/enterprise" element={<EnterpriseIndex />} />
                           <Route path="/data-entry" element={<DataEntryPage />} />
                           <Route path="/facilities" element={<FacilitiesPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
