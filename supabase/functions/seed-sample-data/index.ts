@@ -79,12 +79,12 @@ serve(async (req) => {
 
     // Create emission factors
     const emissionFactors = [
-      { name: "Natural Gas", category: "stationary_combustion", scope: "scope_1", factor_value: 2.02, unit: "kg_co2e_per_kwh", source: "EPA 2024" },
-      { name: "Diesel Fuel", category: "mobile_combustion", scope: "scope_1", factor_value: 2.68, unit: "kg_co2e_per_liter", source: "EPA 2024" },
-      { name: "Grid Electricity - US Average", category: "purchased_electricity", scope: "scope_2", factor_value: 0.42, unit: "kg_co2e_per_kwh", source: "eGRID 2024" },
-      { name: "Business Travel - Air", category: "business_travel", scope: "scope_3", factor_value: 0.255, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
-      { name: "Employee Commuting", category: "employee_commuting", scope: "scope_3", factor_value: 0.21, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
-      { name: "Purchased Goods", category: "purchased_goods", scope: "scope_3", factor_value: 0.5, unit: "kg_co2e_per_usd", source: "EEIO 2024" },
+      { name: "Natural Gas", category: "stationary_combustion", scope: "S1", factor_value: 2.02, unit: "kg_co2e_per_kwh", source: "EPA 2024" },
+      { name: "Diesel Fuel", category: "mobile_combustion", scope: "S1", factor_value: 2.68, unit: "kg_co2e_per_liter", source: "EPA 2024" },
+      { name: "Grid Electricity - US Average", category: "purchased_electricity", scope: "S2", factor_value: 0.42, unit: "kg_co2e_per_kwh", source: "eGRID 2024" },
+      { name: "Business Travel - Air", category: "business_travel", scope: "S3", factor_value: 0.255, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
+      { name: "Employee Commuting", category: "employee_commuting", scope: "S3", factor_value: 0.21, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
+      { name: "Purchased Goods", category: "purchased_goods", scope: "S3", factor_value: 0.5, unit: "kg_co2e_per_usd", source: "EEIO 2024" },
     ];
 
     const { data: factors, error: factorsError } = await supabase
@@ -117,7 +117,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Natural Gas")?.id,
-        scope: "scope_1",
+        scope: "S1",
         category: "stationary_combustion",
         activity_type: "natural_gas",
         quantity: gasUsage,
@@ -132,7 +132,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Diesel Fuel")?.id,
-        scope: "scope_1",
+        scope: "S1",
         category: "mobile_combustion",
         activity_type: "diesel",
         quantity: dieselUsage,
@@ -147,7 +147,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Grid Electricity - US Average")?.id,
-        scope: "scope_2",
+        scope: "S2",
         category: "purchased_electricity",
         activity_type: "electricity",
         quantity: electricityUsage,
@@ -162,7 +162,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Business Travel - Air")?.id,
-        scope: "scope_3",
+        scope: "S3",
         category: "business_travel",
         activity_type: "air_travel",
         quantity: travelKm,
@@ -177,7 +177,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Employee Commuting")?.id,
-        scope: "scope_3",
+        scope: "S3",
         category: "employee_commuting",
         activity_type: "commuting",
         quantity: commuteKm,
@@ -192,7 +192,7 @@ serve(async (req) => {
         user_id: user.id,
         facility_id: facility.id,
         emission_factor_id: factors.find(f => f.name === "Purchased Goods")?.id,
-        scope: "scope_3",
+        scope: "S3",
         category: "purchased_goods",
         activity_type: "goods_services",
         quantity: purchasedGoods,
@@ -244,13 +244,13 @@ serve(async (req) => {
     // Calculate totals for response
     const totalEmissions = calculations.reduce((sum, c) => sum + c.calculated_emissions, 0);
     const scope1Total = calculations
-      .filter((_, i) => insertedEntries[i].scope === "scope_1")
+      .filter((_, i) => insertedEntries[i].scope === "S1")
       .reduce((sum, c) => sum + c.calculated_emissions, 0);
     const scope2Total = calculations
-      .filter((_, i) => insertedEntries[i].scope === "scope_2")
+      .filter((_, i) => insertedEntries[i].scope === "S2")
       .reduce((sum, c) => sum + c.calculated_emissions, 0);
     const scope3Total = calculations
-      .filter((_, i) => insertedEntries[i].scope === "scope_3")
+      .filter((_, i) => insertedEntries[i].scope === "S3")
       .reduce((sum, c) => sum + c.calculated_emissions, 0);
 
     return new Response(JSON.stringify({
