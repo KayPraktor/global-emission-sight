@@ -4,7 +4,8 @@ import { FactorsTable } from '@/components/EmissionFactors/FactorsTable';
 import { CustomFactorForm } from '@/components/EmissionFactors/CustomFactorForm';
 import { RegionalComparison } from '@/components/EmissionFactors/RegionalComparison';
 import { BulkImportDialog } from '@/components/EmissionFactors/BulkImportDialog';
-import { Database, Plus, GitCompare } from 'lucide-react';
+import { EEIOFactorsTable } from '@/components/EmissionFactors/EEIOFactorsTable';
+import { Database, Plus, GitCompare, DollarSign } from 'lucide-react';
 
 const EmissionFactorsPage = () => {
   const [activeTab, setActiveTab] = useState('browse');
@@ -23,23 +24,31 @@ const EmissionFactorsPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="browse" className="gap-2">
               <Database className="h-4 w-4" />
-              Browse Factors
+              Browse
+            </TabsTrigger>
+            <TabsTrigger value="eeio" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              EEIO Factors
             </TabsTrigger>
             <TabsTrigger value="custom" className="gap-2">
               <Plus className="h-4 w-4" />
-              Custom Factors
+              Custom
             </TabsTrigger>
             <TabsTrigger value="compare" className="gap-2">
               <GitCompare className="h-4 w-4" />
-              Compare Regions
+              Compare
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="browse" className="mt-6">
             <FactorsTable />
+          </TabsContent>
+
+          <TabsContent value="eeio" className="mt-6">
+            <EEIOFactorsTable />
           </TabsContent>
 
           <TabsContent value="custom" className="mt-6">
