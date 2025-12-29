@@ -75,10 +75,13 @@ class CSRDComplianceService {
       .select('scope, category', { count: 'exact' })
       .eq('organization_id', organizationId);
 
-    // Check for missing scopes
-    const scopes = new Set(emissions?.map(e => e.scope) || []);
+    // Check for missing scopes - handle both enum formats (S1/S2/S3 and scope_1/scope_2/scope_3)
+    const scopeValues = emissions?.map(e => e.scope?.toString().toLowerCase()) || [];
+    const hasScope1 = scopeValues.some(s => s === 's1' || s === 'scope_1');
+    const hasScope2 = scopeValues.some(s => s === 's2' || s === 'scope_2');
+    const hasScope3 = scopeValues.some(s => s === 's3' || s === 'scope_3');
     
-    if (!scopes.has('scope_1')) {
+    if (!hasScope1) {
       gaps.push({
         id: 'gap-scope1',
         disclosureId: 'E1-6',
@@ -92,7 +95,7 @@ class CSRDComplianceService {
       });
     }
 
-    if (!scopes.has('scope_2')) {
+    if (!hasScope2) {
       gaps.push({
         id: 'gap-scope2',
         disclosureId: 'E1-6',
@@ -106,7 +109,7 @@ class CSRDComplianceService {
       });
     }
 
-    if (!scopes.has('scope_3')) {
+    if (!hasScope3) {
       gaps.push({
         id: 'gap-scope3',
         disclosureId: 'E1-6',
