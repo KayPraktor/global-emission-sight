@@ -39,6 +39,8 @@ import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
 import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
+import SeedDataButton from '@/components/Dashboard/SeedDataButton';
+import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -610,11 +612,15 @@ const Index = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Empty state example (conditionally shown) */}
-      {sampleTableData.length === 0 && <EmptyState icon={FileSpreadsheet} title="No emissions data found" description="Start by adding your first emissions record to see analytics and insights." action={{
-      label: "Add Emissions Data",
-      onClick: handleNewReport
-    }} />}
+      {/* First Time Welcome Modal */}
+      <FirstTimeWelcome />
+
+      {/* Empty state - show when no real data exists */}
+      {!isLoading && (!analyticsData || analyticsData.totalEmissions === 0) && (
+        <SlideIn direction="up" delay={0.5}>
+          <SeedDataButton />
+        </SlideIn>
+      )}
     </div>;
 };
 export default Index;
