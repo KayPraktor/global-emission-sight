@@ -6,7 +6,7 @@ import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
 import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
@@ -39,6 +39,7 @@ import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
 import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
 import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
+import EnhancedComplianceCalendar from '@/components/Dashboard/EnhancedComplianceCalendar';
 
 // Sample data for the advanced table
 const sampleTableData = [{
@@ -477,6 +478,19 @@ const Index = () => {
           </div>
         </GlassmorphismCard>
       </StaggeredList>
+
+      {/* Compliance Calendar with Iran-specific templates */}
+      <SectionHeader
+        icon={Calendar}
+        title="Compliance Calendar"
+        subtitle="Regulatory deadlines with Persian date support"
+        helpText="Track compliance deadlines from Iranian regulatory bodies (DOE, MIMT, NIOC) and global frameworks. Dates are shown in both Gregorian and Solar Hijri calendars."
+        lastUpdated="2025-01-15T14:30:00Z"
+      />
+      
+      <SlideIn direction="up" delay={0.25}>
+        <EnhancedComplianceCalendar />
+      </SlideIn>
 
       {/* Data Quality Section - High-Level Summary Only */}
       <SectionHeader
