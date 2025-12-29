@@ -9,6 +9,18 @@ export interface DashboardTemplate {
 
 export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   {
+    id: 'essential-view',
+    name: 'Essential View',
+    description: 'Minimal dashboard showing only core metrics for quick daily check-ins',
+    icon: 'minimize-2',
+    pinnedKPIs: [
+      'Total Emissions',
+      'YoY Reduction',
+      'Compliance Score'
+    ],
+    widgetOrder: ['kpis', 'compliance']
+  },
+  {
     id: 'executive-summary',
     name: 'Executive Summary',
     description: 'High-level KPIs for executive oversight and strategic decision-making',

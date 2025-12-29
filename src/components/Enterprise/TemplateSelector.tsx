@@ -15,6 +15,7 @@ import {
   ShieldCheck, 
   Target, 
   LayoutDashboard,
+  Minimize2,
   Check
 } from 'lucide-react';
 import { DASHBOARD_TEMPLATES, DashboardTemplate } from '@/utils/dashboardTemplates';
@@ -26,6 +27,7 @@ interface TemplateSelectorProps {
 }
 
 const iconMap = {
+  'minimize-2': Minimize2,
   'briefcase': Briefcase,
   'cog': Cog,
   'shield-check': ShieldCheck,
