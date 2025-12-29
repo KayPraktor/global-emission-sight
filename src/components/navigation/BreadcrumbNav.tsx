@@ -52,7 +52,7 @@ export function BreadcrumbNav() {
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
         {breadcrumbItems.map((item, index) => (
-          <React.Fragment key={item.path}>
+          <span key={item.path} className="contents">
             <BreadcrumbItem>
               {index === breadcrumbItems.length - 1 ? (
                 <BreadcrumbPage className="flex items-center gap-1">
@@ -71,7 +71,7 @@ export function BreadcrumbNav() {
             {index < breadcrumbItems.length - 1 && (
               <BreadcrumbSeparator />
             )}
-          </React.Fragment>
+          </span>
         ))}
       </BreadcrumbList>
     </Breadcrumb>
