@@ -16,8 +16,11 @@ import {
   Zap,
   Building2,
   Target,
-  ArrowLeft
+  ArrowLeft,
+  Play
 } from 'lucide-react';
+import { InteractiveProductTour } from '@/components/ProductTour/InteractiveProductTour';
+import { DemoVideoSection } from '@/components/ProductTour/DemoVideoSection';
 
 // Helper to convert numbers to Persian numerals
 const toPersianNumber = (num: number | string): string => {
@@ -32,6 +35,7 @@ const formatPersianCurrency = (num: number): string => {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [tourOpen, setTourOpen] = useState(false);
   const [roiInputs, setRoiInputs] = useState({
     consultantFees: 120000,
     fteHours: 40,
@@ -154,8 +158,9 @@ export default function LandingPage() {
                 شروع دوره آزمایشی رایگان
                 <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg h-12 px-8" onClick={() => navigate('/roi-calculator')}>
-                محاسبه بازگشت سرمایه
+              <Button size="lg" variant="outline" className="text-lg h-12 px-8" onClick={() => setTourOpen(true)}>
+                <Play className="ml-2 h-5 w-5" />
+                مشاهده دمو
               </Button>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
@@ -164,6 +169,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Demo Video Section */}
+      <DemoVideoSection onOpenTour={() => setTourOpen(true)} />
 
       {/* Pain Points Section */}
       <section className="py-16 bg-muted/30">
@@ -397,6 +405,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Product Tour Modal */}
+      <InteractiveProductTour open={tourOpen} onOpenChange={setTourOpen} />
     </div>
   );
 }
