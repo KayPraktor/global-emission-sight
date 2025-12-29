@@ -26,7 +26,7 @@ export const SampleDataBadge: React.FC<SampleDataBadgeProps> = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            {badge}
+            <span className="inline-flex">{badge}</span>
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-xs">This data is for demonstration purposes. Add real data to see your actual metrics.</p>

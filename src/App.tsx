@@ -75,7 +75,6 @@ function App() {
                           <Route path="/compliance" element={<CompliancePage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
-                          <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
                     </SidebarProvider>
