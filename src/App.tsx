@@ -28,6 +28,7 @@ import AuditPage from "./pages/AuditPage";
 import FinancialPage from "./pages/FinancialPage";
 import Scope3Page from "./pages/Scope3Page";
 import SuppliersPage from "./pages/SuppliersPage";
+import CompliancePage from "./pages/CompliancePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,7 +72,9 @@ function App() {
                           <Route path="/financial" element={<FinancialPage />} />
                           <Route path="/scope3" element={<Scope3Page />} />
                           <Route path="/suppliers" element={<SuppliersPage />} />
+                          <Route path="/compliance" element={<CompliancePage />} />
                           <Route path="/settings" element={<SettingsPage />} />
+                          <Route path="*" element={<NotFound />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </DashboardLayout>
