@@ -25,6 +25,12 @@ const routeLabels: Record<string, string> = {
   '/goals': 'Goals',
   '/settings': 'Settings',
   '/admin': 'Admin',
+  '/compliance': 'Compliance',
+  '/scope3': 'Scope 3',
+  '/suppliers': 'Suppliers',
+  '/financial': 'Financial',
+  '/audit': 'Audit Trail',
+  '/approvals': 'Approvals',
 };
 
 export function BreadcrumbNav() {

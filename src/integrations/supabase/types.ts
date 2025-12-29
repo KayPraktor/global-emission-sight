@@ -291,6 +291,71 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_data_gaps: {
+        Row: {
+          created_at: string | null
+          description: string
+          disclosure_id: string
+          disclosure_name: string
+          due_date: string | null
+          estimated_effort: string | null
+          gap_type: string
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          owner_id: string | null
+          recommendation: string | null
+          resolution_status: string | null
+          resolved_at: string | null
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          disclosure_id: string
+          disclosure_name: string
+          due_date?: string | null
+          estimated_effort?: string | null
+          gap_type: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          owner_id?: string | null
+          recommendation?: string | null
+          resolution_status?: string | null
+          resolved_at?: string | null
+          severity: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          disclosure_id?: string
+          disclosure_name?: string
+          due_date?: string | null
+          estimated_effort?: string | null
+          gap_type?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          owner_id?: string | null
+          recommendation?: string | null
+          resolution_status?: string | null
+          resolved_at?: string | null
+          severity?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_data_gaps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_deadlines: {
         Row: {
           assignee_id: string | null
@@ -406,6 +471,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "compliance_frameworks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      csrd_disclosures: {
+        Row: {
+          completeness_score: number | null
+          content: Json | null
+          created_at: string | null
+          data_quality_score: number | null
+          disclosure_id: string
+          disclosure_name: string
+          disclosure_standard: string
+          due_date: string | null
+          id: string
+          last_updated: string | null
+          metadata: Json | null
+          organization_id: string | null
+          review_notes: string | null
+          reviewer_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completeness_score?: number | null
+          content?: Json | null
+          created_at?: string | null
+          data_quality_score?: number | null
+          disclosure_id: string
+          disclosure_name: string
+          disclosure_standard: string
+          due_date?: string | null
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          review_notes?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completeness_score?: number | null
+          content?: Json | null
+          created_at?: string | null
+          data_quality_score?: number | null
+          disclosure_id?: string
+          disclosure_name?: string
+          disclosure_standard?: string
+          due_date?: string | null
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          review_notes?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "csrd_disclosures_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1626,6 +1756,53 @@ export type Database = {
           typical_scopes?: string[] | null
         }
         Relationships: []
+      }
+      issb_assessment_responses: {
+        Row: {
+          category: string
+          created_at: string | null
+          evidence_links: string[] | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          question_id: string
+          response: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          evidence_links?: string[] | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          question_id: string
+          response: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          evidence_links?: string[] | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          question_id?: string
+          response?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issb_assessment_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

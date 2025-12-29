@@ -19,7 +19,8 @@ import {
   Wallet,
   ScrollText,
   Link2,
-  Users
+  Users,
+  FileCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -80,8 +81,9 @@ export function AppSidebar() {
     { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
     
-    // REPORTING
+    // REPORTING & COMPLIANCE
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
+    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting' },
     { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting' },
     { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting' },
     
