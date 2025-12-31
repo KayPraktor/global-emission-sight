@@ -671,93 +671,103 @@ const Index = () => {
       )}
 
       {/* Performance Intelligence Section - Collapsible */}
-      <motion.div 
-        initial={false}
-        className="space-y-4"
-      >
-        <div 
-          className="flex items-center justify-between cursor-pointer group p-4 rounded-lg hover:bg-muted/50 transition-colors"
-          onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setShowAdvancedAnalytics(!showAdvancedAnalytics);
-            }
-          }}
-          aria-expanded={showAdvancedAnalytics}
-          aria-controls="performance-intelligence-content"
+      {(isWidgetVisible('performance') || isCustomizeMode) && (
+        <DraggableWidget
+          id="performance"
+          title="Performance Intelligence"
+          isCustomizeMode={isCustomizeMode}
+          isVisible={isWidgetVisible('performance')}
+          onRemove={() => toggleWidgetVisibility('performance')}
         >
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <BarChart3 className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
-              <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <SampleDataBadge />
-            <span className="text-sm text-muted-foreground">
-              {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
-            </span>
-            {showAdvancedAnalytics ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-            )}
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {showAdvancedAnalytics && (
-            <motion.div
-              id="performance-intelligence-content"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="space-y-6 overflow-hidden"
+          <motion.div 
+            initial={false}
+            className="space-y-4"
+          >
+            <div 
+              className="flex items-center justify-between cursor-pointer group p-4 rounded-lg hover:bg-muted/50 transition-colors"
+              onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowAdvancedAnalytics(!showAdvancedAnalytics);
+                }
+              }}
+              aria-expanded={showAdvancedAnalytics}
+              aria-controls="performance-intelligence-content"
             >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
+                  <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <SampleDataBadge />
+                <span className="text-sm text-muted-foreground">
+                  {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
+                </span>
+                {showAdvancedAnalytics ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+              </div>
+            </div>
 
-              {/* Value Tracking Widget */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <ValueTrackingWidget />
-              </motion.div>
+            <AnimatePresence>
+              {showAdvancedAnalytics && (
+                <motion.div
+                  id="performance-intelligence-content"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="space-y-6 overflow-hidden"
+                >
 
-              {/* Top row: Key Drivers Analysis */}
-              <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-                <TopDrivers categoryBreakdown={analyticsData?.categoryBreakdown || []} />
-                <InsightsNextActions />
-              </StaggeredList>
-              
-              {/* Enhanced Targets Widget */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <EnhancedTargetsWidget />
-              </motion.div>
+                  {/* Value Tracking Widget */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <ValueTrackingWidget />
+                  </motion.div>
 
-              {/* Strategic Intelligence Panel */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <StrategicIntelligencePanel />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                  {/* Top row: Key Drivers Analysis */}
+                  <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
+                    <TopDrivers categoryBreakdown={analyticsData?.categoryBreakdown || []} />
+                    <InsightsNextActions />
+                  </StaggeredList>
+                  
+                  {/* Enhanced Targets Widget */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    <EnhancedTargetsWidget />
+                  </motion.div>
+
+                  {/* Strategic Intelligence Panel */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 }}
+                  >
+                    <StrategicIntelligencePanel />
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </DraggableWidget>
+      )}
 
       {/* First Time Welcome Modal */}
       <FirstTimeWelcome />
