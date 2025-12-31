@@ -43,8 +43,8 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       transition={{ duration: 0.2 }}
       className={cn(
         "relative group",
-        isCustomizeMode && "ring-2 ring-primary/20 ring-dashed rounded-lg",
-        !isVisible && isCustomizeMode && "opacity-50",
+        isCustomizeMode && "ring-2 ring-primary/30 ring-dashed rounded-lg bg-primary/5",
+        !isVisible && isCustomizeMode && "opacity-50 bg-muted/50",
         className
       )}
     >
@@ -54,12 +54,12 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
           {/* Drag Handle */}
           <div 
             className={cn(
-              "absolute top-2 left-2 p-1.5 bg-background/90 rounded-md shadow-sm cursor-grab active:cursor-grabbing pointer-events-auto flex items-center gap-1",
+              "absolute top-2 left-2 p-1.5 bg-background/95 rounded-md shadow-md border cursor-grab active:cursor-grabbing pointer-events-auto flex items-center gap-1.5",
               dragHandleClassName
             )}
           >
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground pr-1">{title}</span>
+            <GripVertical className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-foreground pr-1">{title}</span>
           </div>
 
           {/* Action Buttons */}
