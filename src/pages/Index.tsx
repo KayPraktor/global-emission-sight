@@ -5,7 +5,7 @@ import { analyticsService, AnalyticsSummary } from '@/services/analyticsService'
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
 import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
-import { PageHeader, PageHeaderDateFilter, PageHeaderExport } from '@/components/ui/page-header';
+import { PageHeader, PageHeaderDateFilter } from '@/components/ui/page-header';
 import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp, BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet, Activity, Bell, Zap, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -43,7 +43,7 @@ import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
 import { DashboardCustomizer, WidgetConfig } from '@/components/Dashboard/DashboardCustomizer';
 import { DraggableWidget } from '@/components/Dashboard/DraggableWidget';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
-import { ViewSelector } from '@/components/Enterprise/ViewSelector';
+
 
 // Widget configuration for customization
 const WIDGET_CONFIGS: WidgetConfig[] = [
@@ -305,17 +305,7 @@ const Index = () => {
               <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
             </div>
             <div className="flex items-center gap-3">
-              {/* View Selector */}
-              <ViewSelector
-                views={savedViews}
-                currentView={currentView}
-                onSelectView={selectView}
-                onSaveView={saveLayout}
-                onDeleteView={deleteView}
-                onSetDefault={setDefaultView}
-              />
-              
-              {/* Dashboard Customizer */}
+              {/* Dashboard Customizer with View Selector */}
               <DashboardCustomizer
                 widgets={WIDGET_CONFIGS}
                 currentLayout={layout}
@@ -323,21 +313,20 @@ const Index = () => {
                 onSave={saveLayout}
                 isCustomizeMode={isCustomizeMode}
                 onCustomizeModeChange={setIsCustomizeMode}
+                views={savedViews}
+                currentView={currentView}
+                onSelectView={selectView}
+                onDeleteView={deleteView}
+                onSetDefault={setDefaultView}
               />
               
               <PageHeaderDateFilter defaultValue="Jan - May 2025" />
-              <PageHeaderExport />
               <HoverScale>
                 <InteractiveButton onClick={handleNewReport} loading={isLoading} className="bg-primary hover:bg-primary/90">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   {isLoading ? 'Creating...' : 'New Report'}
                 </InteractiveButton>
               </HoverScale>
-              <Tooltip content="Start interactive tour">
-                <InteractiveButton variant="outline" onClick={startOnboarding}>
-                  Help
-                </InteractiveButton>
-              </Tooltip>
             </div>
           </div>
         </div>

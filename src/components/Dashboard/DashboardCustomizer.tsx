@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Sheet,
   SheetContent,
@@ -14,6 +15,21 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Settings2,
   GripVertical,
   Eye,
@@ -22,9 +38,13 @@ import {
   RotateCcw,
   Layout,
   Sparkles,
+  ChevronDown,
+  Star,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { DASHBOARD_TEMPLATES, DashboardTemplate } from '@/utils/dashboardTemplates';
-import { DashboardLayout } from '@/services/dashboardPreferencesService';
+import { DashboardLayout, DashboardPreference } from '@/services/dashboardPreferencesService';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -40,9 +60,15 @@ interface DashboardCustomizerProps {
   widgets: WidgetConfig[];
   currentLayout: DashboardLayout;
   onLayoutChange: (layout: DashboardLayout) => void;
-  onSave: () => Promise<void>;
+  onSave: (viewName?: string, isDefault?: boolean) => Promise<void>;
   isCustomizeMode: boolean;
   onCustomizeModeChange: (mode: boolean) => void;
+  // View selector props
+  views?: DashboardPreference[];
+  currentView?: DashboardPreference | null;
+  onSelectView?: (view: DashboardPreference | null) => void;
+  onDeleteView?: (viewId: string) => Promise<void>;
+  onSetDefault?: (viewId: string) => Promise<void>;
 }
 
 export const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
@@ -52,9 +78,17 @@ export const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
   onSave,
   isCustomizeMode,
   onCustomizeModeChange,
+  views = [],
+  currentView,
+  onSelectView,
+  onDeleteView,
+  onSetDefault,
 }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [viewName, setViewName] = useState('');
+  const [setAsDefault, setSetAsDefault] = useState(false);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(
     currentLayout.widgetOrder.length > 0 
       ? currentLayout.widgetOrder 
@@ -98,6 +132,25 @@ export const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
     }
   };
 
+  const handleSaveAsView = async () => {
+    if (!viewName.trim()) {
+      toast.error('Please enter a view name');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(viewName.trim(), setAsDefault);
+      toast.success(`View "${viewName}" saved`);
+      setSaveDialogOpen(false);
+      setViewName('');
+      setSetAsDefault(false);
+    } catch (error) {
+      toast.error('Failed to save view');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleApplyTemplate = (template: DashboardTemplate) => {
     onLayoutChange({
       ...currentLayout,
@@ -126,10 +179,81 @@ export const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
     return widgets.find(w => w.id === widgetId);
   };
 
+  const hasViewSelector = views.length > 0 || onSelectView;
+
   return (
     <>
-      {/* Customize Mode Toggle Button */}
+      {/* View Selector and Customize Controls */}
       <div className="flex items-center gap-2">
+        {/* View Selector Dropdown */}
+        {hasViewSelector && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Layout className="w-4 h-4" />
+                <span className="hidden sm:inline max-w-[120px] truncate">
+                  {currentView?.view_name || 'Default View'}
+                </span>
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => onSelectView?.(null)}>
+                <Layout className="w-4 h-4 mr-2" />
+                Default View
+                {!currentView && <Check className="w-4 h-4 ml-auto" />}
+              </DropdownMenuItem>
+              {views.length > 0 && <DropdownMenuSeparator />}
+              {views.map((view) => (
+                <DropdownMenuItem
+                  key={view.id}
+                  className="flex items-center justify-between group"
+                  onClick={() => onSelectView?.(view)}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {view.is_default && <Star className="w-3 h-3 text-amber-500 flex-shrink-0" />}
+                    <span className="truncate">{view.view_name}</span>
+                    {currentView?.id === view.id && <Check className="w-4 h-4 ml-auto flex-shrink-0" />}
+                  </div>
+                  <div className="hidden group-hover:flex items-center gap-1 ml-2">
+                    {!view.is_default && onSetDefault && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSetDefault(view.id);
+                        }}
+                      >
+                        <Star className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {onDeleteView && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteView(view.id);
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSaveDialogOpen(true)}>
+                <Save className="w-4 h-4 mr-2" />
+                Save Current as View...
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         {isCustomizeMode && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -292,6 +416,50 @@ export const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
           </SheetContent>
         </Sheet>
       </div>
+
+      {/* Save View Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as View</DialogTitle>
+            <DialogDescription>
+              Save your current dashboard layout as a named view.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="view-name" className="text-sm font-medium">
+                View Name
+              </label>
+              <Input
+                id="view-name"
+                placeholder="e.g., Executive Summary"
+                value={viewName}
+                onChange={(e) => setViewName(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="set-default"
+                checked={setAsDefault}
+                onCheckedChange={(checked) => setSetAsDefault(checked === true)}
+              />
+              <label htmlFor="set-default" className="text-sm">
+                Set as default view
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAsView} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save View'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
