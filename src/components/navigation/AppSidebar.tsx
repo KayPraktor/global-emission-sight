@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { approvalService } from '@/services/approvalService';
+import { IndustryIndicator } from '@/components/navigation/IndustryIndicator';
 
 import { 
   Sidebar,
@@ -182,6 +183,12 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="p-4 mt-auto border-t">
+        {user && organization && (
+          <>
+            <IndustryIndicator organizationId={organization.id} isAdmin={isAdmin} />
+            <div className="my-3 border-t border-sidebar-border/50" />
+          </>
+        )}
         {user && (
           <div className="space-y-3 mb-3">
             <div className="flex items-center space-x-3">
