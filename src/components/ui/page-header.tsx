@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 interface PageHeaderProps {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   children?: ReactNode;
   actions?: ReactNode;

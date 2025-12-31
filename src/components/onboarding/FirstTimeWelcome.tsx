@@ -75,12 +75,12 @@ const FirstTimeWelcome: React.FC<FirstTimeWelcomeProps> = ({ onComplete }) => {
 
   const handleImportData = () => {
     handleDismiss();
-    navigate('/data-entry');
+    navigate('/data-entry?action=import');
   };
 
   const handleManualEntry = () => {
     handleDismiss();
-    navigate('/data-entry');
+    navigate('/data-entry?action=manual');
   };
 
   if (!isVisible) return null;

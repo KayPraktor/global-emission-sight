@@ -1,24 +1,30 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BarChart3 } from "lucide-react";
+import { Plus, BarChart3, Target, Lightbulb } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import GoalsDashboard from '@/components/Goals/GoalsDashboard';
 import EnhancedGoalForm from '@/components/Goals/EnhancedGoalForm';
 import ProfessionalGoalsList from '@/components/Goals/ProfessionalGoalsList';
 import GoalsAnalytics from '@/components/Goals/GoalsAnalytics';
+import { ContextualHelp } from '@/components/ui/contextual-help';
 
 const GoalsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         <PageHeader 
-          title="Sustainability Goals & Targets" 
-          subtitle="Comprehensive goal management with advanced tracking, analytics, and professional workflows"
+          title={
+            <span className="flex items-center gap-2">
+              Sustainability Goals & Targets
+              <ContextualHelp content="Goals help you track progress toward emission reduction targets. Set baselines, define milestones, and monitor your journey to Net Zero." />
+            </span>
+          } 
+          subtitle="Set reduction targets, track milestones, and monitor your progress toward Net Zero"
           actions={
             <div className="flex gap-2">
               <Dialog open={openDialog} onOpenChange={setOpenDialog}>

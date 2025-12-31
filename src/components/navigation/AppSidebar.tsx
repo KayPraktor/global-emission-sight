@@ -65,30 +65,30 @@ export function AppSidebar() {
   
   const navItems = [
     // OVERVIEW
-    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', section: 'overview' },
-    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview' },
+    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', section: 'overview', description: 'Real-time emissions overview and KPIs' },
+    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview', description: 'Strategic dashboards and Net Zero planning' },
     
     // DATA MANAGEMENT
-    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data' },
-    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', section: 'data', badge: pendingApprovals, showBadge: isSupervisor },
-    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data' },
-    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data' },
+    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data', description: 'Record emissions data and activities' },
+    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', section: 'data', badge: pendingApprovals, showBadge: isSupervisor, description: 'Review and approve data submissions' },
+    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data', description: 'Manage your sites and locations' },
+    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data', description: 'Conversion factors for calculations' },
     
     // ANALYSIS & PLANNING
-    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis' },
-    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', section: 'analysis' },
-    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', section: 'analysis' },
-    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis' },
-    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis' },
+    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis', description: 'Trends, anomalies, and forecasting' },
+    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', section: 'analysis', description: 'Indirect emissions in your value chain' },
+    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', section: 'analysis', description: 'Track supplier sustainability data' },
+    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis', description: 'Model reduction pathways' },
+    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis', description: 'Set and track reduction targets' },
     
     // REPORTING & COMPLIANCE
-    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting' },
-    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting' },
-    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting' },
-    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting' },
+    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting', description: 'Generate compliance reports' },
+    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting', description: 'CSRD, ISSB and framework tracking' },
+    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting', description: 'Data change history and logs' },
+    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting', description: 'Carbon credits and pricing' },
     
     // ADMINISTRATION
-    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin' },
+    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin', description: 'Configure your preferences' },
   ];
 
   const adminNavItems = [
@@ -105,7 +105,7 @@ export function AppSidebar() {
       <SidebarMenuButton 
         asChild 
         isActive={isActive(item.path)}
-        tooltip={item.name}
+        tooltip={item.description || item.name}
       >
         <Link to={item.path} className="flex items-center justify-between w-full">
           <span className="flex items-center gap-2">
