@@ -458,72 +458,94 @@ const Index = () => {
                 isVisible={isWidgetVisible('compliance')}
                 onRemove={() => toggleWidgetVisibility('compliance')}
               >
-                <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group h-full flex flex-col">
-                  <div className="absolute top-4 right-4">
-                    <LikeButton initialLiked={likedCards.has('compliance-card')} onToggle={liked => handleCardLike('compliance-card', liked)} />
-                  </div>
-                  <div className="flex items-center pb-2 border-b border-border/30">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground">Compliance Status</h4>
-                        <SampleDataBadge />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3 flex-1">
-                    {[{
-                    name: 'GHG Protocol',
-                    status: 'Compliant',
-                    color: 'green',
-                    progress: 100,
-                    icon: CheckCircle2
-                  }, {
-                    name: 'ISO 14064',
-                    status: 'Compliant',
-                    color: 'green',
-                    progress: 100,
-                    icon: CheckCircle2
-                  }, {
-                    name: 'CDP Reporting',
-                    status: 'In Progress',
-                    color: 'amber',
-                    progress: 75,
-                    icon: Clock
-                  }, {
-                    name: 'TCFD Alignment',
-                    status: 'Partial',
-                    color: 'amber',
-                    progress: 60,
-                    icon: AlertTriangle
-                  }].map((item, index) => <motion.div key={index} whileHover={{
-                    scale: 1.02,
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)'
-                  }} className="p-3 bg-white/50 rounded-lg space-y-2 transition-all duration-200 hover:shadow-sm">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <item.icon className={`h-3.5 w-3.5 ${
-                              item.color === 'green' ? 'text-green-500' : 
-                              item.color === 'amber' ? 'text-amber-500' : 
-                              'text-gray-500'
-                            }`} />
-                            <span className="text-sm font-medium">{item.name}</span>
-                          </div>
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                            item.color === 'green' ? 'bg-green-100 text-green-700 border border-green-200' : 
-                            item.color === 'amber' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 
-                            'bg-gray-100 text-gray-700 border border-gray-200'
-                          }`}>
-                            {item.status}
-                          </span>
+                <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
+                  {/* Header with gradient */}
+                  <div className="p-4 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 ring-1 ring-inset ring-emerald-500/20">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                         </div>
-                        <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
-                      </motion.div>)}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-foreground">Compliance Status</h4>
+                            <SampleDataBadge />
+                          </div>
+                          <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </GlassmorphismCard>
+                  {/* Content */}
+                  <div className="p-4 space-y-2 flex-1">
+                    {[{
+                      name: 'GHG Protocol',
+                      status: 'Compliant',
+                      color: 'emerald',
+                      progress: 100,
+                      icon: CheckCircle2
+                    }, {
+                      name: 'ISO 14064',
+                      status: 'Compliant',
+                      color: 'emerald',
+                      progress: 100,
+                      icon: CheckCircle2
+                    }, {
+                      name: 'CDP Reporting',
+                      status: 'In Progress',
+                      color: 'amber',
+                      progress: 75,
+                      icon: Clock
+                    }, {
+                      name: 'TCFD Alignment',
+                      status: 'Partial',
+                      color: 'amber',
+                      progress: 60,
+                      icon: AlertTriangle
+                    }].map((item, index) => {
+                      const getStyles = (color: string) => {
+                        if (color === 'emerald') return {
+                          border: 'border-l-emerald-500',
+                          bg: 'from-emerald-500/5 to-transparent',
+                          iconBg: 'bg-emerald-500/10',
+                          iconText: 'text-emerald-600',
+                          badge: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        };
+                        return {
+                          border: 'border-l-amber-500',
+                          bg: 'from-amber-500/5 to-transparent',
+                          iconBg: 'bg-amber-500/10',
+                          iconText: 'text-amber-600',
+                          badge: 'bg-amber-100 text-amber-700 border-amber-200'
+                        };
+                      };
+                      const styles = getStyles(item.color);
+                      return (
+                        <motion.div 
+                          key={index} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ scale: 1.01 }}
+                          className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} transition-all duration-200 hover:shadow-sm cursor-pointer`}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded-lg ${styles.iconBg}`}>
+                                <item.icon className={`h-3.5 w-3.5 ${styles.iconText}`} />
+                              </div>
+                              <span className="text-sm font-medium">{item.name}</span>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${styles.badge}`}>
+                              {item.status}
+                            </span>
+                          </div>
+                          <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
               </DraggableWidget>
             )}
             
@@ -535,66 +557,90 @@ const Index = () => {
                 isVisible={isWidgetVisible('deadlines')}
                 onRemove={() => toggleWidgetVisibility('deadlines')}
               >
-                <GlassmorphismCard variant="light" className="p-6 space-y-4 relative group h-full flex flex-col">
-                  <div className="absolute top-4 right-4">
-                    <LikeButton initialLiked={likedCards.has('deadlines-card')} onToggle={liked => handleCardLike('deadlines-card', liked)} />
-                  </div>
-                  <div className="flex items-center pb-2 border-b border-border/30">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mr-3">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
-                        <SampleDataBadge />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3 flex-1">
-                    {UPCOMING_DEADLINES.map((item, index) => (
-                      <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining • Click to navigate`}>
-                        <motion.div 
-                          whileHover={{
-                            scale: 1.02,
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)'
-                          }} 
-                          className="flex justify-between items-center p-3 bg-white/50 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm group/deadline"
-                          onClick={() => handleDeadlineClick(item)}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Navigate to ${item.task} deadline details`}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleDeadlineClick(item);
-                            }
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${
-                              item.urgency === 'high' ? 'bg-red-500 shadow-red-500/50 shadow-sm' : 
-                              item.urgency === 'medium' ? 'bg-amber-500 shadow-amber-500/50 shadow-sm' : 
-                              'bg-green-500 shadow-green-500/50 shadow-sm'
-                            }`} />
-                            <div>
-                              <span className="text-sm font-medium text-foreground group-hover/deadline:text-primary transition-colors">
-                                {item.task}
-                              </span>
-                              <div className="text-xs text-muted-foreground">{item.days} days left</div>
-                            </div>
-                          </div>
+                <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
+                  {/* Header with gradient */}
+                  <div className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-inset ring-primary/20">
+                          <Clock className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">
-                              {item.date}
-                            </span>
-                            <ChevronRight className="h-3 w-3 text-muted-foreground group-hover/deadline:text-primary transition-colors" />
+                            <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
+                            <SampleDataBadge />
                           </div>
-                        </motion.div>
-                      </Tooltip>
-                    ))}
+                          <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </GlassmorphismCard>
+                  {/* Content */}
+                  <div className="p-4 space-y-2 flex-1">
+                    {UPCOMING_DEADLINES.map((item, index) => {
+                      const getUrgencyStyles = (urgency: string) => {
+                        if (urgency === 'high') return {
+                          border: 'border-l-destructive',
+                          bg: 'from-destructive/5 to-transparent',
+                          dot: 'bg-destructive shadow-destructive/50',
+                          daysBadge: 'bg-destructive/10 text-destructive border-destructive/20'
+                        };
+                        if (urgency === 'medium') return {
+                          border: 'border-l-amber-500',
+                          bg: 'from-amber-500/5 to-transparent',
+                          dot: 'bg-amber-500 shadow-amber-500/50',
+                          daysBadge: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                        };
+                        return {
+                          border: 'border-l-emerald-500',
+                          bg: 'from-emerald-500/5 to-transparent',
+                          dot: 'bg-emerald-500 shadow-emerald-500/50',
+                          daysBadge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                        };
+                      };
+                      const styles = getUrgencyStyles(item.urgency);
+                      return (
+                        <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining`}>
+                          <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ scale: 1.01 }}
+                            className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} cursor-pointer transition-all duration-200 hover:shadow-sm group`}
+                            onClick={() => handleDeadlineClick(item)}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Navigate to ${item.task} deadline details`}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleDeadlineClick(item);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full ${styles.dot} shadow-sm`} />
+                                <div>
+                                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                                    {item.task}
+                                  </span>
+                                  <div className="text-xs text-muted-foreground">{item.date}</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium border ${styles.daysBadge}`}>
+                                  {item.days}d
+                                </span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </div>
+                            </div>
+                          </motion.div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </div>
               </DraggableWidget>
             )}
           </StaggeredList>

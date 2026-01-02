@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Zap, Clock, TrendingUp, ChevronRight } from 'lucide-react';
+import { Zap, Clock, TrendingUp, ChevronRight, Eye, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 interface QuickWin {
@@ -18,6 +17,196 @@ interface QuickWin {
   actionUrl: string;
   category: string;
 }
+
+// Live indicator component
+const LiveIndicator = () => (
+  <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 rounded-full">
+    <span className="relative flex h-2 w-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+    </span>
+    <span className="text-xs font-medium text-amber-600">ACTIVE</span>
+  </div>
+);
+
+// Quick win card component
+interface QuickWinCardProps {
+  win: QuickWin;
+  index: number;
+  onAction: (win: QuickWin) => void;
+  onDismiss?: (win: QuickWin) => void;
+}
+
+const QuickWinCard: React.FC<QuickWinCardProps> = ({ win, index, onAction, onDismiss }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const getImpactStyles = (impact: string) => {
+    switch (impact) {
+      case 'High':
+        return {
+          border: 'border-l-emerald-500',
+          bg: 'from-emerald-500/5 to-transparent',
+          iconBg: 'bg-emerald-500/10',
+          iconText: 'text-emerald-600',
+          badge: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+        };
+      case 'Medium':
+        return {
+          border: 'border-l-primary',
+          bg: 'from-primary/5 to-transparent',
+          iconBg: 'bg-primary/10',
+          iconText: 'text-primary',
+          badge: 'bg-primary/10 text-primary border-primary/20'
+        };
+      default:
+        return {
+          border: 'border-l-muted-foreground',
+          bg: 'from-muted/50 to-transparent',
+          iconBg: 'bg-muted',
+          iconText: 'text-muted-foreground',
+          badge: 'bg-muted text-muted-foreground border-muted'
+        };
+    }
+  };
+
+  const styles = getImpactStyles(win.impact);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`
+        relative p-4 rounded-xl border border-l-4 ${styles.border}
+        bg-gradient-to-r ${styles.bg}
+        transition-all duration-200 cursor-pointer
+        hover:shadow-md hover:scale-[1.01] hover:border-primary/30
+      `}
+      onClick={() => onAction(win)}
+    >
+      <div className="flex items-start gap-3">
+        {/* Icon container */}
+        <div className={`p-2.5 rounded-xl ${styles.iconBg} ring-1 ring-inset ring-black/5`}>
+          <Zap className={`h-4 w-4 ${styles.iconText}`} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Badge variant="outline" className="text-xs px-1.5 py-0">
+              {win.category}
+            </Badge>
+            <Badge className={`text-xs border ${styles.badge}`}>
+              {win.impact} Impact
+            </Badge>
+          </div>
+          <h5 className="font-medium text-sm mb-1">{win.title}</h5>
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{win.description}</p>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {win.estimatedMinutes} min
+            </span>
+            <span className="flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              Quick win
+            </span>
+          </div>
+        </div>
+
+        {/* Hover action buttons */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="flex items-center gap-1"
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAction(win);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              {onDismiss && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDismiss(win);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Default chevron when not hovered */}
+        {!isHovered && (
+          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+// Empty state component
+const EmptyState = () => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    className="text-center py-10"
+  >
+    <motion.div
+      animate={{ y: [0, -5, 0] }}
+      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+      className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4"
+    >
+      <Zap className="h-8 w-8 text-emerald-500" />
+    </motion.div>
+    <h4 className="font-medium text-foreground mb-1">All caught up!</h4>
+    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+      No quick actions needed right now. Check back later for new opportunities.
+    </p>
+  </motion.div>
+);
+
+// Loading skeleton
+const QuickWinSkeleton = () => (
+  <div className="space-y-3">
+    {[0, 1, 2].map((i) => (
+      <div
+        key={i}
+        className="p-4 rounded-xl border border-l-4 border-l-muted animate-pulse"
+        style={{ animationDelay: `${i * 100}ms` }}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-muted"></div>
+          <div className="flex-1 space-y-2">
+            <div className="flex gap-2">
+              <div className="h-4 w-16 bg-muted rounded"></div>
+              <div className="h-4 w-20 bg-muted rounded"></div>
+            </div>
+            <div className="h-4 w-3/4 bg-muted rounded"></div>
+            <div className="h-3 w-1/2 bg-muted rounded"></div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 const QuickWinsSection: React.FC = () => {
   const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
@@ -181,91 +370,57 @@ const QuickWinsSection: React.FC = () => {
     navigate(win.actionUrl);
   };
 
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'High':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'Medium':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
+  const handleDismiss = (win: QuickWin) => {
+    setQuickWins(prev => prev.filter(w => w.id !== win.id));
+    toast.info('Quick win dismissed');
   };
 
-  if (loading) {
-    return (
-      <GlassmorphismCard variant="light" className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-muted rounded w-1/3"></div>
-          <div className="h-24 bg-muted rounded"></div>
-          <div className="h-24 bg-muted rounded"></div>
-          <div className="h-24 bg-muted rounded"></div>
-        </div>
-      </GlassmorphismCard>
-    );
-  }
-
   return (
-    <GlassmorphismCard variant="light" className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-amber-100">
-          <Zap className="h-5 w-5 text-amber-600" />
-        </div>
-        <div>
-          <h4 className="font-medium">Quick Wins</h4>
-          <p className="text-sm text-muted-foreground">High-impact actions you can complete in under 5 minutes</p>
+    <div className="rounded-xl border bg-card overflow-hidden">
+      {/* Header with gradient */}
+      <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-inset ring-amber-500/20">
+              <Zap className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground">Quick Wins</h4>
+              <p className="text-xs text-muted-foreground">High-impact actions under 5 minutes</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {quickWins.length > 0 && (
+              <Badge variant="secondary" className="font-mono">
+                {quickWins.length}
+              </Badge>
+            )}
+            <LiveIndicator />
+          </div>
         </div>
       </div>
 
-      {quickWins.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <Zap className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">Great job! No quick actions needed right now.</p>
-          <p className="text-xs mt-1">Check back later for new opportunities.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {quickWins.map((win, index) => (
-            <motion.div
-              key={win.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="p-4 rounded-lg border bg-gradient-to-r from-background to-accent/10 hover:border-primary/50 transition-all group"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      {win.category}
-                    </Badge>
-                    <Badge className={`text-xs border ${getImpactColor(win.impact)}`}>
-                      {win.impact} Impact
-                    </Badge>
-                  </div>
-                  <h5 className="font-medium mb-1">{win.title}</h5>
-                  <p className="text-sm text-muted-foreground mb-3">{win.description}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{win.estimatedMinutes} min</span>
-                    <TrendingUp className="h-3 w-3 ml-2" />
-                    <span>Quick win</span>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => handleAction(win)}
-                  className="flex-shrink-0"
-                >
-                  {win.actionLabel}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </GlassmorphismCard>
+      {/* Content */}
+      <div className="p-4">
+        {loading ? (
+          <QuickWinSkeleton />
+        ) : quickWins.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="space-y-3">
+            {quickWins.map((win, index) => (
+              <QuickWinCard
+                key={win.id}
+                win={win}
+                index={index}
+                onAction={handleAction}
+                onDismiss={handleDismiss}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
