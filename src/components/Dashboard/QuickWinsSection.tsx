@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Zap, Clock, TrendingUp, ChevronRight, Eye, X } from 'lucide-react';
+import { Zap, Clock, TrendingUp, ChevronRight, Eye, X, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-
+import { useCelebrationContext } from '@/contexts/CelebrationContext';
+import { SuccessPulse, CardSuccessGlow } from '@/components/ui/celebration-effects';
 interface QuickWin {
   id: string;
   title: string;
@@ -35,11 +36,12 @@ interface QuickWinCardProps {
   index: number;
   onAction: (win: QuickWin) => void;
   onDismiss?: (win: QuickWin) => void;
+  onComplete?: (win: QuickWin) => void;
+  isCompleting?: boolean;
 }
 
-const QuickWinCard: React.FC<QuickWinCardProps> = ({ win, index, onAction, onDismiss }) => {
+const QuickWinCard: React.FC<QuickWinCardProps> = ({ win, index, onAction, onDismiss, onComplete, isCompleting }) => {
   const [isHovered, setIsHovered] = useState(false);
-
   const getImpactStyles = (impact: string) => {
     switch (impact) {
       case 'High':
@@ -72,93 +74,128 @@ const QuickWinCard: React.FC<QuickWinCardProps> = ({ win, index, onAction, onDis
   const styles = getImpactStyles(win.impact);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.3 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`
-        relative p-4 rounded-xl border border-l-4 ${styles.border}
-        bg-gradient-to-r ${styles.bg}
-        transition-all duration-200 cursor-pointer
-        hover:shadow-md hover:scale-[1.01] hover:border-primary/30
-      `}
-      onClick={() => onAction(win)}
-    >
-      <div className="flex items-start gap-3">
-        {/* Icon container */}
-        <div className={`p-2.5 rounded-xl ${styles.iconBg} ring-1 ring-inset ring-black/5`}>
-          <Zap className={`h-4 w-4 ${styles.iconText}`} />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Badge variant="outline" className="text-xs px-1.5 py-0">
-              {win.category}
-            </Badge>
-            <Badge className={`text-xs border ${styles.badge}`}>
-              {win.impact} Impact
-            </Badge>
-          </div>
-          <h5 className="font-medium text-sm mb-1">{win.title}</h5>
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{win.description}</p>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {win.estimatedMinutes} min
-            </span>
-            <span className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Quick win
-            </span>
-          </div>
-        </div>
-
-        {/* Hover action buttons */}
+    <CardSuccessGlow trigger={isCompleting || false}>
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={isCompleting ? { scale: [1, 1.02, 1], opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 20, scale: 0.95 }}
+        transition={{ delay: index * 0.1, duration: 0.3 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`
+          relative p-4 rounded-xl border border-l-4 ${styles.border}
+          bg-gradient-to-r ${styles.bg}
+          transition-all duration-200 cursor-pointer
+          hover:shadow-md hover:scale-[1.01] hover:border-primary/30
+          ${isCompleting ? 'ring-2 ring-emerald-500/50' : ''}
+        `}
+        onClick={() => onAction(win)}
+      >
+        {/* Completion overlay */}
         <AnimatePresence>
-          {isHovered && (
+          {isCompleting && (
             <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              className="flex items-center gap-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 rounded-xl bg-emerald-500/10 flex items-center justify-center z-10"
             >
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAction(win);
-                }}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              {onDismiss && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDismiss(win);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <SuccessPulse trigger={true}>
+                <div className="p-3 rounded-full bg-emerald-500 text-white">
+                  <Check className="h-6 w-6" />
+                </div>
+              </SuccessPulse>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Default chevron when not hovered */}
-        {!isHovered && (
-          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        )}
-      </div>
-    </motion.div>
+        <div className="flex items-start gap-3">
+          {/* Icon container */}
+          <div className={`p-2.5 rounded-xl ${styles.iconBg} ring-1 ring-inset ring-black/5`}>
+            <Zap className={`h-4 w-4 ${styles.iconText}`} />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="outline" className="text-xs px-1.5 py-0">
+                {win.category}
+              </Badge>
+              <Badge className={`text-xs border ${styles.badge}`}>
+                {win.impact} Impact
+              </Badge>
+            </div>
+            <h5 className="font-medium text-sm mb-1">{win.title}</h5>
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{win.description}</p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {win.estimatedMinutes} min
+              </span>
+              <span className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Quick win
+              </span>
+            </div>
+          </div>
+
+          {/* Hover action buttons */}
+          <AnimatePresence>
+            {isHovered && !isCompleting && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex items-center gap-1"
+              >
+                {onComplete && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onComplete(win);
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction(win);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                {onDismiss && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDismiss(win);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Default chevron when not hovered */}
+          {!isHovered && !isCompleting && (
+            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          )}
+        </div>
+      </motion.div>
+    </CardSuccessGlow>
   );
 };
 
@@ -211,8 +248,17 @@ const QuickWinSkeleton = () => (
 const QuickWinsSection: React.FC = () => {
   const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [completedCount, setCompletedCount] = useState(0);
   const navigate = useNavigate();
-
+  
+  // Try to use celebration context, with fallback
+  let celebration: ReturnType<typeof useCelebrationContext> | null = null;
+  try {
+    celebration = useCelebrationContext();
+  } catch {
+    // Context not available, celebrations will be skipped
+  }
   useEffect(() => {
     const generateQuickWins = async () => {
       try {
@@ -370,11 +416,45 @@ const QuickWinsSection: React.FC = () => {
     navigate(win.actionUrl);
   };
 
+  const handleComplete = (win: QuickWin) => {
+    setCompletingId(win.id);
+    
+    // Trigger celebration
+    if (celebration) {
+      const newCount = completedCount + 1;
+      setCompletedCount(newCount);
+      
+      // Check for streak milestone
+      if (newCount >= 3) {
+        celebration.celebrateCompletion({
+          type: 'milestone',
+          title: 'Quick Win Streak!',
+          subtitle: `${newCount} actions completed - You're on fire!`,
+          isFirstTime: newCount === 3
+        });
+      } else {
+        celebration.celebrateCompletion({
+          type: 'quick-win',
+          title: win.title,
+          isFirstTime: newCount === 1
+        });
+      }
+    }
+    
+    // Remove card after animation
+    setTimeout(() => {
+      setQuickWins(prev => prev.filter(w => w.id !== win.id));
+      setCompletingId(null);
+      toast.success('Quick win completed! 🎉', {
+        description: `Great job completing: ${win.title}`
+      });
+    }, 1000);
+  };
+
   const handleDismiss = (win: QuickWin) => {
     setQuickWins(prev => prev.filter(w => w.id !== win.id));
     toast.info('Quick win dismissed');
   };
-
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       {/* Header with gradient */}
@@ -408,15 +488,19 @@ const QuickWinsSection: React.FC = () => {
           <EmptyState />
         ) : (
           <div className="space-y-3">
-            {quickWins.map((win, index) => (
-              <QuickWinCard
-                key={win.id}
-                win={win}
-                index={index}
-                onAction={handleAction}
-                onDismiss={handleDismiss}
-              />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {quickWins.map((win, index) => (
+                <QuickWinCard
+                  key={win.id}
+                  win={win}
+                  index={index}
+                  onAction={handleAction}
+                  onDismiss={handleDismiss}
+                  onComplete={handleComplete}
+                  isCompleting={completingId === win.id}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
