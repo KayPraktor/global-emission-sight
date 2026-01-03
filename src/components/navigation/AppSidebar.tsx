@@ -20,7 +20,8 @@ import {
   ScrollText,
   Link2,
   Users,
-  FileCheck
+  FileCheck,
+  Presentation
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,7 @@ export function AppSidebar() {
     
     // REPORTING & COMPLIANCE
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting', description: 'Generate compliance reports' },
+    { name: 'Board Reporting', icon: <Presentation className="h-4 w-4" />, path: '/board-reporting', section: 'reporting', description: 'Executive reports and governance' },
     { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting', description: 'CSRD, ISSB and framework tracking' },
     { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting', description: 'Data change history and logs' },
     { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting', description: 'Carbon credits and pricing' },
