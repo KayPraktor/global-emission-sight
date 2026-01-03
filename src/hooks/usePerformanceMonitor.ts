@@ -23,12 +23,9 @@ export function usePerformanceMonitor(componentName: string) {
   useEffect(() => {
     mountCount.current += 1;
     renderStartTime.current = performance.now();
-
-    return () => {
-      const renderTime = performance.now() - renderStartTime.current;
-      console.log(`${componentName} render time:`, renderTime.toFixed(2), 'ms');
-    };
-  });
+    
+    // Only log in development and only on actual mounts, not every render
+  }, []);
 
   useEffect(() => {
     const measureFPS = () => {
