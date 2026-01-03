@@ -43,6 +43,7 @@ import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
 import { DashboardCustomizer, WidgetConfig } from '@/components/Dashboard/DashboardCustomizer';
 import { DraggableWidget } from '@/components/Dashboard/DraggableWidget';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { CelebrationProvider } from '@/contexts/CelebrationContext';
 
 
 // Widget configuration for customization
@@ -290,7 +291,9 @@ const Index = () => {
       navigate(route);
     }
   };
-  return <div className="space-y-6">
+  return (
+    <CelebrationProvider>
+      <div className="space-y-6">
       {/* Performance Monitor */}
       <PerformanceMonitor componentName="Dashboard" />
       
@@ -813,6 +816,8 @@ const Index = () => {
           <SeedDataButton />
         </SlideIn>
       )}
-    </div>;
+    </div>
+    </CelebrationProvider>
+  );
 };
 export default Index;

@@ -10,13 +10,15 @@ import EnhancedGoalForm from '@/components/Goals/EnhancedGoalForm';
 import ProfessionalGoalsList from '@/components/Goals/ProfessionalGoalsList';
 import GoalsAnalytics from '@/components/Goals/GoalsAnalytics';
 import { ContextualHelp } from '@/components/ui/contextual-help';
+import { CelebrationProvider } from '@/contexts/CelebrationContext';
 
 const GoalsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+    <CelebrationProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         <PageHeader 
           title={
             <span className="flex items-center gap-2">
@@ -79,8 +81,9 @@ const GoalsPage = () => {
             <GoalsAnalytics />
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+        </main>
+      </div>
+    </CelebrationProvider>
   );
 };
 

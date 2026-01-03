@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,9 +12,15 @@ import {
   CheckCircle2,
   Clock,
   Users,
-  Calendar
+  Calendar,
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCelebrationContext } from '@/contexts/CelebrationContext';
+import { SuccessPulse } from '@/components/ui/celebration-effects';
+import { toast } from 'sonner';
 
 const performanceData = [
   { month: 'Jan', target: 100, actual: 95, projected: 98 },
@@ -31,6 +38,39 @@ const riskData = [
 ];
 
 const GoalsDashboard = () => {
+  const [completedMilestones, setCompletedMilestones] = useState<Set<string>>(new Set());
+  
+  // Try to use celebration context with fallback
+  let celebration: ReturnType<typeof useCelebrationContext> | null = null;
+  try {
+    celebration = useCelebrationContext();
+  } catch {
+    // Context not available
+  }
+
+  const handleMilestoneComplete = (milestoneId: string, milestoneName: string) => {
+    if (completedMilestones.has(milestoneId)) return;
+    
+    const newCompleted = new Set(completedMilestones);
+    newCompleted.add(milestoneId);
+    setCompletedMilestones(newCompleted);
+    
+    // Trigger celebration
+    if (celebration) {
+      const isFirstMilestone = newCompleted.size === 1;
+      celebration.celebrateCompletion({
+        type: 'milestone',
+        title: 'Milestone Achieved! 🎯',
+        subtitle: milestoneName,
+        isFirstTime: isFirstMilestone
+      });
+    }
+    
+    toast.success('Milestone completed! 🎉', {
+      description: milestoneName
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Executive Summary Cards */}
@@ -162,54 +202,81 @@ const GoalsDashboard = () => {
         </Card>
       </div>
 
-      {/* Key Milestones */}
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Milestones</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            Upcoming Milestones
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium">Q2 Emissions Review</p>
-                  <p className="text-sm text-muted-foreground">Scope 1 & 2 reduction targets</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">Due in 15 days</Badge>
-                <Badge className="bg-amber-100 text-amber-800">Medium Priority</Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="font-medium">Supply Chain Assessment</p>
-                  <p className="text-sm text-muted-foreground">Scope 3 emissions mapping</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">Due in 32 days</Badge>
-                <Badge className="bg-red-100 text-red-800">High Priority</Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="font-medium">Renewable Energy Transition</p>
-                  <p className="text-sm text-muted-foreground">50% renewable energy target</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">Due in 45 days</Badge>
-                <Badge className="bg-green-100 text-green-800">Low Priority</Badge>
-              </div>
-            </div>
+            {[
+              { id: 'q2-review', name: 'Q2 Emissions Review', desc: 'Scope 1 & 2 reduction targets', icon: Calendar, color: 'blue', days: 15, priority: 'Medium' },
+              { id: 'supply-chain', name: 'Supply Chain Assessment', desc: 'Scope 3 emissions mapping', icon: Users, color: 'green', days: 32, priority: 'High' },
+              { id: 'renewable', name: 'Renewable Energy Transition', desc: '50% renewable energy target', icon: Clock, color: 'purple', days: 45, priority: 'Low' }
+            ].map((milestone) => {
+              const isCompleted = completedMilestones.has(milestone.id);
+              const IconComponent = milestone.icon;
+              
+              return (
+                <motion.div
+                  key={milestone.id}
+                  layout
+                  className={`flex items-center justify-between p-4 border rounded-lg transition-all ${
+                    isCompleted ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800' : 'hover:border-primary/30'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    {isCompleted ? (
+                      <SuccessPulse trigger={false}>
+                        <div className="p-1 rounded-full bg-emerald-500 text-white">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </div>
+                      </SuccessPulse>
+                    ) : (
+                      <IconComponent className={`h-5 w-5 text-${milestone.color}-600`} />
+                    )}
+                    <div>
+                      <p className={`font-medium ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                        {milestone.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{milestone.desc}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {!isCompleted && (
+                      <>
+                        <Badge variant="outline">Due in {milestone.days} days</Badge>
+                        <Badge className={`
+                          ${milestone.priority === 'High' ? 'bg-red-100 text-red-800' : ''}
+                          ${milestone.priority === 'Medium' ? 'bg-amber-100 text-amber-800' : ''}
+                          ${milestone.priority === 'Low' ? 'bg-green-100 text-green-800' : ''}
+                        `}>
+                          {milestone.priority} Priority
+                        </Badge>
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={isCompleted ? 'ghost' : 'outline'}
+                      onClick={() => handleMilestoneComplete(milestone.id, milestone.name)}
+                      disabled={isCompleted}
+                      className={isCompleted ? 'text-emerald-600' : ''}
+                    >
+                      {isCompleted ? (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          Completed
+                        </>
+                      ) : (
+                        'Mark Complete'
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
