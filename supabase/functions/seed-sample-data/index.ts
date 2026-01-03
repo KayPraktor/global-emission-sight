@@ -77,14 +77,14 @@ serve(async (req) => {
 
     console.log(`Created facility: ${facility.id}`);
 
-    // Create emission factors
+    // Create emission factors - using correct ef_unit enum values
     const emissionFactors = [
-      { name: "Natural Gas", category: "stationary_combustion", scope: "S1", factor_value: 2.02, unit: "kg_co2e_per_kwh", source: "EPA 2024" },
-      { name: "Diesel Fuel", category: "mobile_combustion", scope: "S1", factor_value: 2.68, unit: "kg_co2e_per_liter", source: "EPA 2024" },
-      { name: "Grid Electricity - US Average", category: "purchased_electricity", scope: "S2", factor_value: 0.42, unit: "kg_co2e_per_kwh", source: "eGRID 2024" },
-      { name: "Business Travel - Air", category: "business_travel", scope: "S3", factor_value: 0.255, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
-      { name: "Employee Commuting", category: "employee_commuting", scope: "S3", factor_value: 0.21, unit: "kg_co2e_per_km", source: "DEFRA 2024" },
-      { name: "Purchased Goods", category: "purchased_goods", scope: "S3", factor_value: 0.5, unit: "kg_co2e_per_usd", source: "EEIO 2024" },
+      { name: "Natural Gas", category: "stationary_combustion", scope: "S1", factor_value: 2.02, unit: "kgCO2e/kWh", source: "EPA 2024" },
+      { name: "Diesel Fuel", category: "mobile_combustion", scope: "S1", factor_value: 2.68, unit: "kgCO2e/L", source: "EPA 2024" },
+      { name: "Grid Electricity - US Average", category: "purchased_electricity", scope: "S2", factor_value: 0.42, unit: "kgCO2e/kWh", source: "eGRID 2024" },
+      { name: "Business Travel - Air", category: "business_travel", scope: "S3", factor_value: 0.255, unit: "kgCO2e/km", source: "DEFRA 2024" },
+      { name: "Employee Commuting", category: "employee_commuting", scope: "S3", factor_value: 0.21, unit: "kgCO2e/km", source: "DEFRA 2024" },
+      { name: "Purchased Goods", category: "purchased_goods", scope: "S3", factor_value: 0.5, unit: "kgCO2e/kg", source: "EEIO 2024" },
     ];
 
     const { data: factors, error: factorsError } = await supabase
