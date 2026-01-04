@@ -30,6 +30,7 @@ import Scope3Page from "./pages/Scope3Page";
 import SuppliersPage from "./pages/SuppliersPage";
 import CompliancePage from "./pages/CompliancePage";
 import BoardReportingPage from "./pages/BoardReportingPage";
+import MaterialityPage from "./pages/MaterialityPage";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -74,6 +75,7 @@ function App() {
                           <Route path="/suppliers" element={<SuppliersPage />} />
                           <Route path="/compliance" element={<CompliancePage />} />
                           <Route path="/board-reporting" element={<BoardReportingPage />} />
+                          <Route path="/materiality" element={<MaterialityPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
