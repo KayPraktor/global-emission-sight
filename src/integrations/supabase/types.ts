@@ -1858,6 +1858,92 @@ export type Database = {
           },
         ]
       }
+      materiality_assessments: {
+        Row: {
+          assessed_at: string | null
+          assessed_by: string | null
+          created_at: string | null
+          esrs_standard: string | null
+          evidence: string | null
+          financial_likelihood: number | null
+          financial_magnitude: number | null
+          financial_score: number | null
+          financial_time_horizon: string | null
+          id: string
+          impact_irremediability: number | null
+          impact_likelihood: number | null
+          impact_scale: number | null
+          impact_scope: number | null
+          impact_score: number | null
+          is_material: boolean | null
+          organization_id: string | null
+          stakeholder_ids: string[] | null
+          topic_category: string
+          topic_id: string
+          topic_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assessed_at?: string | null
+          assessed_by?: string | null
+          created_at?: string | null
+          esrs_standard?: string | null
+          evidence?: string | null
+          financial_likelihood?: number | null
+          financial_magnitude?: number | null
+          financial_score?: number | null
+          financial_time_horizon?: string | null
+          id?: string
+          impact_irremediability?: number | null
+          impact_likelihood?: number | null
+          impact_scale?: number | null
+          impact_scope?: number | null
+          impact_score?: number | null
+          is_material?: boolean | null
+          organization_id?: string | null
+          stakeholder_ids?: string[] | null
+          topic_category: string
+          topic_id: string
+          topic_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assessed_at?: string | null
+          assessed_by?: string | null
+          created_at?: string | null
+          esrs_standard?: string | null
+          evidence?: string | null
+          financial_likelihood?: number | null
+          financial_magnitude?: number | null
+          financial_score?: number | null
+          financial_time_horizon?: string | null
+          id?: string
+          impact_irremediability?: number | null
+          impact_likelihood?: number | null
+          impact_scale?: number | null
+          impact_scope?: number | null
+          impact_score?: number | null
+          is_material?: boolean | null
+          organization_id?: string | null
+          stakeholder_ids?: string[] | null
+          topic_category?: string
+          topic_id?: string
+          topic_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materiality_assessments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -2629,6 +2715,62 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      stakeholders: {
+        Row: {
+          category: string
+          created_at: string | null
+          engagement_methods: string[] | null
+          id: string
+          influence: string
+          interest: string
+          last_engaged: string | null
+          metadata: Json | null
+          name: string
+          organization_id: string | null
+          topic_priorities: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          engagement_methods?: string[] | null
+          id?: string
+          influence: string
+          interest: string
+          last_engaged?: string | null
+          metadata?: Json | null
+          name: string
+          organization_id?: string | null
+          topic_priorities?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          engagement_methods?: string[] | null
+          id?: string
+          influence?: string
+          interest?: string
+          last_engaged?: string | null
+          metadata?: Json | null
+          name?: string
+          organization_id?: string | null
+          topic_priorities?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stakeholders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_emissions: {
         Row: {

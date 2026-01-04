@@ -87,6 +87,7 @@ export function AppSidebar() {
     { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting', description: 'Generate compliance reports' },
     { name: 'Board Reporting', icon: <Presentation className="h-4 w-4" />, path: '/board-reporting', section: 'reporting', description: 'Executive reports and governance' },
     { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting', description: 'CSRD, ISSB and framework tracking' },
+    { name: 'Materiality', icon: <BarChart3 className="h-4 w-4" />, path: '/materiality', section: 'reporting', description: 'Double materiality assessment' },
     { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting', description: 'Data change history and logs' },
     { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting', description: 'Carbon credits and pricing' },
     
