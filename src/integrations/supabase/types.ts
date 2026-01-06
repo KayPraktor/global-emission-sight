@@ -748,6 +748,204 @@ export type Database = {
         }
         Relationships: []
       }
+      emission_factor_change_reviews: {
+        Row: {
+          affected_entries_count: number | null
+          ai_analysis: Json | null
+          ai_confidence: number | null
+          ai_impact_assessment: string | null
+          ai_recommendation: string | null
+          ai_significance: string | null
+          change_percentage: number | null
+          created_at: string | null
+          existing_factor_id: string | null
+          factor_name: string
+          id: string
+          new_value: number
+          old_value: number | null
+          organization_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          staging_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          affected_entries_count?: number | null
+          ai_analysis?: Json | null
+          ai_confidence?: number | null
+          ai_impact_assessment?: string | null
+          ai_recommendation?: string | null
+          ai_significance?: string | null
+          change_percentage?: number | null
+          created_at?: string | null
+          existing_factor_id?: string | null
+          factor_name: string
+          id?: string
+          new_value: number
+          old_value?: number | null
+          organization_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          staging_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          affected_entries_count?: number | null
+          ai_analysis?: Json | null
+          ai_confidence?: number | null
+          ai_impact_assessment?: string | null
+          ai_recommendation?: string | null
+          ai_significance?: string | null
+          change_percentage?: number | null
+          created_at?: string | null
+          existing_factor_id?: string | null
+          factor_name?: string
+          id?: string
+          new_value?: number
+          old_value?: number | null
+          organization_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          staging_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emission_factor_change_reviews_existing_factor_id_fkey"
+            columns: ["existing_factor_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emission_factor_change_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emission_factor_change_reviews_staging_id_fkey"
+            columns: ["staging_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factor_updates_staging"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emission_factor_sources: {
+        Row: {
+          api_endpoint: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          metadata: Json | null
+          name: string
+          next_sync_at: string | null
+          requires_api_key: boolean | null
+          sync_frequency: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          api_endpoint?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          name: string
+          next_sync_at?: string | null
+          requires_api_key?: boolean | null
+          sync_frequency?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          api_endpoint?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          name?: string
+          next_sync_at?: string | null
+          requires_api_key?: boolean | null
+          sync_frequency?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      emission_factor_sync_logs: {
+        Row: {
+          completed_at: string | null
+          duration_ms: number | null
+          errors: Json | null
+          factors_fetched: number | null
+          factors_new: number | null
+          factors_unchanged: number | null
+          factors_updated: number | null
+          id: string
+          source_id: string | null
+          started_at: string | null
+          status: string | null
+          sync_type: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          factors_fetched?: number | null
+          factors_new?: number | null
+          factors_unchanged?: number | null
+          factors_updated?: number | null
+          id?: string
+          source_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          sync_type?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          factors_fetched?: number | null
+          factors_new?: number | null
+          factors_unchanged?: number | null
+          factors_updated?: number | null
+          id?: string
+          source_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          sync_type?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emission_factor_sync_logs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factor_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emission_factor_updates: {
         Row: {
           created_at: string | null
@@ -795,6 +993,68 @@ export type Database = {
             columns: ["old_factor_id"]
             isOneToOne: false
             referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emission_factor_updates_staging: {
+        Row: {
+          created_at: string | null
+          external_id: string | null
+          factor_category: string | null
+          factor_name: string
+          factor_scope: string | null
+          factor_unit: string | null
+          factor_value: number
+          id: string
+          methodology: string | null
+          processed_at: string | null
+          raw_data: Json | null
+          region: string | null
+          source_id: string | null
+          status: string | null
+          year: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_id?: string | null
+          factor_category?: string | null
+          factor_name: string
+          factor_scope?: string | null
+          factor_unit?: string | null
+          factor_value: number
+          id?: string
+          methodology?: string | null
+          processed_at?: string | null
+          raw_data?: Json | null
+          region?: string | null
+          source_id?: string | null
+          status?: string | null
+          year?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          external_id?: string | null
+          factor_category?: string | null
+          factor_name?: string
+          factor_scope?: string | null
+          factor_unit?: string | null
+          factor_value?: number
+          id?: string
+          methodology?: string | null
+          processed_at?: string | null
+          raw_data?: Json | null
+          region?: string | null
+          source_id?: string | null
+          status?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emission_factor_updates_staging_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "emission_factor_sources"
             referencedColumns: ["id"]
           },
         ]

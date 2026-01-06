@@ -5,7 +5,11 @@ import { CustomFactorForm } from '@/components/EmissionFactors/CustomFactorForm'
 import { RegionalComparison } from '@/components/EmissionFactors/RegionalComparison';
 import { BulkImportDialog } from '@/components/EmissionFactors/BulkImportDialog';
 import { EEIOFactorsTable } from '@/components/EmissionFactors/EEIOFactorsTable';
-import { Database, Plus, GitCompare, DollarSign } from 'lucide-react';
+import { FactorSourcesManager } from '@/components/EmissionFactors/FactorSourcesManager';
+import { FactorChangeReview } from '@/components/EmissionFactors/FactorChangeReview';
+import { SyncHistoryLog } from '@/components/EmissionFactors/SyncHistoryLog';
+import { FactorImpactPreview } from '@/components/EmissionFactors/FactorImpactPreview';
+import { Database, Plus, GitCompare, DollarSign, RefreshCw } from 'lucide-react';
 
 const EmissionFactorsPage = () => {
   const [activeTab, setActiveTab] = useState('browse');
@@ -24,7 +28,7 @@ const EmissionFactorsPage = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-xl grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5">
             <TabsTrigger value="browse" className="gap-2">
               <Database className="h-4 w-4" />
               Browse
@@ -40,6 +44,10 @@ const EmissionFactorsPage = () => {
             <TabsTrigger value="compare" className="gap-2">
               <GitCompare className="h-4 w-4" />
               Compare
+            </TabsTrigger>
+            <TabsTrigger value="auto-update" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Auto-Update
             </TabsTrigger>
           </TabsList>
 
@@ -57,6 +65,17 @@ const EmissionFactorsPage = () => {
 
           <TabsContent value="compare" className="mt-6">
             <RegionalComparison />
+          </TabsContent>
+
+          <TabsContent value="auto-update" className="mt-6 space-y-6">
+            <FactorSourcesManager />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <FactorChangeReview />
+              <div className="space-y-6">
+                <FactorImpactPreview />
+                <SyncHistoryLog />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
