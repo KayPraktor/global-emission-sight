@@ -121,7 +121,7 @@ serve(async (req) => {
         category: "stationary_combustion",
         activity_type: "natural_gas",
         quantity: gasUsage,
-        unit: "kwh",
+        unit: "kWh",
         entry_date: monthStr,
         notes: "Monthly natural gas consumption",
       });
@@ -136,7 +136,7 @@ serve(async (req) => {
         category: "mobile_combustion",
         activity_type: "diesel",
         quantity: dieselUsage,
-        unit: "liters",
+        unit: "L",
         entry_date: monthStr,
         notes: "Company vehicle fleet fuel",
       });
@@ -151,7 +151,7 @@ serve(async (req) => {
         category: "purchased_electricity",
         activity_type: "electricity",
         quantity: electricityUsage,
-        unit: "kwh",
+        unit: "kWh",
         entry_date: monthStr,
         notes: "Monthly electricity consumption",
       });
@@ -186,8 +186,8 @@ serve(async (req) => {
         notes: "Employee commuting estimate",
       });
 
-      // Scope 3: Purchased Goods (varies by quarter)
-      const purchasedGoods = 50000 * randomVariation() * (1 + 0.3 * Math.sin((entryDate.getMonth() / 3) * Math.PI));
+      // Scope 3: Purchased Goods (varies by quarter) - weight in kg
+      const purchasedGoodsKg = 5000 * randomVariation() * (1 + 0.3 * Math.sin((entryDate.getMonth() / 3) * Math.PI));
       entries.push({
         user_id: user.id,
         facility_id: facility.id,
@@ -195,10 +195,10 @@ serve(async (req) => {
         scope: "S3",
         category: "purchased_goods",
         activity_type: "goods_services",
-        quantity: purchasedGoods,
-        unit: "usd",
+        quantity: purchasedGoodsKg,
+        unit: "kg",
         entry_date: monthStr,
-        notes: "Purchased goods and services spend",
+        notes: "Purchased goods and materials weight",
       });
     }
 
