@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,7 +9,9 @@ import {
   FileText,
   TrendingUp,
   Shield,
+  Radio,
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { auditService, AuditAction } from '@/services/auditService';
 
 interface AuditStats {
@@ -22,13 +24,9 @@ interface AuditStats {
 export const AuditDashboard: React.FC = () => {
   const [stats, setStats] = useState<AuditStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    setLoading(true);
+  const fetchStats = useCallback(async () => {
     try {
       const data = await auditService.getAuditStats();
       setStats(data);
@@ -37,7 +35,35 @@ export const AuditDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+
+    // Set up real-time subscription for dashboard updates
+    const channel = supabase
+      .channel('audit-dashboard-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs',
+        },
+        () => {
+          // Flash live indicator
+          setIsLive(true);
+          setTimeout(() => setIsLive(false), 2000);
+          // Refetch stats when new audit log is added
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchStats]);
 
   if (loading) {
     return (
@@ -66,10 +92,18 @@ export const AuditDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className={isLive ? 'ring-2 ring-green-500/50 transition-all' : 'transition-all'}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Actions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              {isLive && (
+                <Badge variant="outline" className="text-green-500 border-green-500 animate-pulse">
+                  <Radio className="h-3 w-3 mr-1" />
+                  Live
+                </Badge>
+              )}
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalActions.toLocaleString()}</div>

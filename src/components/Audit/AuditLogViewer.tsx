@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import {
   Table,
@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Filter,
   Eye,
+  Radio,
 } from 'lucide-react';
 import {
   auditService,
@@ -38,6 +39,7 @@ import {
 } from '@/services/auditService';
 import { toast } from 'sonner';
 import { EntityHistoryPanel } from './EntityHistoryPanel';
+import { useRealTimeAuditLogs } from '@/hooks/useRealTimeAuditLogs';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -56,34 +58,29 @@ const actionColors: Record<AuditAction, string> = {
 };
 
 export const AuditLogViewer: React.FC = () => {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [filters, setFilters] = useState<AuditLogFilters>({});
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
-      const result = await auditService.getAuditLogs(
-        filters,
-        ITEMS_PER_PAGE,
-        page * ITEMS_PER_PAGE
-      );
-      setLogs(result.logs);
-      setTotal(result.total);
-    } catch (error) {
-      toast.error('Failed to load audit logs');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Use real-time hook for audit logs
+  const {
+    logs,
+    total,
+    isLoading: loading,
+    refetch: fetchLogs,
+    newLogCount,
+    clearNewLogCount,
+  } = useRealTimeAuditLogs({
+    filters,
+    limit: ITEMS_PER_PAGE,
+    offset: page * ITEMS_PER_PAGE,
+  });
 
-  useEffect(() => {
-    fetchLogs();
-  }, [page, filters]);
+  // Clear new log count when page changes
+  React.useEffect(() => {
+    clearNewLogCount();
+  }, [page, clearNewLogCount]);
 
   const handleExport = async () => {
     try {
@@ -115,7 +112,15 @@ export const AuditLogViewer: React.FC = () => {
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-xl font-semibold">Audit Trail</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-xl font-semibold">Audit Trail</CardTitle>
+            {newLogCount > 0 && (
+              <Badge variant="default" className="animate-pulse bg-green-500">
+                <Radio className="h-3 w-3 mr-1" />
+                {newLogCount} new
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
