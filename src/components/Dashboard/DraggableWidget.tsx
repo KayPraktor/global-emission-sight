@@ -16,7 +16,7 @@ interface DraggableWidgetProps {
   dragHandleClassName?: string;
 }
 
-export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
+export const DraggableWidget: React.FC<DraggableWidgetProps> = React.memo(({
   id,
   title,
   children,
@@ -94,6 +94,17 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       </div>
     </motion.div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these props change
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.isCustomizeMode === nextProps.isCustomizeMode &&
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.title === nextProps.title &&
+    prevProps.children === nextProps.children
+  );
+});
+
+DraggableWidget.displayName = 'DraggableWidget';
 
 export default DraggableWidget;

@@ -35,7 +35,7 @@ const MiniSparkline: React.FC<{ data: number[] }> = ({ data }) => {
   );
 };
 
-const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasData }) => {
+const EmissionsTimeline: React.FC<EmissionsTimelineProps> = React.memo(({ monthlyData, hasData }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -155,6 +155,8 @@ const EmissionsTimeline: React.FC<EmissionsTimelineProps> = ({ monthlyData, hasD
       </AnimatePresence>
     </GlassmorphismCard>
   );
-};
+});
+
+EmissionsTimeline.displayName = 'EmissionsTimeline';
 
 export default EmissionsTimeline;

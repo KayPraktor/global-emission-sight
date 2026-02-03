@@ -245,7 +245,7 @@ const QuickWinSkeleton = () => (
   </div>
 );
 
-const QuickWinsSection: React.FC = () => {
+const QuickWinsSection: React.FC = React.memo(() => {
   const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -506,6 +506,8 @@ const QuickWinsSection: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+
+QuickWinsSection.displayName = 'QuickWinsSection';
 
 export default QuickWinsSection;

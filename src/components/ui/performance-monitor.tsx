@@ -14,7 +14,8 @@ export const PerformanceMonitor: React.FC<{
   className?: string;
 }> = ({ componentName = 'App', className = '' }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const metrics = usePerformanceMonitor(componentName);
+  // Enable continuous monitoring only when the panel is visible
+  const metrics = usePerformanceMonitor(componentName, isVisible);
   const memoryInfo = useMemoryUsage();
 
   const getFPSColor = (fps: number) => {

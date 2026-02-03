@@ -8,7 +8,7 @@ interface PerformanceMetrics {
   componentMounts: number;
 }
 
-export function usePerformanceMonitor(componentName: string) {
+export function usePerformanceMonitor(componentName: string, enabled = false) {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     renderTime: 0,
     fps: 0,
@@ -24,10 +24,18 @@ export function usePerformanceMonitor(componentName: string) {
     mountCount.current += 1;
     renderStartTime.current = performance.now();
     
-    // Only log in development and only on actual mounts, not every render
+    // Update mount count once on actual mount
+    setMetrics(prev => ({
+      ...prev,
+      componentMounts: mountCount.current,
+      renderTime: performance.now() - renderStartTime.current
+    }));
   }, []);
 
+  // Only run the continuous FPS measurement loop when explicitly enabled
   useEffect(() => {
+    if (!enabled) return;
+
     const measureFPS = () => {
       frameCount.current++;
       const currentTime = performance.now();
@@ -47,12 +55,12 @@ export function usePerformanceMonitor(componentName: string) {
         lastTime.current = currentTime;
       }
       
-      requestAnimationFrame(measureFPS);
+      animationId = requestAnimationFrame(measureFPS);
     };
 
-    const animationId = requestAnimationFrame(measureFPS);
+    let animationId = requestAnimationFrame(measureFPS);
     return () => cancelAnimationFrame(animationId);
-  }, [componentName]);
+  }, [componentName, enabled]);
 
   return metrics;
 }
