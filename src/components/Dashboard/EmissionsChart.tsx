@@ -30,7 +30,7 @@ interface EmissionsChartProps {
   hasData: boolean;
 }
 
-const EmissionsChart: React.FC<EmissionsChartProps> = ({ monthlyData, categoryBreakdown, hasData }) => {
+const EmissionsChart: React.FC<EmissionsChartProps> = React.memo(({ monthlyData, categoryBreakdown, hasData }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [timePeriod, setTimePeriod] = useState('6months');
   const [visibleScopes, setVisibleScopes] = useState({
@@ -537,6 +537,8 @@ const EmissionsChart: React.FC<EmissionsChartProps> = ({ monthlyData, categoryBr
       </div>
     </div>
   );
-};
+});
+
+EmissionsChart.displayName = 'EmissionsChart';
 
 export default EmissionsChart;

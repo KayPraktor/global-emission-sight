@@ -30,7 +30,7 @@ interface ProgressDataPoint {
   energyEfficiency: number;
 }
 
-const StrategicIntelligencePanel: React.FC = () => {
+const StrategicIntelligencePanel: React.FC = React.memo(() => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('quarterly');
   const [kpis, setKPIs] = useState<EnterpriseKPI[]>([]);
   const [progressData, setProgressData] = useState<ProgressDataPoint[]>([]);
@@ -399,6 +399,8 @@ const StrategicIntelligencePanel: React.FC = () => {
       </GlassmorphismCard>
     </div>
   );
-};
+});
+
+StrategicIntelligencePanel.displayName = 'StrategicIntelligencePanel';
 
 export default StrategicIntelligencePanel;

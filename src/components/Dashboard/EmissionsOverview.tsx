@@ -16,7 +16,7 @@ interface EmissionsOverviewProps {
   monthlyData?: Array<{ month: string; scope1: number; scope2: number; scope3: number; total: number }>;
 }
 
-const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
+const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
   totalEmissions,
   scope1Total,
   scope2Total,
@@ -171,6 +171,8 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = ({
       </div>
     </div>
   );
-};
+});
+
+EmissionsOverview.displayName = 'EmissionsOverview';
 
 export default EmissionsOverview;

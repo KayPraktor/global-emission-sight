@@ -27,7 +27,7 @@ interface KPIWithValue extends IndustryKPI {
   performance: 'good' | 'average' | 'poor';
 }
 
-export function IndustryKPIPanel() {
+export const IndustryKPIPanel = React.memo(function IndustryKPIPanel() {
   const { organization, user } = useAuth();
   const [kpis, setKpis] = useState<KPIWithValue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,4 +258,4 @@ export function IndustryKPIPanel() {
       </CardContent>
     </Card>
   );
-}
+});

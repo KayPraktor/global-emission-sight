@@ -261,7 +261,7 @@ const EmptyState = () => (
   </motion.div>
 );
 
-const RealtimeNotificationsPanel: React.FC = () => {
+const RealtimeNotificationsPanel: React.FC = React.memo(() => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
@@ -499,6 +499,8 @@ const RealtimeNotificationsPanel: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+
+RealtimeNotificationsPanel.displayName = 'RealtimeNotificationsPanel';
 
 export default RealtimeNotificationsPanel;

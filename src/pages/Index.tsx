@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { analyticsService, AnalyticsSummary } from '@/services/analyticsService';
@@ -26,17 +26,9 @@ import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
-import { IndustryKPIPanel } from '@/components/Industry/IndustryKPIPanel';
-import StrategicIntelligencePanel from '@/components/Dashboard/StrategicIntelligencePanel';
-import EmissionsTimeline from '@/components/Dashboard/EmissionsTimeline';
-import { DataQualityWidget } from '@/components/Dashboard/DataQualityWidget';
-import { QualityAlertsWidget } from '@/components/Dashboard/QualityAlertsWidget';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Button } from '@/components/ui/button';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
-import ValueTrackingWidget from '@/components/Dashboard/ValueTrackingWidget';
-import RealtimeNotificationsPanel from '@/components/Dashboard/RealtimeNotificationsPanel';
-import QuickWinsSection from '@/components/Dashboard/QuickWinsSection';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
 import SeedDataButton from '@/components/Dashboard/SeedDataButton';
 import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
@@ -44,6 +36,36 @@ import { DashboardCustomizer, WidgetConfig } from '@/components/Dashboard/Dashbo
 import { DraggableWidget } from '@/components/Dashboard/DraggableWidget';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { CelebrationProvider } from '@/contexts/CelebrationContext';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load heavy dashboard widgets for better initial load performance
+const EmissionsTimeline = lazy(() => import('@/components/Dashboard/EmissionsTimeline'));
+const QuickWinsSection = lazy(() => import('@/components/Dashboard/QuickWinsSection'));
+const RealtimeNotificationsPanel = lazy(() => import('@/components/Dashboard/RealtimeNotificationsPanel'));
+const StrategicIntelligencePanel = lazy(() => import('@/components/Dashboard/StrategicIntelligencePanel'));
+const IndustryKPIPanel = lazy(() => 
+  import('@/components/Industry/IndustryKPIPanel').then(m => ({ default: m.IndustryKPIPanel }))
+);
+const DataQualityWidget = lazy(() => 
+  import('@/components/Dashboard/DataQualityWidget').then(m => ({ default: m.DataQualityWidget }))
+);
+const ValueTrackingWidget = lazy(() => import('@/components/Dashboard/ValueTrackingWidget'));
+
+// Widget skeleton for Suspense fallbacks
+const WidgetSkeleton: React.FC<{ height?: string }> = ({ height = 'h-48' }) => (
+  <div className={`rounded-xl border bg-card p-6 ${height}`}>
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-10 rounded-lg" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      </div>
+      <Skeleton className="h-24 w-full" />
+    </div>
+  </div>
+);
 
 
 // Widget configuration for customization
@@ -399,10 +421,12 @@ const Index = () => {
             {isLoading ? (
               <SkeletonCard />
             ) : (
-              <EmissionsTimeline 
-                monthlyData={analyticsData?.monthlyData || []}
-                hasData={!!analyticsData && analyticsData.totalEmissions > 0}
-              />
+              <Suspense fallback={<WidgetSkeleton height="h-24" />}>
+                <EmissionsTimeline 
+                  monthlyData={analyticsData?.monthlyData || []}
+                  hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+                />
+              </Suspense>
             )}
           </SlideIn>
         </DraggableWidget>
@@ -424,7 +448,9 @@ const Index = () => {
               isVisible={isWidgetVisible('quickWins')}
               onRemove={() => toggleWidgetVisibility('quickWins')}
             >
-              <QuickWinsSection />
+              <Suspense fallback={<WidgetSkeleton height="h-64" />}>
+                <QuickWinsSection />
+              </Suspense>
             </DraggableWidget>
           )}
           {isWidgetVisible('notifications') && (
@@ -435,7 +461,9 @@ const Index = () => {
               isVisible={isWidgetVisible('notifications')}
               onRemove={() => toggleWidgetVisibility('notifications')}
             >
-              <RealtimeNotificationsPanel />
+              <Suspense fallback={<WidgetSkeleton height="h-64" />}>
+                <RealtimeNotificationsPanel />
+              </Suspense>
             </DraggableWidget>
           )}
         </div>
@@ -667,7 +695,9 @@ const Index = () => {
             lastUpdated="2025-01-15T14:30:00Z"
           />
           <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4" staggerDelay={0.1}>
-            <DataQualityWidget />
+            <Suspense fallback={<WidgetSkeleton />}>
+              <DataQualityWidget />
+            </Suspense>
             <GlassmorphismCard variant="light" className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -703,7 +733,9 @@ const Index = () => {
             lastUpdated="2025-01-15T14:30:00Z"
           />
           <SlideIn direction="up" delay={0.3}>
-            <IndustryKPIPanel />
+            <Suspense fallback={<WidgetSkeleton height="h-64" />}>
+              <IndustryKPIPanel />
+            </Suspense>
           </SlideIn>
         </DraggableWidget>
       )}
@@ -774,7 +806,9 @@ const Index = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.1 }}
                   >
-                    <ValueTrackingWidget />
+                    <Suspense fallback={<WidgetSkeleton />}>
+                      <ValueTrackingWidget />
+                    </Suspense>
                   </motion.div>
 
                   {/* Top row: Key Drivers Analysis */}
@@ -798,7 +832,9 @@ const Index = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.4 }}
                   >
-                    <StrategicIntelligencePanel />
+                    <Suspense fallback={<WidgetSkeleton height="h-96" />}>
+                      <StrategicIntelligencePanel />
+                    </Suspense>
                   </motion.div>
                 </motion.div>
               )}
