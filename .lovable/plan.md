@@ -1,105 +1,97 @@
 
+## E2E Test Results: Issues Found & Fix Plan
 
-## Backend Fixes Plan
-
-This plan addresses two critical database errors preventing the Scenario Modeling and Enterprise KPI services from working correctly.
-
----
-
-### Issue Summary
-
-| Service | Error | Cause | Impact |
-|---------|-------|-------|--------|
-| Scenario Modeling | `no unique constraint matching ON CONFLICT` | Missing unique constraint on `(organization_id, scenario_name)` | Cannot save scenarios |
-| Enterprise KPIs | `violates row-level security policy` | Missing UPDATE RLS policy | Cannot update existing metrics |
+The end-to-end test of the user journey revealed critical bugs blocking core functionality.
 
 ---
 
-### Fix 1: Add Unique Constraint for Scenarios
+### Test Journey Summary
 
-**Table:** `enterprise_scenarios`
+| Step | Page | Status | Notes |
+|------|------|--------|-------|
+| 1 | Landing Page | Pass | Renders correctly |
+| 2 | Authentication | Pass | User already logged in from previous session |
+| 3 | Onboarding | FAIL | "Load Demo Data" returns 500 error |
+| 4 | Dashboard | WARN | 406 errors from quality_tracking queries |
+| 5 | Data Entry | Pass | Industry wizard and form work correctly |
+| 6 | Reports | Pass | Templates display correctly |
 
-The service attempts to upsert scenarios using:
+---
+
+### Critical Issues Found
+
+#### Issue 1: "Load Demo Data" Edge Function Fails (Severity: Critical)
+
+**Error**: `numeric field overflow: A field with precision 3, scale 2 must round to an absolute value less than 10^1`
+
+**Root Cause**: The `calculations` table has `confidence_score NUMERIC(3,2)` which only allows values from -9.99 to 9.99. However, the seed function tries to insert values 85-100 (percentage).
+
+**Location**: `supabase/functions/seed-sample-data/index.ts` line 229:
 ```typescript
-.upsert(scenariosToSave, { onConflict: 'organization_id,scenario_name' })
+confidence_score: 85 + Math.random() * 15, // Generates 85-100
 ```
 
-But the table only has a primary key constraint on `id`. We need to add a unique constraint.
-
-**Database Migration:**
-```sql
--- Add unique constraint on (organization_id, scenario_name)
-ALTER TABLE public.enterprise_scenarios 
-ADD CONSTRAINT enterprise_scenarios_org_name_unique 
-UNIQUE (organization_id, scenario_name);
-```
+**Fix Options**:
+1. Change the column precision to `NUMERIC(5,2)` to allow 0.00-100.00
+2. Store as decimal (0.85-1.00) instead of percentage
 
 ---
 
-### Fix 2: Add UPDATE RLS Policy for Metrics
+#### Issue 2: quality_tracking 406 Errors (Severity: High)
 
-**Table:** `enterprise_metrics`
+**Error**: HTTP 406 (Not Acceptable) on queries to quality_tracking table
 
-The service attempts to upsert metrics using:
-```typescript
-.upsert({ organization_id, metric_date, ...metrics }, { onConflict: 'organization_id,metric_date' })
+**Root Cause**: The dashboard queries filter by `user_id`:
+```
+quality_tracking?user_id=eq.{user_id}
 ```
 
-The table has INSERT and SELECT policies but lacks an UPDATE policy. When upsert tries to update an existing row, RLS blocks it.
-
-**Database Migration:**
+But the RLS policy only checks organization membership:
 ```sql
--- Add UPDATE policy for enterprise_metrics
-CREATE POLICY "Org members can update metrics"
-ON public.enterprise_metrics
+USING (is_org_member(auth.uid(), organization_id))
+```
+
+Users without an organization, or where `organization_id` is NULL, cannot read any rows.
+
+**Fix**: Add user-based RLS policy or update queries to include organization_id filter.
+
+---
+
+### Proposed Database Migration
+
+```sql
+-- Fix 1: Alter confidence_score column to allow percentage values
+ALTER TABLE public.calculations 
+ALTER COLUMN confidence_score TYPE NUMERIC(5,2);
+
+-- Fix 2: Add user-based SELECT policy for quality_tracking
+CREATE POLICY "Users can view own quality tracking"
+ON public.quality_tracking
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+-- Add UPDATE policy for quality_tracking (needed for upserts)
+CREATE POLICY "Users can update own quality tracking"
+ON public.quality_tracking  
 FOR UPDATE
 TO authenticated
-USING (is_org_member(auth.uid(), organization_id))
-WITH CHECK (is_org_member(auth.uid(), organization_id));
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 ```
 
 ---
 
-### Implementation
+### Expected Outcome After Fix
 
-**Single Migration File Contents:**
-
-```sql
--- Fix 1: Add unique constraint for enterprise_scenarios upsert
-ALTER TABLE public.enterprise_scenarios 
-ADD CONSTRAINT enterprise_scenarios_org_name_unique 
-UNIQUE (organization_id, scenario_name);
-
--- Fix 2: Add UPDATE policy for enterprise_metrics
-CREATE POLICY "Org members can update metrics"
-ON public.enterprise_metrics
-FOR UPDATE
-TO authenticated
-USING (is_org_member(auth.uid(), organization_id))
-WITH CHECK (is_org_member(auth.uid(), organization_id));
-```
+1. **Load Demo Data**: Will successfully seed 72 emissions entries + 72 calculations
+2. **Dashboard Quality Widgets**: Will load without 406 errors
+3. **Complete User Journey**: New users can onboard with sample data and see populated dashboard
 
 ---
 
-### Expected Outcome
+### Additional Observations
 
-After applying these fixes:
-
-1. **Scenario Modeling Service**: Will successfully save and update scenarios using upsert with `onConflict: 'organization_id,scenario_name'`
-
-2. **Enterprise KPI Service**: Will successfully update existing metrics for the same organization and date
-
-3. **Console Errors**: Both error messages will no longer appear:
-   - `"there is no unique or exclusion constraint matching the ON CONFLICT specification"` - FIXED
-   - `"new row violates row-level security policy (USING expression)"` - FIXED
-
----
-
-### Verification Steps
-
-After deployment:
-1. Navigate to the dashboard to trigger KPI calculations
-2. Navigate to Scenario Planning page to generate scenarios
-3. Check console logs for any remaining errors
-4. Verify data appears correctly in the UI
-
+- Onboarding wizard shows "BARYON" in some places and "CarbonTrack" in others (branding inconsistency noted in memories)
+- The postMessage warnings in console are harmless development artifacts
+- Overall navigation and core features work well once data exists
