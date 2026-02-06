@@ -1,97 +1,99 @@
 
-## E2E Test Results: Issues Found & Fix Plan
+# Product Audit: 3 Critical Business Logic & UX Gaps
 
-The end-to-end test of the user journey revealed critical bugs blocking core functionality.
-
----
-
-### Test Journey Summary
-
-| Step | Page | Status | Notes |
-|------|------|--------|-------|
-| 1 | Landing Page | Pass | Renders correctly |
-| 2 | Authentication | Pass | User already logged in from previous session |
-| 3 | Onboarding | FAIL | "Load Demo Data" returns 500 error |
-| 4 | Dashboard | WARN | 406 errors from quality_tracking queries |
-| 5 | Data Entry | Pass | Industry wizard and form work correctly |
-| 6 | Reports | Pass | Templates display correctly |
+After a thorough analysis of the BARYON carbon management platform, I've identified three significant issues that could confuse new users, break the user's flow, or weaken the product's value proposition.
 
 ---
 
-### Critical Issues Found
+## Issue #1: Goals Are Disconnected from Emissions Data Entry Flow
 
-#### Issue 1: "Load Demo Data" Edge Function Fails (Severity: Critical)
+### The Problem
+There is a critical gap between data entry and goal tracking that breaks the value chain.
 
-**Error**: `numeric field overflow: A field with precision 3, scale 2 must round to an absolute value less than 10^1`
+**Current State:**
+- Users enter emissions data via the Data Entry wizard (IndustryAwareWizard)
+- Goals are created separately in the Goals page (EnhancedGoalForm)
+- Goal progress is calculated by querying emissions_entries against baseline values
 
-**Root Cause**: The `calculations` table has `confidence_score NUMERIC(3,2)` which only allows values from -9.99 to 9.99. However, the seed function tries to insert values 85-100 (percentage).
+**The Flaw:**
+1. When a user enters new emissions data, there is **no feedback** about how this affects their active goals
+2. Users must manually navigate to the Goals page to see if they're on track
+3. The Goal creation form asks for baseline emissions but doesn't offer to **pull existing data** from the system
+4. There's no alert when emissions data pushes a goal "at risk" or "off track"
 
-**Location**: `supabase/functions/seed-sample-data/index.ts` line 229:
-```typescript
-confidence_score: 85 + Math.random() * 15, // Generates 85-100
-```
+**User Impact:**
+A VP of Sustainability enters monthly data for 6 months, never realizing their Net Zero goal has gone off-track until they randomly visit the Goals page. This undermines the core value proposition of "track Net Zero progress."
 
-**Fix Options**:
-1. Change the column precision to `NUMERIC(5,2)` to allow 0.00-100.00
-2. Store as decimal (0.85-1.00) instead of percentage
-
----
-
-#### Issue 2: quality_tracking 406 Errors (Severity: High)
-
-**Error**: HTTP 406 (Not Acceptable) on queries to quality_tracking table
-
-**Root Cause**: The dashboard queries filter by `user_id`:
-```
-quality_tracking?user_id=eq.{user_id}
-```
-
-But the RLS policy only checks organization membership:
-```sql
-USING (is_org_member(auth.uid(), organization_id))
-```
-
-Users without an organization, or where `organization_id` is NULL, cannot read any rows.
-
-**Fix**: Add user-based RLS policy or update queries to include organization_id filter.
+### Recommended Fix
+- Show a "Goal Impact Preview" panel in the Data Entry review step showing affected goals
+- Trigger notifications when new data changes goal status
+- Pre-populate baseline emissions from actual data when creating goals
 
 ---
 
-### Proposed Database Migration
+## Issue #2: The Organization-to-User Relationship is Fragile for New Signups
 
-```sql
--- Fix 1: Alter confidence_score column to allow percentage values
-ALTER TABLE public.calculations 
-ALTER COLUMN confidence_score TYPE NUMERIC(5,2);
+### The Problem
+New users who sign up may end up in a broken state where they have no organization, which silently breaks most platform features.
 
--- Fix 2: Add user-based SELECT policy for quality_tracking
-CREATE POLICY "Users can view own quality tracking"
-ON public.quality_tracking
-FOR SELECT
-TO authenticated
-USING (auth.uid() = user_id);
+**Current State:**
+- Signup (AuthPage.tsx) captures company_name but doesn't automatically create an organization
+- Organization creation appears to happen via a database trigger (create_user_organization function)
+- Multiple services check for organization_id and fail silently if null
 
--- Add UPDATE policy for quality_tracking (needed for upserts)
-CREATE POLICY "Users can update own quality tracking"
-ON public.quality_tracking  
-FOR UPDATE
-TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-```
+**Evidence from the database:**
+Looking at organizations table, some have null industry values and generic names like "admin@admin.com's Organization", suggesting auto-creation works, but the onboarding flow has gaps.
 
----
+**The Flaw:**
+1. If the trigger fails or runs late, services like approval workflows, emissions entry with organization_id, and facility creation will fail
+2. The goalsService queries by user_id (works), but approvalService queries by organization_id (may return empty results for users without orgs)
+3. The OnboardingWizard tries to fetch organizationId but if null, it blocks industry selection with "Please select an industry" even when user has selected
 
-### Expected Outcome After Fix
+**User Impact:**
+A new user signs up, goes through onboarding, but all approval-related features show empty states. They can create emissions data but can't see it in the Approvals page, creating confusion about where their data went.
 
-1. **Load Demo Data**: Will successfully seed 72 emissions entries + 72 calculations
-2. **Dashboard Quality Widgets**: Will load without 406 errors
-3. **Complete User Journey**: New users can onboard with sample data and see populated dashboard
+### Recommended Fix
+- Add explicit organization creation in signup flow (don't rely solely on triggers)
+- Add a blocking error state when organization is missing instead of silent failures
+- Show "Setup incomplete" banner prompting organization setup when detected
 
 ---
 
-### Additional Observations
+## Issue #3: Approval Workflow Creates Data "Limbo" Without Clear Resolution Path
 
-- Onboarding wizard shows "BARYON" in some places and "CarbonTrack" in others (branding inconsistency noted in memories)
-- The postMessage warnings in console are harmless development artifacts
-- Overall navigation and core features work well once data exists
+### The Problem
+Entries submitted for approval can enter states where the submitter has no clear path forward.
+
+**Current State:**
+- Users enter data with approval_status = 'draft'
+- Data is submitted for review to supervisors
+- Supervisor can: Approve, Reject, or Request Changes
+- The ApprovalQueue shows pending/approved/rejected/changes_requested entries
+
+**The Flaw:**
+1. When "Changes Requested" is selected, the **original submitter has no way to see their rejected entries** - the Approvals page is supervisor-focused
+2. There's no notification system for the submitter to know changes were requested
+3. There's no "Edit and Resubmit" workflow - users would need to know to go back to Data Entry, find the entry somehow, edit it, and resubmit
+4. The entry is simply marked as "changes_requested" but the submitter can't respond, edit, or resubmit from the Approvals UI
+5. The Data Entry page doesn't show existing entries at all - it's purely for new entries
+
+**User Impact:**
+An operations manager submits monthly emissions data. The supervisor requests changes. The operations manager never sees this feedback. The data sits in "changes_requested" limbo indefinitely, creating data gaps in reports.
+
+### Recommended Fix
+- Create "My Submissions" view showing user's own entries and their statuses
+- Add email/in-app notifications when entry status changes
+- Add "Edit Draft" capability from the entry list
+- Create resubmit flow: Changes Requested → Edit → Resubmit → Pending Review
+
+---
+
+## Summary Impact Assessment
+
+| Issue | Severity | User Segment Affected | Value Proposition Impact |
+|-------|----------|----------------------|-------------------------|
+| Goals Disconnected | High | All users tracking Net Zero | Weakens "track progress" claim |
+| Organization Fragility | Critical | New signups (100% of growth) | Broken first experience |
+| Approval Limbo | High | Organizations with approval workflows | Data quality & completeness |
+
+These three issues, if addressed, would significantly improve the first-use experience, data completeness, and the core value delivery of the platform.
