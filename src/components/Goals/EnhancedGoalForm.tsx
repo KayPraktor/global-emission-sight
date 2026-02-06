@@ -9,14 +9,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Upload, Plus, X, AlertCircle } from 'lucide-react';
+import { Calendar, Upload, Plus, X, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { goalsService } from '@/services/goalsService';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface EnhancedGoalFormProps {
   onComplete?: () => void;
 }
 
+// Zod validation schema
+const currentYear = new Date().getFullYear();
+
+const goalSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().optional(),
+  category: z.string().min(1, 'Category is required'),
+  priority: z.string().min(1, 'Priority is required'),
+  scope: z.string().min(1, 'Emission scope is required'),
+  baselineValue: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, 'Baseline value must be a positive number'),
+  baselineYear: z.string().refine(val => {
+    const year = Number(val);
+    return !isNaN(year) && year >= 1990 && year <= currentYear;
+  }, `Baseline year must be between 1990 and ${currentYear}`),
+  targetValue: z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, 'Target value must be a non-negative number'),
+  targetYear: z.string().refine(val => {
+    const year = Number(val);
+    return !isNaN(year) && year >= currentYear;
+  }, `Target year must be ${currentYear} or later`),
+});
+
+type ValidationErrors = Partial<Record<keyof z.infer<typeof goalSchema>, string>>;
+
 const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  
   const [formData, setFormData] = useState({
     // Basic Information
     title: '',
@@ -90,9 +120,110 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
     setRisks(risks.filter(r => r.id !== id));
   };
 
-  const handleSubmit = () => {
-    toast.success('Goal created successfully!');
-    onComplete?.();
+  const validateForm = (): boolean => {
+    const result = goalSchema.safeParse({
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      priority: formData.priority,
+      scope: formData.scope,
+      baselineValue: formData.baselineValue,
+      baselineYear: formData.baselineYear,
+      targetValue: formData.targetValue,
+      targetYear: formData.targetYear,
+    });
+
+    if (!result.success) {
+      const errors: ValidationErrors = {};
+      result.error.errors.forEach(err => {
+        const field = err.path[0] as keyof ValidationErrors;
+        errors[field] = err.message;
+      });
+      setValidationErrors(errors);
+      return false;
+    }
+
+    // Additional validation: target year must be after baseline year
+    if (Number(formData.targetYear) <= Number(formData.baselineYear)) {
+      setValidationErrors({ targetYear: 'Target year must be after baseline year' });
+      return false;
+    }
+
+    setValidationErrors({});
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double-click
+
+    if (!validateForm()) {
+      toast.error('Please fix the validation errors before submitting');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Map scope to array format expected by the service
+      const scopeMapping: Record<string, string[]> = {
+        'scope1': ['Scope 1'],
+        'scope2': ['Scope 2'],
+        'scope3': ['Scope 3'],
+        'multiple': ['Scope 1', 'Scope 2', 'Scope 3'],
+      };
+
+      const { data, error } = await goalsService.createGoal({
+        title: formData.title,
+        description: formData.description || undefined,
+        baseline_emissions: Number(formData.baselineValue),
+        baseline_year: Number(formData.baselineYear),
+        target_emissions: Number(formData.targetValue),
+        target_date: `${formData.targetYear}-12-31`,
+        scope_covered: scopeMapping[formData.scope] || ['Scope 1'],
+        status: 'not_started',
+        milestones: milestones.filter(m => m.title).length > 0 ? milestones.filter(m => m.title) : undefined,
+        metadata: {
+          category: formData.category,
+          priority: formData.priority,
+          department: formData.department || undefined,
+          owner: formData.owner || undefined,
+          budget: formData.budget || undefined,
+          resources: formData.resources || undefined,
+          risks: risks.filter(r => r.risk).length > 0 ? risks.filter(r => r.risk) : undefined,
+          dependencies: formData.dependencies || undefined,
+          regulatoryFramework: formData.regulatoryFramework || undefined,
+          reportingRequirements: formData.reportingRequirements || undefined,
+          unit: formData.unit || 'tCO2e',
+          methodology: formData.methodology || undefined,
+        },
+      });
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['goals-dashboard'] });
+
+      toast.success('Goal created successfully!');
+      onComplete?.();
+    } catch (error: any) {
+      console.error('Error creating goal:', error);
+      toast.error(error.message || 'Failed to create goal. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderFieldError = (field: keyof ValidationErrors) => {
+    if (!validationErrors[field]) return null;
+    return (
+      <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" />
+        {validationErrors[field]}
+      </p>
+    );
   };
 
   return (
@@ -121,7 +252,9 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
                       placeholder="e.g., Reduce Scope 1 emissions by 25%"
+                      className={validationErrors.title ? 'border-destructive' : ''}
                     />
+                    {renderFieldError('title')}
                   </div>
 
                   <div>
@@ -130,7 +263,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                       value={formData.category}
                       onValueChange={(value) => setFormData({...formData, category: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={validationErrors.category ? 'border-destructive' : ''}>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -142,6 +275,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         <SelectItem value="supply-chain">Supply Chain</SelectItem>
                       </SelectContent>
                     </Select>
+                    {renderFieldError('category')}
                   </div>
 
                   <div>
@@ -150,7 +284,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                       value={formData.scope}
                       onValueChange={(value) => setFormData({...formData, scope: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={validationErrors.scope ? 'border-destructive' : ''}>
                         <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
                       <SelectContent>
@@ -160,6 +294,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         <SelectItem value="multiple">Multiple Scopes</SelectItem>
                       </SelectContent>
                     </Select>
+                    {renderFieldError('scope')}
                   </div>
 
                   <div>
@@ -168,7 +303,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                       value={formData.priority}
                       onValueChange={(value) => setFormData({...formData, priority: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={validationErrors.priority ? 'border-destructive' : ''}>
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>
@@ -178,12 +313,13 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         <SelectItem value="low">Low</SelectItem>
                       </SelectContent>
                     </Select>
+                    {renderFieldError('priority')}
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -241,7 +377,9 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         value={formData.baselineValue}
                         onChange={(e) => setFormData({...formData, baselineValue: e.target.value})}
                         placeholder="e.g., 1000"
+                        className={validationErrors.baselineValue ? 'border-destructive' : ''}
                       />
+                      {renderFieldError('baselineValue')}
                     </div>
                     <div>
                       <Label htmlFor="baselineYear">Baseline Year *</Label>
@@ -251,10 +389,12 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         value={formData.baselineYear}
                         onChange={(e) => setFormData({...formData, baselineYear: e.target.value})}
                         placeholder="e.g., 2020"
+                        className={validationErrors.baselineYear ? 'border-destructive' : ''}
                       />
+                      {renderFieldError('baselineYear')}
                     </div>
                     <div>
-                      <Label htmlFor="unit">Unit of Measurement *</Label>
+                      <Label htmlFor="unit">Unit of Measurement</Label>
                       <Select 
                         value={formData.unit}
                         onValueChange={(value) => setFormData({...formData, unit: value})}
@@ -288,7 +428,9 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         value={formData.targetValue}
                         onChange={(e) => setFormData({...formData, targetValue: e.target.value})}
                         placeholder="e.g., 750"
+                        className={validationErrors.targetValue ? 'border-destructive' : ''}
                       />
+                      {renderFieldError('targetValue')}
                     </div>
                     <div>
                       <Label htmlFor="targetYear">Target Year *</Label>
@@ -298,10 +440,12 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         value={formData.targetYear}
                         onChange={(e) => setFormData({...formData, targetYear: e.target.value})}
                         placeholder="e.g., 2030"
+                        className={validationErrors.targetYear ? 'border-destructive' : ''}
                       />
+                      {renderFieldError('targetYear')}
                     </div>
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-700">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
                         Target Reduction: {formData.baselineValue && formData.targetValue ? 
                           Math.round((1 - Number(formData.targetValue) / Number(formData.baselineValue)) * 100) 
                           : 0}%
@@ -435,7 +579,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                                 );
                                 setRisks(updatedRisks);
                               }}
-                              placeholder="Mitigation approach"
+                              placeholder="How to mitigate"
                             />
                           </div>
                         </div>
@@ -449,7 +593,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
             <TabsContent value="timeline" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Label htmlFor="startDate">Start Date</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -458,7 +602,7 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endDate">End Date *</Label>
+                  <Label htmlFor="endDate">End Date</Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -497,28 +641,28 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <Label>Milestone Title</Label>
+                            <Label>Title</Label>
                             <Input
                               value={milestone.title}
                               onChange={(e) => {
-                                const updatedMilestones = milestones.map(m => 
+                                const updated = milestones.map(m => 
                                   m.id === milestone.id ? {...m, title: e.target.value} : m
                                 );
-                                setMilestones(updatedMilestones);
+                                setMilestones(updated);
                               }}
-                              placeholder="e.g., Complete energy audit"
+                              placeholder="Milestone title"
                             />
                           </div>
                           <div>
-                            <Label>Due Date</Label>
+                            <Label>Target Date</Label>
                             <Input
                               type="date"
                               value={milestone.date}
                               onChange={(e) => {
-                                const updatedMilestones = milestones.map(m => 
+                                const updated = milestones.map(m => 
                                   m.id === milestone.id ? {...m, date: e.target.value} : m
                                 );
-                                setMilestones(updatedMilestones);
+                                setMilestones(updated);
                               }}
                             />
                           </div>
@@ -527,12 +671,12 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                             <Input
                               value={milestone.description}
                               onChange={(e) => {
-                                const updatedMilestones = milestones.map(m => 
+                                const updated = milestones.map(m => 
                                   m.id === milestone.id ? {...m, description: e.target.value} : m
                                 );
-                                setMilestones(updatedMilestones);
+                                setMilestones(updated);
                               }}
-                              placeholder="Milestone details"
+                              placeholder="Brief description"
                             />
                           </div>
                         </div>
@@ -555,13 +699,13 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                       <SelectValue placeholder="Select framework" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sbti">Science Based Targets initiative (SBTi)</SelectItem>
-                      <SelectItem value="cdp">CDP (Carbon Disclosure Project)</SelectItem>
-                      <SelectItem value="tcfd">TCFD (Task Force on Climate-related Financial Disclosures)</SelectItem>
                       <SelectItem value="ghg-protocol">GHG Protocol</SelectItem>
-                      <SelectItem value="iso14001">ISO 14001</SelectItem>
-                      <SelectItem value="eu-taxonomy">EU Taxonomy</SelectItem>
-                      <SelectItem value="local-regulations">Local Regulations</SelectItem>
+                      <SelectItem value="sbti">Science Based Targets initiative (SBTi)</SelectItem>
+                      <SelectItem value="cdp">CDP</SelectItem>
+                      <SelectItem value="tcfd">TCFD</SelectItem>
+                      <SelectItem value="csrd">CSRD</SelectItem>
+                      <SelectItem value="sec-climate">SEC Climate Disclosure</SelectItem>
+                      <SelectItem value="iso-14064">ISO 14064</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -572,34 +716,31 @@ const EnhancedGoalForm = ({ onComplete }: EnhancedGoalFormProps) => {
                     id="reportingRequirements"
                     value={formData.reportingRequirements}
                     onChange={(e) => setFormData({...formData, reportingRequirements: e.target.value})}
-                    placeholder="Specific reporting requirements and frequency"
+                    placeholder="Describe any specific reporting requirements"
                     rows={3}
                   />
                 </div>
               </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-amber-800">Verification Requirements</h4>
-                    <p className="text-sm text-amber-700 mt-1">
-                      This goal may require third-party verification for compliance reporting. 
-                      Consider engaging a qualified verification body early in the process.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </TabsContent>
-          </Tabs>
 
-          <div className="flex justify-between pt-6 border-t">
-            <Button variant="outline">Save as Draft</Button>
-            <div className="space-x-2">
-              <Button variant="outline" onClick={onComplete}>Cancel</Button>
-              <Button onClick={handleSubmit}>Create Goal</Button>
+            <Separator />
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={onComplete}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Goal'
+                )}
+              </Button>
             </div>
-          </div>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

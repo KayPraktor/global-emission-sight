@@ -88,7 +88,9 @@ export const approvalService = {
   // Get entries pending review (for supervisors)
   async getEntriesPendingReview(): Promise<EmissionsEntryWithApproval[]> {
     const organizationId = await getCurrentUserOrganization();
-    if (!organizationId) return [];
+    if (!organizationId) {
+      throw new Error('No organization found for current user');
+    }
 
     const { data, error } = await supabase
       .from('emissions_entries')
@@ -99,7 +101,7 @@ export const approvalService = {
 
     if (error) {
       console.error('Error fetching pending entries:', error);
-      return [];
+      throw new Error(`Failed to fetch pending entries: ${error.message}`);
     }
 
     return (data || []) as EmissionsEntryWithApproval[];
@@ -108,7 +110,9 @@ export const approvalService = {
   // Get all entries with their approval status
   async getEntriesWithApprovalStatus(status?: ApprovalStatus): Promise<EmissionsEntryWithApproval[]> {
     const organizationId = await getCurrentUserOrganization();
-    if (!organizationId) return [];
+    if (!organizationId) {
+      throw new Error('No organization found for current user');
+    }
 
     let query = supabase
       .from('emissions_entries')
@@ -124,7 +128,7 @@ export const approvalService = {
 
     if (error) {
       console.error('Error fetching entries:', error);
-      return [];
+      throw new Error(`Failed to fetch entries: ${error.message}`);
     }
 
     return (data || []) as EmissionsEntryWithApproval[];
@@ -251,7 +255,7 @@ export const approvalService = {
 
     if (error) {
       console.error('Error fetching approval history:', error);
-      return [];
+      throw new Error(`Failed to fetch approval history: ${error.message}`);
     }
 
     return (data || []) as ApprovalRequest[];
@@ -260,7 +264,9 @@ export const approvalService = {
   // Get pending approval count (for badge)
   async getPendingApprovalCount(): Promise<number> {
     const organizationId = await getCurrentUserOrganization();
-    if (!organizationId) return 0;
+    if (!organizationId) {
+      throw new Error('No organization found for current user');
+    }
 
     const { count, error } = await supabase
       .from('emissions_entries')
@@ -270,7 +276,7 @@ export const approvalService = {
 
     if (error) {
       console.error('Error fetching pending count:', error);
-      return 0;
+      throw new Error(`Failed to fetch pending count: ${error.message}`);
     }
 
     return count || 0;

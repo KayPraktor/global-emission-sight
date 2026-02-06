@@ -18,7 +18,8 @@ import {
   Sparkles,
   ChevronRight,
   Star,
-  Send
+  Send,
+  X
 } from 'lucide-react';
 import { IndustrySelector } from './IndustrySelector';
 import { SubIndustrySelector } from './SubIndustrySelector';
@@ -299,18 +300,44 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
   const progress = (step / 4) * 100;
 
+  const handleSkipOnboarding = async () => {
+    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    await updateAnalytics({ 
+      completed: false,
+      time_spent_seconds: timeSpent
+    });
+    onComplete();
+    navigate('/');
+  };
+
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-3xl"
+        className="w-full max-w-3xl relative"
       >
+        {/* Close Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute -top-2 -right-2 z-10 bg-background rounded-full shadow-md hover:bg-muted"
+          onClick={handleSkipOnboarding}
+          aria-label="Close onboarding"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+
         <Card className="p-8">
           <div className="mb-8">
             <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground mt-2">Step {step + 1} of 4</p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-sm text-muted-foreground">Step {step + 1} of 4</p>
+              <Button variant="link" size="sm" onClick={handleSkipOnboarding} className="text-muted-foreground h-auto p-0">
+                Skip for now
+              </Button>
+            </div>
           </div>
 
           <AnimatePresence mode="wait">
