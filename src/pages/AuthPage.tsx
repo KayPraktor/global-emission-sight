@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { lovable } from '@/integrations/lovable/index';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
+import { PasswordStrength } from '@/components/ui/password-strength';
 
 const signUpSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -278,6 +279,7 @@ export default function AuthPage() {
                       type="password"
                       {...signUpForm.register('password')}
                     />
+                    <PasswordStrength password={signUpForm.watch('password') || ''} />
                     {signUpForm.formState.errors.password && (
                       <p className="text-sm text-destructive">{signUpForm.formState.errors.password.message}</p>
                     )}
