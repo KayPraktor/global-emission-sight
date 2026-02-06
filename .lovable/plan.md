@@ -1,188 +1,194 @@
 
-# Comprehensive User Flow and Logical Consistency Fixes
+# Comprehensive Industry Standards Audit Report
 
-This plan addresses all critical, high, and medium priority issues identified in the deep audit of the application's user flow and logical consistency.
-
----
-
-## Summary of Changes
-
-| Priority | Issue | Component |
-|----------|-------|-----------|
-| Critical | No Error Boundary | App.tsx |
-| Critical | No Close/Skip in Onboarding | OnboardingWizard.tsx |
-| High | GoalsDashboard shows hardcoded data | GoalsDashboard.tsx |
-| High | EnhancedGoalForm lacks validation | EnhancedGoalForm.tsx |
-| High | NotFound lacks dashboard navigation | NotFound.tsx |
-| Medium | EmissionsWizard lacks global cancel | DataEntryPage.tsx |
-| Medium | Approval service returns empty on error | approvalService.ts |
+Based on my analysis of the BARYON carbon management platform against modern industry standards, I've identified gaps across five critical areas. Below is a detailed report with actionable tasks categorized by impact.
 
 ---
 
-## File 1: Create Global Error Boundary
+## Executive Summary
 
-**New File:** `src/components/ErrorBoundary.tsx`
-
-Creates a React Error Boundary component that:
-- Catches all unhandled React errors
-- Shows a user-friendly error page with recovery options
-- Logs errors for debugging
-- Provides "Return to Dashboard" and "Refresh Page" buttons
-- Prevents the entire app from crashing on component errors
-
----
-
-## File 2: Wrap App with Error Boundary
-
-**File:** `src/App.tsx`
-
-**Changes:**
-- Import the new ErrorBoundary component
-- Wrap the entire application in the ErrorBoundary
-- This ensures any uncaught error shows a friendly recovery UI instead of a blank screen
+| Area | Current State | Industry Standard | Gap Level |
+|------|---------------|-------------------|-----------|
+| Advanced Validations | Basic Zod schemas | Real-time + Cross-field | Medium |
+| Error Handling | Global boundary + toasts | Retry + Offline + Graceful | High |
+| Loading States | Skeletons + Spinners | Optimistic UI + Transitions | Medium |
+| Edge Case Coverage | Empty states + 404 | Offline + Unsaved warnings | High |
+| UX Patterns | Shadcn/UI components | Accessibility + Micro-interactions | Medium |
 
 ---
 
-## File 3: Add Close/Skip to Onboarding Wizard
+## 1. Advanced Technical Standards
 
-**File:** `src/components/onboarding/OnboardingWizard.tsx`
+### What's Already Good
+- Zod validation in AuthPage, FacilityForm, EnhancedGoalForm
+- Input length limits and type checking
+- Double-click submission prevention (isSubmitting states)
 
-**Changes:**
-- Add an X (close) button in the top-right corner of the onboarding modal
-- Add a "Skip for now" link/button at the bottom of each step
-- Both options call `onComplete()` to close the wizard
-- Track skipped onboarding in analytics for product insights
-- This prevents users from being trapped in the onboarding flow
+### Missing Elements
 
----
-
-## File 4: Fix NotFound Page with Better Navigation
-
-**File:** `src/pages/NotFound.tsx`
-
-**Changes:**
-- Import Button and useNavigate from react-router-dom
-- Add a "Go to Dashboard" button that uses proper navigation
-- Add a "Go Back" button to return to previous page
-- Improve styling to match the rest of the application
-- Make it work within the authenticated layout context
+| Task | Description | Impact: User Trust | Impact: Polish |
+|------|-------------|-------------------|----------------|
+| **Phone Number Validation** | Add regex pattern for phone inputs (currently just max length 20) | Medium | Medium |
+| **Password Strength Indicator** | Show real-time password strength feedback during signup | High | High |
+| **Real-time Server-side Validation** | Check email uniqueness before form submit (currently waits for error) | High | Medium |
+| **Cross-field Date Validation** | Validate reporting period end > start in EmissionsWizard at input time, not just submission | Medium | Medium |
+| **Numeric Input Sanitization** | Prevent negative numbers in quantity fields via input constraints, not just Zod | Low | Medium |
+| **Country Code Autocomplete** | Replace free-text country_code field with ISO country selector | Medium | High |
 
 ---
 
-## File 5: Add Zod Validation to EnhancedGoalForm
+## 2. Error Handling & Feedback
 
-**File:** `src/components/Goals/EnhancedGoalForm.tsx`
+### What's Already Good
+- Global ErrorBoundary component wraps the app
+- Toast notifications for API failures (sonner)
+- Try/catch blocks in all service methods
+- ApprovalService now throws errors instead of silent failures
 
-**Changes:**
-- Add Zod schema for form validation with required fields:
-  - title (required, min 3 chars)
-  - category (required)
-  - scope (required)
-  - priority (required)
-  - baselineValue (required, positive number)
-  - baselineYear (required, valid year)
-  - targetValue (required, positive number)
-  - targetYear (required, valid year, must be after baseline year)
-- Add validation state and error display
-- Add double-click/submission protection with `isSubmitting` state
-- Show inline error messages for each field
-- Validate before submission and show toast for validation failures
-- Connect to goalsService.createGoal() for actual database persistence
+### Missing Elements
 
----
-
-## File 6: Fix GoalsDashboard to Use Real Data
-
-**File:** `src/components/Goals/GoalsDashboard.tsx`
-
-**Changes:**
-- Import goalsService and useQuery from @tanstack/react-query
-- Replace hardcoded `performanceData` and summary cards with real data
-- Fetch goals using `goalsService.getGoalsWithProgress()`
-- Calculate summary metrics (total, on-track, at-risk, avg progress) from real goals
-- Add loading skeleton states while data loads
-- Add empty state when no goals exist with "Create Goal" CTA
-- Keep the milestone celebration functionality intact
-- Generate chart data from actual goal progress over time
+| Task | Description | Impact: User Trust | Impact: Polish |
+|------|-------------|-------------------|----------------|
+| **Network Retry Logic** | Add automatic retry with exponential backoff for failed API calls | High | High |
+| **Offline Detection** | Detect navigator.onLine and show banner when user goes offline | High | High |
+| **Request Cancellation** | Use AbortController to cancel in-flight requests when component unmounts | Medium | Medium |
+| **Granular Error Messages** | Differentiate between "No internet", "Server error", "Auth expired" instead of generic "Failed to load" | High | Medium |
+| **Rate Limiting Feedback** | Show specific message when user hits rate limits (429 errors) | Medium | Medium |
+| **Session Expiry Handling** | Auto-redirect to login with toast when JWT expires mid-session | High | High |
 
 ---
 
-## File 7: Add Global Cancel to Data Entry Page
+## 3. Loading & Transition States
 
-**File:** `src/pages/DataEntryPage.tsx`
+### What's Already Good
+- Skeleton components used in ApprovalQueue, Index, FacilitiesPage
+- Loader2 spinners on buttons during submission
+- Lazy loading for heavy dashboard widgets
+- Suspense boundaries with widget fallbacks
 
-**Changes:**
-- Add a confirmation dialog for canceling data entry
-- Add "Cancel Entry" button next to "Import CSV" that:
-  - Warns user about losing unsaved data
-  - Clears localStorage draft on confirmation
-  - Navigates back to dashboard
-- This provides a clear exit path from the data entry flow
+### Missing Elements
+
+| Task | Description | Impact: User Trust | Impact: Polish |
+|------|-------------|-------------------|----------------|
+| **Optimistic Updates** | Update UI immediately on approve/reject, rollback if server fails | High | High |
+| **Page Transition Animations** | Add route change animations (fade/slide) between pages | Low | High |
+| **Debounced Search Inputs** | Add debounce to filter/search inputs (only one instance found in ScenarioProjection) | Medium | Medium |
+| **Progressive Image Loading** | Add blur-up or skeleton for facility map images | Low | Medium |
+| **Skeleton Consistency** | Some pages lack skeletons (e.g., ReportsPage, ScenarioPlanningPage) | Medium | High |
+| **Micro-interaction Feedback** | Add haptic-like feedback on checkbox toggle, button clicks in Approvals | Low | High |
 
 ---
 
-## File 8: Improve Approval Service Error Propagation
+## 4. Edge Case Coverage
 
-**File:** `src/services/approvalService.ts`
+### What's Already Good
+- Empty state illustrations in ApprovalQueue, FacilitiesPage, MySubmissions
+- 404 NotFound page with navigation buttons
+- Organization missing state handling in FacilitiesPage
+- Draft auto-save to localStorage in EmissionsWizard
 
-**Changes:**
-- Change functions that return empty arrays on error to throw errors instead
-- Add proper try/catch with error propagation
-- This allows the UI to show appropriate error messages instead of silent empty states
+### Missing Elements
 
-The changes will modify:
-- `getEntriesPendingReview()` - throw on error
-- `getEntriesWithApprovalStatus()` - throw on error
-- `getApprovalHistory()` - throw on error
-- `getPendingApprovalCount()` - throw on error
+| Task | Description | Impact: User Trust | Impact: Polish |
+|------|-------------|-------------------|----------------|
+| **Unsaved Changes Warning** | Add beforeunload handler to warn users with unsaved form data | High | High |
+| **Interrupted Upload Handling** | Resume or retry failed file uploads in CSV import | Medium | Medium |
+| **Concurrent Edit Detection** | Show warning if another user modified the same record (stale data check) | High | Medium |
+| **Session Timeout Warning** | Show countdown warning before session expires instead of abrupt logout | Medium | High |
+| **Empty Search Results State** | Distinct messaging when filters return no results vs. no data exists | Medium | Medium |
+| **Quota/Limit Warnings** | Warn users approaching data storage or API limits | Medium | Medium |
+
+---
+
+## 5. Standard UX Patterns
+
+### What's Already Good
+- Shadcn/UI component library fully integrated
+- ARIA labels on breadcrumbs, sidebar, navigation
+- Keyboard shortcuts (sidebar toggle with Cmd+B)
+- Focus states on form inputs
+- Confirmation dialogs for destructive actions
+
+### Missing Elements
+
+| Task | Description | Impact: User Trust | Impact: Polish |
+|------|-------------|-------------------|----------------|
+| **Skip to Main Content** | Add accessibility skip link for screen reader users | Medium | Medium |
+| **Focus Trap in Modals** | Ensure focus doesn't escape dialogs when tabbing | Medium | High |
+| **Keyboard Navigation in Tables** | Allow arrow key navigation in ApprovalQueue table | Low | Medium |
+| **Loading Button States** | Disable all form buttons (not just submit) during async operations | Medium | Medium |
+| **Toast Stacking Limit** | Limit concurrent toasts to prevent screen clutter | Low | Medium |
+| **Data Freshness Indicator** | Show "Last updated: X minutes ago" on dashboard widgets | Medium | High |
+| **Batch Action Confirmation** | Show count and preview before bulk approve/reject actions | Medium | High |
+
+---
+
+## Priority Implementation Roadmap
+
+### Critical (Implement First)
+1. **Unsaved Changes Warning** - Prevents data loss
+2. **Offline Detection & Banner** - Critical for user trust
+3. **Network Retry Logic** - Reduces failed operations
+4. **Session Expiry Handling** - Prevents silent failures
+
+### High Priority
+5. **Optimistic Updates for Approvals** - Improves perceived speed
+6. **Password Strength Indicator** - Security best practice
+7. **Granular Error Messages** - Better debugging for users
+8. **Data Freshness Indicators** - Dashboard trust
+
+### Medium Priority
+9. **Debounced Filters** - Performance optimization
+10. **Country Code Selector** - Data quality
+11. **Phone Number Validation** - Input quality
+12. **Skeleton Consistency** - Visual polish
+
+### Nice to Have
+13. **Page Transition Animations** - Polish
+14. **Keyboard Table Navigation** - Accessibility enhancement
+15. **Skip to Content Link** - Accessibility compliance
 
 ---
 
 ## Technical Implementation Notes
 
-### Error Boundary Pattern
+### Network Retry Pattern
 ```text
-App.tsx
-  └── ErrorBoundary
-        └── QueryClientProvider
-              └── ThemeProvider
-                    └── AuthProvider
-                          └── ... rest of app
+useQuery with retry configuration:
+- maxRetries: 3
+- retryDelay: exponential backoff (1s, 2s, 4s)
+- retryCondition: only on 5xx or network errors
 ```
 
-### Form Validation Schema (Zod)
+### Offline Detection Pattern
 ```text
-goalSchema = z.object({
-  title: z.string().min(3, "Title required"),
-  category: z.string().min(1, "Category required"),
-  scope: z.string().min(1, "Scope required"),
-  priority: z.string().min(1, "Priority required"),
-  baselineValue: z.number().positive(),
-  baselineYear: z.number().min(1990).max(currentYear),
-  targetValue: z.number().positive(),
-  targetYear: z.number().min(currentYear)
-})
+useNetworkStatus hook:
+- Listen to navigator.onLine
+- Subscribe to 'online' and 'offline' events
+- Show persistent banner when offline
+- Queue mutations for retry when back online
 ```
 
-### Real Data Integration for GoalsDashboard
+### Unsaved Changes Pattern
 ```text
-Summary Cards:
-  - Total Goals: goals.length
-  - On Track: goals.filter(g => g.isOnTrack).length
-  - At Risk: goals.filter(g => !g.isOnTrack).length
-  - Avg Progress: mean(goals.map(g => g.progressPercentage))
+useUnsavedChanges hook:
+- Track form dirty state
+- Add beforeunload event listener
+- Integrate with router navigation blocker
+- Show confirmation modal on route change
 ```
 
 ---
 
-## Testing Checklist
+## Summary Metrics
 
-After implementation, verify:
+| Category | Items Identified | Critical | High | Medium | Low |
+|----------|-----------------|----------|------|--------|-----|
+| Validations | 6 | 0 | 2 | 3 | 1 |
+| Error Handling | 6 | 2 | 3 | 1 | 0 |
+| Loading States | 6 | 0 | 2 | 2 | 2 |
+| Edge Cases | 6 | 1 | 2 | 3 | 0 |
+| UX Patterns | 7 | 0 | 0 | 5 | 2 |
+| **Total** | **31** | **3** | **9** | **14** | **5** |
 
-1. **Error Boundary**: Intentionally cause an error (e.g., render null.something) and verify the error page appears
-2. **Onboarding Skip**: Start onboarding and verify X button and Skip link work
-3. **NotFound**: Navigate to `/invalid-route` and verify navigation buttons work
-4. **Goal Form**: Try submitting with empty required fields and verify validation errors
-5. **GoalsDashboard**: Create real goals and verify they appear in the dashboard
-6. **Data Entry Cancel**: Start entering data and verify Cancel button warns before discarding
-7. **Approval Service**: Check that API errors show proper error messages in UI
+This audit identifies 31 potential improvements, with 3 critical items that should be addressed immediately to meet production-ready standards.
