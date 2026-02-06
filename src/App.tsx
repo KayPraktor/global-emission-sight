@@ -8,6 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Index from "./pages/Index";
 import EnterpriseIndex from "./pages/EnterpriseIndex";
 import DataEntryPage from "./pages/DataEntryPage";
@@ -41,10 +42,11 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <AuthProvider>
-          <OnboardingProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <AuthProvider>
+            <OnboardingProvider>
           <Router>
             <Routes>
               <Route path="/landing" element={<LandingPage />} />
@@ -85,12 +87,13 @@ function App() {
                 }
               />
             </Routes>
-          </Router>
-          <Toaster />
-          </OnboardingProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+            </Router>
+            <Toaster />
+            </OnboardingProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
