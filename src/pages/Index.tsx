@@ -32,6 +32,7 @@ import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
 import SeedDataButton from '@/components/Dashboard/SeedDataButton';
 import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
+import { OrganizationSetupBanner } from '@/components/onboarding/OrganizationSetupBanner';
 import { DashboardCustomizer, WidgetConfig } from '@/components/Dashboard/DashboardCustomizer';
 import { DraggableWidget } from '@/components/Dashboard/DraggableWidget';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
@@ -318,6 +319,9 @@ const Index = () => {
       <div className="space-y-6">
       {/* Performance Monitor */}
       <PerformanceMonitor componentName="Dashboard" />
+      
+      {/* Organization Setup Banner - Show if user has no organization */}
+      <OrganizationSetupBanner />
       
       {/* Personalized Welcome Message */}
       <PersonalizedWelcome />

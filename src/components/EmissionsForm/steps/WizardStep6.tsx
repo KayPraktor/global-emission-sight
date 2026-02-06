@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { CheckCircle, AlertTriangle, FileCheck, Send, Loader2 } from "lucide-rea
 import { toast } from "sonner";
 import { EmissionsFormData } from '../EmissionsWizard';
 import { EmissionsService } from '@/services/emissionsService';
+import { GoalImpactPreview } from '../GoalImpactPreview';
 
 interface WizardStep6Props {
   formData: EmissionsFormData;
@@ -208,6 +208,9 @@ export const WizardStep6: React.FC<WizardStep6Props> = ({
             </div>
           </CardContent>
         </Card>
+
+        {/* Goal Impact Preview */}
+        <GoalImpactPreview newEmissions={totalEmissions} />
 
         {/* Review Comments */}
         <div>

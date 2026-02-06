@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ApprovalQueue } from '@/components/Approvals/ApprovalQueue';
+import { MySubmissions } from '@/components/Approvals/MySubmissions';
 import { approvalService } from '@/services/approvalService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ClipboardCheck, Clock, CheckCircle, XCircle, AlertTriangle, FileEdit, Send } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ApprovalsPage() {
@@ -87,7 +89,7 @@ export default function ApprovalsPage() {
             Data Approvals
           </h1>
           <p className="text-muted-foreground mt-1">
-            Review and approve emissions data entries before they are finalized
+            Review and manage emissions data entries
           </p>
         </div>
 
@@ -114,25 +116,43 @@ export default function ApprovalsPage() {
           ))}
         </div>
 
-        {/* Access Notice for Non-Supervisors */}
-        {isSupervisor === false && (
-          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">Limited Access</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    You can view entries but only organization owners and admins can approve or reject submissions.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Approval Queue */}
-        <ApprovalQueue />
+        {/* Tabs for My Submissions vs Approval Queue */}
+        <Tabs defaultValue="my-submissions" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="my-submissions" className="gap-2">
+              <FileEdit className="h-4 w-4" />
+              My Submissions
+            </TabsTrigger>
+            <TabsTrigger value="approval-queue" className="gap-2">
+              <Send className="h-4 w-4" />
+              {isSupervisor ? 'Approval Queue' : 'Team Queue'}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="my-submissions" className="mt-6">
+            <MySubmissions />
+          </TabsContent>
+          
+          <TabsContent value="approval-queue" className="mt-6">
+            {/* Access Notice for Non-Supervisors */}
+            {isSupervisor === false && (
+              <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 mb-6">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    <div>
+                      <p className="font-medium text-amber-800 dark:text-amber-200">Limited Access</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        You can view entries but only organization owners and admins can approve or reject submissions.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            <ApprovalQueue />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );
