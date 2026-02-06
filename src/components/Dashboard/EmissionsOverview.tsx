@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, BarChart3, CloudRain, Factory, Truck } from 'lucide-react';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { Sparkline } from './Sparkline';
+import { DataFreshness } from '@/components/ui/data-freshness';
 
 interface EmissionsOverviewProps {
   totalEmissions: number;
@@ -13,6 +13,7 @@ interface EmissionsOverviewProps {
   previousPeriodTotal: number;
   changePercentage: number;
   hasData: boolean;
+  lastUpdated?: Date | string;
   monthlyData?: Array<{ month: string; scope1: number; scope2: number; scope3: number; total: number }>;
 }
 
@@ -24,6 +25,7 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
   previousPeriodTotal,
   changePercentage,
   hasData,
+  lastUpdated,
   monthlyData = []
 }) => {
   // Extract last 7 data points for sparklines
@@ -77,8 +79,9 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
   
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Emissions Overview</h3>
+        {lastUpdated && <DataFreshness lastUpdated={lastUpdated} />}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="stat-card">
