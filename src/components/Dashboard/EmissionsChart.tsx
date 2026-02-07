@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DataFreshness } from '@/components/ui/data-freshness';
 import DoughnutChart from '@/components/ui/doughnut-chart';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { feedback } from '@/lib/feedback';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 
 interface EmissionsChartProps {
@@ -186,7 +186,39 @@ const EmissionsChart: React.FC<EmissionsChartProps> = React.memo(({ monthlyData,
   };
 
   const handleExport = () => {
-    toast.success("Chart data exported successfully");
+    const toastId = feedback.loading('Exporting chart data');
+    try {
+      // Prepare export data
+      const exportData = filteredData.map(d => ({
+        month: d.month,
+        scope1: d.scope1,
+        scope2: d.scope2,
+        scope3: d.scope3,
+        total: d.scope1 + d.scope2 + d.scope3
+      }));
+      
+      // Create CSV content
+      const headers = ['Month', 'Scope 1', 'Scope 2', 'Scope 3', 'Total'];
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => 
+          [row.month, row.scope1, row.scope2, row.scope3, row.total].join(',')
+        )
+      ].join('\n');
+      
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `emissions-data-${timePeriod}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      feedback.resolveLoading(toastId, 'Chart data exported successfully');
+    } catch (error) {
+      feedback.rejectLoading(toastId, 'export chart data', 'Please try again.');
+    }
   };
   
   return (

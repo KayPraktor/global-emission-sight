@@ -26,7 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import { feedback } from "@/lib/feedback";
 import { cn } from "@/lib/utils";
 
 // Sample data - in a real app this would come from an API
@@ -142,15 +142,24 @@ const GoalsList = ({ scope }: GoalsListProps) => {
   };
 
   const handleUpdateProgress = (goalId: string) => {
-    toast.success(`Progress updated for goal #${goalId}`);
+    // TODO: Implement progress update modal/form
+    feedback.info('Progress update coming soon', {
+      description: 'This feature will allow you to log progress updates.',
+    });
   };
 
   const handleEditGoal = (goalId: string) => {
-    toast.info(`Edit goal #${goalId}`);
+    // TODO: Navigate to goal edit page or open modal
+    feedback.info('Navigating to goal editor...', {
+      description: 'Opening the goal configuration panel.',
+    });
   };
 
   const handleDeleteGoal = (goalId: string) => {
-    toast.success(`Goal #${goalId} deleted`);
+    // TODO: Implement proper delete with confirmation dialog
+    feedback.warning('Delete requires confirmation', 
+      'Please use the Goals Dashboard for full management capabilities.'
+    );
   };
 
   return (

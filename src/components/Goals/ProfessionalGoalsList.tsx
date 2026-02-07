@@ -31,7 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from 'sonner';
+import { feedback } from '@/lib/feedback';
 import { cn } from '@/lib/utils';
 import { goalsService, GoalWithProgress } from '@/services/goalsService';
 import { format } from 'date-fns';
@@ -57,7 +57,7 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
     const { data, error } = await goalsService.getGoalsWithProgress(scope);
     
     if (error) {
-      toast.error('Failed to load goals', { description: error });
+      feedback.crud.loadError('goals', loadGoals);
       setGoals([]);
     } else {
       setGoals(data || []);
@@ -123,20 +123,27 @@ const ProfessionalGoalsList = ({ scope }: ProfessionalGoalsListProps) => {
   };
 
   const handleViewGoal = (goalId: string) => {
-    toast.info(`Opening goal details for #${goalId}`);
+    // TODO: Navigate to goal detail view
+    feedback.info('Opening goal details...', {
+      description: 'Loading goal configuration and progress data.',
+    });
   };
 
   const handleEditGoal = (goalId: string) => {
-    toast.info(`Editing goal #${goalId}`);
+    // TODO: Navigate to goal edit page or open modal
+    feedback.info('Opening goal editor...', {
+      description: 'You can modify targets, timeline, and scope settings.',
+    });
   };
 
   const handleDeleteGoal = async (goalId: string) => {
+    const toastId = feedback.loading('Deleting goal');
     const { success, error } = await goalsService.deleteGoal(goalId);
     
     if (error) {
-      toast.error('Failed to delete goal', { description: error });
+      feedback.rejectLoading(toastId, 'delete goal', error);
     } else {
-      toast.success('Goal deleted successfully');
+      feedback.resolveLoading(toastId, 'Goal deleted successfully');
       loadGoals();
     }
   };
