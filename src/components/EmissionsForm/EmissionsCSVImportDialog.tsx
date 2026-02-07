@@ -77,9 +77,22 @@ export const EmissionsCSVImportDialog: React.FC<EmissionsCSVImportDialogProps> =
     }
   };
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // File size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File too large', {
+        description: 'Please upload a file smaller than 10MB'
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
 
     setSelectedFile(file);
     setIsProcessing(true);

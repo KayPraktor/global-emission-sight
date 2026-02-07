@@ -9,6 +9,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ValidationRule {
   id: string;
@@ -25,6 +35,9 @@ export const ValidationRulesManager: React.FC = () => {
   const [rules, setRules] = useState<ValidationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState<ValidationRule | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     rule_name: '',
     rule_type: 'field',
@@ -62,8 +75,9 @@ export const ValidationRulesManager: React.FC = () => {
   };
 
   const handleCreateRule = async () => {
-    if (!organization || !user) return;
+    if (!organization || !user || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       const condition: any = { field: formData.field };
       if (formData.min) condition.min = parseFloat(formData.min);
@@ -97,6 +111,8 @@ export const ValidationRulesManager: React.FC = () => {
     } catch (error) {
       console.error('Error creating rule:', error);
       toast.error('Failed to create validation rule');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -117,20 +133,26 @@ export const ValidationRulesManager: React.FC = () => {
     }
   };
 
-  const handleDeleteRule = async (ruleId: string) => {
+  const handleConfirmDelete = async () => {
+    if (!ruleToDelete || isDeleting) return;
+    
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('validation_rules')
         .delete()
-        .eq('id', ruleId);
+        .eq('id', ruleToDelete.id);
 
       if (error) throw error;
 
-      setRules(rules.filter(r => r.id !== ruleId));
+      setRules(rules.filter(r => r.id !== ruleToDelete.id));
       toast.success('Rule deleted');
     } catch (error) {
       console.error('Error deleting rule:', error);
       toast.error('Failed to delete rule');
+    } finally {
+      setIsDeleting(false);
+      setRuleToDelete(null);
     }
   };
 
@@ -145,154 +167,184 @@ export const ValidationRulesManager: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Validation Rules</CardTitle>
-            <CardDescription>
-              Configure custom validation rules for your data
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Validation Rules</CardTitle>
+              <CardDescription>
+                Configure custom validation rules for your data
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowForm(!showForm)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Rule
+            </Button>
           </div>
-          <Button onClick={() => setShowForm(!showForm)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Rule
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {showForm && (
-          <div className="p-4 border rounded-lg space-y-3 bg-accent/50">
-            <div className="space-y-2">
-              <Label>Rule Name</Label>
-              <Input
-                value={formData.rule_name}
-                onChange={(e) => setFormData({ ...formData, rule_name: e.target.value })}
-                placeholder="e.g., Maximum Electricity Consumption"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {showForm && (
+            <div className="p-4 border rounded-lg space-y-3 bg-accent/50">
               <div className="space-y-2">
-                <Label>Rule Type</Label>
-                <Select
-                  value={formData.rule_type}
-                  onValueChange={(value) => setFormData({ ...formData, rule_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="field">Field Validation</SelectItem>
-                    <SelectItem value="business_logic">Business Logic</SelectItem>
-                    <SelectItem value="consistency">Consistency Check</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Severity</Label>
-                <Select
-                  value={formData.severity}
-                  onValueChange={(value) => setFormData({ ...formData, severity: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="error">Error</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Field Name</Label>
-              <Input
-                value={formData.field}
-                onChange={(e) => setFormData({ ...formData, field: e.target.value })}
-                placeholder="e.g., quantity"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Minimum Value (optional)</Label>
+                <Label>Rule Name</Label>
                 <Input
-                  type="number"
-                  value={formData.min}
-                  onChange={(e) => setFormData({ ...formData, min: e.target.value })}
+                  value={formData.rule_name}
+                  onChange={(e) => setFormData({ ...formData, rule_name: e.target.value })}
+                  placeholder="e.g., Maximum Electricity Consumption"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Rule Type</Label>
+                  <Select
+                    value={formData.rule_type}
+                    onValueChange={(value) => setFormData({ ...formData, rule_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="field">Field Validation</SelectItem>
+                      <SelectItem value="business_logic">Business Logic</SelectItem>
+                      <SelectItem value="consistency">Consistency Check</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Severity</Label>
+                  <Select
+                    value={formData.severity}
+                    onValueChange={(value) => setFormData({ ...formData, severity: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="error">Error</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="info">Info</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label>Maximum Value (optional)</Label>
+                <Label>Field Name</Label>
                 <Input
-                  type="number"
-                  value={formData.max}
-                  onChange={(e) => setFormData({ ...formData, max: e.target.value })}
+                  value={formData.field}
+                  onChange={(e) => setFormData({ ...formData, field: e.target.value })}
+                  placeholder="e.g., quantity"
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label>Error Message</Label>
-              <Input
-                value={formData.error_message}
-                onChange={(e) => setFormData({ ...formData, error_message: e.target.value })}
-                placeholder="e.g., Quantity exceeds maximum allowed value"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Minimum Value (optional)</Label>
+                  <Input
+                    type="number"
+                    value={formData.min}
+                    onChange={(e) => setFormData({ ...formData, min: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Maximum Value (optional)</Label>
+                  <Input
+                    type="number"
+                    value={formData.max}
+                    onChange={(e) => setFormData({ ...formData, max: e.target.value })}
+                  />
+                </div>
+              </div>
 
-            <div className="flex gap-2">
-              <Button onClick={handleCreateRule}>Create Rule</Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-            </div>
-          </div>
-        )}
+              <div className="space-y-2">
+                <Label>Error Message</Label>
+                <Input
+                  value={formData.error_message}
+                  onChange={(e) => setFormData({ ...formData, error_message: e.target.value })}
+                  placeholder="e.g., Quantity exceeds maximum allowed value"
+                />
+              </div>
 
-        <div className="space-y-2">
-          {rules.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              No validation rules configured yet
-            </p>
-          ) : (
-            rules.map((rule) => (
-              <div
-                key={rule.id}
-                className="flex items-center justify-between p-3 border rounded-lg"
-              >
-                <div className="flex-1">
-                  <h4 className="font-medium">{rule.rule_name}</h4>
-                  <p className="text-sm text-muted-foreground">{rule.error_message}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs px-2 py-1 rounded bg-accent">
-                      {rule.rule_type}
-                    </span>
-                    <span className="text-xs px-2 py-1 rounded bg-accent">
-                      {rule.severity}
-                    </span>
+              <div className="flex gap-2">
+                <Button onClick={handleCreateRule} disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Create Rule
+                </Button>
+                <Button variant="outline" onClick={() => setShowForm(false)} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {rules.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No validation rules configured yet
+              </p>
+            ) : (
+              rules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium">{rule.rule_name}</h4>
+                    <p className="text-sm text-muted-foreground">{rule.error_message}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-xs px-2 py-1 rounded bg-accent">
+                        {rule.rule_type}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded bg-accent">
+                        {rule.severity}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={rule.is_active}
+                      onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setRuleToDelete(rule)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={rule.is_active}
-                    onCheckedChange={(checked) => handleToggleRule(rule.id, checked)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteRule(rule.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!ruleToDelete} onOpenChange={(open) => !open && setRuleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Validation Rule</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the rule "{ruleToDelete?.rule_name}"? 
+              This action cannot be undone and the rule will no longer validate your data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
