@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, BarChart3, CloudRain, Factory, Truck } fr
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { Sparkline } from './Sparkline';
 import { DataFreshness } from '@/components/ui/data-freshness';
+import { CountUp } from '@/components/ui/count-up';
 
 interface EmissionsOverviewProps {
   totalEmissions: number;
@@ -90,7 +91,9 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
             <span className="stat-label">Total Emissions</span>
             <BarChart3 className="text-carbon h-5 w-5" />
           </div>
-          <p className="stat-value">{formatNumber(totalEmissions)} tCO₂e</p>
+          <p className="stat-value">
+            <CountUp value={totalEmissions} decimals={1} suffix=" tCO₂e" />
+          </p>
           {totalTrend.length > 0 && (
             <Sparkline 
               data={totalTrend} 
@@ -112,7 +115,9 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
             <span className="stat-label">Scope 1 Emissions</span>
             <Factory className="text-carbon h-5 w-5" />
           </div>
-          <p className="stat-value">{formatNumber(scope1Total)} tCO₂e</p>
+          <p className="stat-value">
+            <CountUp value={scope1Total} decimals={1} suffix=" tCO₂e" />
+          </p>
           {scope1Trend.length > 0 && (
             <Sparkline 
               data={scope1Trend} 
@@ -134,7 +139,9 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
             <span className="stat-label">Scope 2 Emissions</span>
             <CloudRain className="text-carbon h-5 w-5" />
           </div>
-          <p className="stat-value">{formatNumber(scope2Total)} tCO₂e</p>
+          <p className="stat-value">
+            <CountUp value={scope2Total} decimals={1} suffix=" tCO₂e" />
+          </p>
           {scope2Trend.length > 0 && (
             <Sparkline 
               data={scope2Trend} 
@@ -156,7 +163,9 @@ const EmissionsOverview: React.FC<EmissionsOverviewProps> = React.memo(({
             <span className="stat-label">Scope 3 Emissions</span>
             <Truck className="text-carbon h-5 w-5" />
           </div>
-          <p className="stat-value">{formatNumber(scope3Total)} tCO₂e</p>
+          <p className="stat-value">
+            <CountUp value={scope3Total} decimals={1} suffix=" tCO₂e" />
+          </p>
           {scope3Trend.length > 0 && (
             <Sparkline 
               data={scope3Trend} 
