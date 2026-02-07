@@ -29,6 +29,7 @@ import { SubIndustrySelector } from './SubIndustrySelector';
 import { updateOrganizationIndustry } from '@/services/industryService';
 import { ContextualHelp } from '@/components/ui/contextual-help';
 import { BRAND_NAME } from '@/lib/constants';
+import { trackOnboarding, trackSystem } from '@/services/analyticsTrackingService';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -124,17 +125,21 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
   const handleQuickStartSelection = async (action: 'import' | 'sample' | 'manual') => {
     await updateAnalytics({ step_reached: 1 });
+    trackOnboarding.quickStartSelected(action);
     
     if (action === 'sample') {
       // Fast path - load sample data immediately
       localStorage.setItem('show_sample_data', 'true');
+      trackOnboarding.completed(Math.floor((Date.now() - startTimeRef.current) / 1000), 'sample_data');
       onComplete();
       navigate('/');
       toast.success(`Loaded sample data! Explore the dashboard to see what ${BRAND_NAME} can do.`);
     } else if (action === 'import') {
+      trackOnboarding.completed(Math.floor((Date.now() - startTimeRef.current) / 1000), 'import');
       onComplete();
       navigate('/data-entry?action=import');
     } else {
+      trackOnboarding.completed(Math.floor((Date.now() - startTimeRef.current) / 1000), 'manual');
       onComplete();
       navigate('/data-entry');
     }
@@ -192,6 +197,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           would_recommend: quickFeedback === 'positive',
         });
       }
+      trackSystem.feedbackSubmitted(quickFeedback === 'positive' ? 5 : 2, 'onboarding');
     }
 
     await updateAnalytics({ 
@@ -200,12 +206,14 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       time_spent_seconds: timeSpent
     });
 
+    trackOnboarding.completed(timeSpent, 'full_flow');
     onComplete();
     navigate('/');
   };
 
   const handleSkipOnboarding = async () => {
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    trackOnboarding.skipped(step, timeSpent);
     await updateAnalytics({ 
       completed: false,
       time_spent_seconds: timeSpent

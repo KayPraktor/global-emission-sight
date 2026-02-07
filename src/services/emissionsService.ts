@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { EmissionsFormData } from '@/components/EmissionsForm/EmissionsWizard';
 import { FacilityInsert, EmissionFactorInsert, EmissionsEntryInsert } from '@/types/database';
 import { fullFormSchema } from '@/schemas/emissionsSchema';
+import { trackDataEntry } from '@/services/analyticsTrackingService';
 
 export class EmissionsService {
   /**
@@ -199,6 +200,13 @@ export class EmissionsService {
         if (entryError) {
           throw new Error(`Failed to create emissions entry: ${entryError.message}`);
         }
+        
+        // Track each emission entry created
+        trackDataEntry.emissionEntryCreated(
+          emissionsEntryData.scope,
+          consumption.type,
+          facility.id
+        );
       }
 
       return { success: true };
