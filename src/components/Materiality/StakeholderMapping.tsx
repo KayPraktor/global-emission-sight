@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Users, Plus, Edit2, Trash2, Calendar } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Calendar, Loader2 } from 'lucide-react';
 import { Stakeholder, InfluenceLevel, StakeholderCategory } from '@/types/materiality';
 import { 
   getMockStakeholders, 
@@ -18,12 +18,25 @@ import {
 } from '@/services/materialityService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const StakeholderMapping: React.FC = () => {
   const { user } = useAuth();
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStakeholder, setEditingStakeholder] = useState<Stakeholder | null>(null);
+  const [stakeholderToDelete, setStakeholderToDelete] = useState<Stakeholder | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     category: 'investors' as StakeholderCategory,
@@ -50,11 +63,12 @@ const StakeholderMapping: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name) {
-      toast.error('Please enter a stakeholder name');
+    if (!formData.name || isSaving) {
+      if (!formData.name) toast.error('Please enter a stakeholder name');
       return;
     }
 
+    setIsSaving(true);
     try {
       if (user) {
         await saveStakeholder({
@@ -88,18 +102,26 @@ const StakeholderMapping: React.FC = () => {
       toast.success('Stakeholder added successfully');
     } catch {
       toast.error('Failed to save stakeholder');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleConfirmDelete = async () => {
+    if (!stakeholderToDelete || isDeleting) return;
+    
+    setIsDeleting(true);
     try {
       if (user) {
-        await deleteStakeholderApi(id);
+        await deleteStakeholderApi(stakeholderToDelete.id);
       }
-      setStakeholders(prev => prev.filter(s => s.id !== id));
+      setStakeholders(prev => prev.filter(s => s.id !== stakeholderToDelete.id));
       toast.success('Stakeholder removed');
     } catch {
       toast.error('Failed to delete stakeholder');
+    } finally {
+      setIsDeleting(false);
+      setStakeholderToDelete(null);
     }
   };
 
@@ -219,7 +241,10 @@ const StakeholderMapping: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full">Save Stakeholder</Button>
+              <Button onClick={handleSave} className="w-full" disabled={isSaving}>
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Save Stakeholder
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -322,7 +347,11 @@ const StakeholderMapping: React.FC = () => {
                   <Button variant="ghost" size="icon">
                     <Edit2 className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(stakeholder.id)}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setStakeholderToDelete(stakeholder)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -331,6 +360,29 @@ const StakeholderMapping: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!stakeholderToDelete} onOpenChange={(open) => !open && setStakeholderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Stakeholder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove "{stakeholderToDelete?.name}" from your stakeholder registry? 
+              This will also remove any associated topic priorities and engagement history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -86,79 +86,97 @@ class GoalsService {
       const yearStart = startOfYear(new Date()).toISOString();
       const yearEnd = endOfYear(new Date()).toISOString();
 
-      const goalsWithProgress = await Promise.all(
+      // Use Promise.allSettled to handle partial failures gracefully
+      const goalsWithProgressResults = await Promise.allSettled(
         goals.map(async (goal) => {
-          // Calculate actual emissions for the current period
-          let query = supabase
-            .from('emissions_entries')
-            .select('calculations(calculated_emissions), scope')
-            .eq('user_id', user.id)
-            .gte('entry_date', yearStart)
-            .lte('entry_date', yearEnd);
+          try {
+            // Calculate actual emissions for the current period
+            let query = supabase
+              .from('emissions_entries')
+              .select('calculations(calculated_emissions), scope')
+              .eq('user_id', user.id)
+              .gte('entry_date', yearStart)
+              .lte('entry_date', yearEnd);
 
-          // Filter by facility if goal is facility-specific
-          if (goal.facility_id) {
-            query = query.eq('facility_id', goal.facility_id);
+            // Filter by facility if goal is facility-specific
+            if (goal.facility_id) {
+              query = query.eq('facility_id', goal.facility_id);
+            }
+
+            // Filter by scope if goal has scope coverage
+            if (goal.scope_covered && goal.scope_covered.length > 0) {
+              const scopes = goal.scope_covered.map(s => {
+                if (s === 'Scope 1') return 'S1';
+                if (s === 'Scope 2') return 'S2';
+                if (s === 'Scope 3') return 'S3';
+                return s;
+              });
+              query = query.in('scope', scopes as any);
+            }
+
+            const { data: entries, error: entriesError } = await query;
+
+            if (entriesError) {
+              console.error('Error fetching emissions for goal:', entriesError);
+            }
+
+            const actualEmissions = entries?.reduce((sum, entry: any) => {
+              return sum + (entry.calculations?.[0]?.calculated_emissions || 0);
+            }, 0) || 0;
+
+            // Calculate progress percentage
+            let progressPercentage = 0;
+            if (goal.baseline_emissions && goal.target_emissions !== undefined) {
+              const targetReduction = goal.baseline_emissions - goal.target_emissions;
+              const actualReduction = goal.baseline_emissions - actualEmissions;
+              progressPercentage = targetReduction > 0 
+                ? Math.min(100, Math.max(0, (actualReduction / targetReduction) * 100))
+                : 0;
+            } else if (goal.target_reduction_percentage && goal.baseline_emissions) {
+              const targetEmissions = goal.baseline_emissions * (1 - goal.target_reduction_percentage / 100);
+              const targetReduction = goal.baseline_emissions - targetEmissions;
+              const actualReduction = goal.baseline_emissions - actualEmissions;
+              progressPercentage = targetReduction > 0
+                ? Math.min(100, Math.max(0, (actualReduction / targetReduction) * 100))
+                : 0;
+            }
+
+            // Determine if on track (within 10% of expected progress based on time)
+            const targetDate = new Date(goal.target_date);
+            const baselineDate = new Date(goal.baseline_year || currentYear - 1, 0, 1);
+            const totalDays = (targetDate.getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24);
+            const elapsedDays = (new Date().getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24);
+            const expectedProgress = (elapsedDays / totalDays) * 100;
+            const isOnTrack = progressPercentage >= expectedProgress - 10;
+
+            // Determine trend (comparing to previous update)
+            const trend: 'up' | 'down' = (goal.progress_percentage || 0) < progressPercentage ? 'up' : 'down';
+
+            return {
+              ...goal,
+              actualEmissions,
+              progressPercentage: Math.round(progressPercentage),
+              isOnTrack,
+              trend,
+            } as GoalWithProgress;
+          } catch (error) {
+            // Return a default state for failed goals rather than crashing the whole operation
+            console.warn(`Failed to calculate progress for goal ${goal.id}:`, error);
+            return {
+              ...goal,
+              actualEmissions: 0,
+              progressPercentage: 0,
+              isOnTrack: false,
+              trend: 'down' as const,
+            } as GoalWithProgress;
           }
-
-          // Filter by scope if goal has scope coverage
-          if (goal.scope_covered && goal.scope_covered.length > 0) {
-            const scopes = goal.scope_covered.map(s => {
-              if (s === 'Scope 1') return 'S1';
-              if (s === 'Scope 2') return 'S2';
-              if (s === 'Scope 3') return 'S3';
-              return s;
-            });
-            query = query.in('scope', scopes as any);
-          }
-
-          const { data: entries, error: entriesError } = await query;
-
-          if (entriesError) {
-            console.error('Error fetching emissions for goal:', entriesError);
-          }
-
-          const actualEmissions = entries?.reduce((sum, entry: any) => {
-            return sum + (entry.calculations?.[0]?.calculated_emissions || 0);
-          }, 0) || 0;
-
-          // Calculate progress percentage
-          let progressPercentage = 0;
-          if (goal.baseline_emissions && goal.target_emissions !== undefined) {
-            const targetReduction = goal.baseline_emissions - goal.target_emissions;
-            const actualReduction = goal.baseline_emissions - actualEmissions;
-            progressPercentage = targetReduction > 0 
-              ? Math.min(100, Math.max(0, (actualReduction / targetReduction) * 100))
-              : 0;
-          } else if (goal.target_reduction_percentage && goal.baseline_emissions) {
-            const targetEmissions = goal.baseline_emissions * (1 - goal.target_reduction_percentage / 100);
-            const targetReduction = goal.baseline_emissions - targetEmissions;
-            const actualReduction = goal.baseline_emissions - actualEmissions;
-            progressPercentage = targetReduction > 0
-              ? Math.min(100, Math.max(0, (actualReduction / targetReduction) * 100))
-              : 0;
-          }
-
-          // Determine if on track (within 10% of expected progress based on time)
-          const targetDate = new Date(goal.target_date);
-          const baselineDate = new Date(goal.baseline_year || currentYear - 1, 0, 1);
-          const totalDays = (targetDate.getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24);
-          const elapsedDays = (new Date().getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24);
-          const expectedProgress = (elapsedDays / totalDays) * 100;
-          const isOnTrack = progressPercentage >= expectedProgress - 10;
-
-          // Determine trend (comparing to previous update)
-          const trend: 'up' | 'down' = (goal.progress_percentage || 0) < progressPercentage ? 'up' : 'down';
-
-          return {
-            ...goal,
-            actualEmissions,
-            progressPercentage: Math.round(progressPercentage),
-            isOnTrack,
-            trend,
-          } as GoalWithProgress;
         })
       );
+
+      // Filter out rejected promises and extract fulfilled values
+      const goalsWithProgress = goalsWithProgressResults
+        .filter((result): result is PromiseFulfilledResult<GoalWithProgress> => result.status === 'fulfilled')
+        .map(result => result.value);
 
       return { data: goalsWithProgress, error: null };
     } catch (error: any) {

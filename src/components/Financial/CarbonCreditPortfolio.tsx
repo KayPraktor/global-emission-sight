@@ -9,9 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, TrendingUp, TrendingDown, Leaf, Trash2, Archive } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Leaf, Trash2, Archive, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { carbonCreditService, CarbonCredit, CarbonCreditType, PortfolioSummary, AddCreditInput } from '@/services/carbonCreditService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const CREDIT_TYPE_COLORS: Record<CarbonCreditType, string> = {
   VCU: 'hsl(142, 76%, 36%)',
@@ -35,6 +45,9 @@ const CREDIT_TYPE_LABELS: Record<CarbonCreditType, string> = {
   OTHER: 'Other Credits',
 };
 
+const MAX_QUANTITY = 1_000_000_000;
+const MAX_PRICE = 1_000_000_000;
+
 export function CarbonCreditPortfolio() {
   const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
@@ -44,6 +57,10 @@ export function CarbonCreditPortfolio() {
   const [selectedCredit, setSelectedCredit] = useState<CarbonCredit | null>(null);
   const [retireQuantity, setRetireQuantity] = useState<number>(0);
   const [retirePurpose, setRetirePurpose] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRetiring, setIsRetiring] = useState(false);
+  const [creditToDelete, setCreditToDelete] = useState<CarbonCredit | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newCredit, setNewCredit] = useState<AddCreditInput>({
     credit_type: 'VCU',
     vintage_year: new Date().getFullYear(),
@@ -75,61 +92,93 @@ export function CarbonCreditPortfolio() {
   };
 
   const handleAddCredit = async () => {
+    if (isSubmitting) return;
+    
     if (newCredit.quantity <= 0) {
       toast.error('Please enter a valid quantity');
       return;
     }
+    
+    if (newCredit.quantity > MAX_QUANTITY) {
+      toast.error('Quantity exceeds maximum allowed value');
+      return;
+    }
+    
+    if (newCredit.purchase_price && newCredit.purchase_price > MAX_PRICE) {
+      toast.error('Price exceeds maximum allowed value');
+      return;
+    }
 
-    const result = await carbonCreditService.addCredit(newCredit);
-    if (result) {
-      toast.success('Carbon credit added successfully');
-      setIsAddDialogOpen(false);
-      setNewCredit({
-        credit_type: 'VCU',
-        vintage_year: new Date().getFullYear(),
-        quantity: 0,
-        purchase_price: 0,
-        registry: '',
-        project_name: '',
-        project_type: '',
-      });
-      loadData();
-    } else {
-      toast.error('Failed to add carbon credit');
+    setIsSubmitting(true);
+    try {
+      const result = await carbonCreditService.addCredit(newCredit);
+      if (result) {
+        toast.success('Carbon credit added successfully');
+        setIsAddDialogOpen(false);
+        setNewCredit({
+          credit_type: 'VCU',
+          vintage_year: new Date().getFullYear(),
+          quantity: 0,
+          purchase_price: 0,
+          registry: '',
+          project_name: '',
+          project_type: '',
+        });
+        loadData();
+      } else {
+        toast.error('Failed to add carbon credit');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRetireCredits = async () => {
+    if (isRetiring) return;
+    
     if (!selectedCredit || retireQuantity <= 0 || !retirePurpose) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    const success = await carbonCreditService.retireCredits(
-      selectedCredit.id,
-      retireQuantity,
-      retirePurpose
-    );
+    setIsRetiring(true);
+    try {
+      const success = await carbonCreditService.retireCredits(
+        selectedCredit.id,
+        retireQuantity,
+        retirePurpose
+      );
 
-    if (success) {
-      toast.success('Credits retired successfully');
-      setIsRetireDialogOpen(false);
-      setSelectedCredit(null);
-      setRetireQuantity(0);
-      setRetirePurpose('');
-      loadData();
-    } else {
-      toast.error('Failed to retire credits');
+      if (success) {
+        toast.success('Credits retired successfully');
+        setIsRetireDialogOpen(false);
+        setSelectedCredit(null);
+        setRetireQuantity(0);
+        setRetirePurpose('');
+        loadData();
+      } else {
+        toast.error('Failed to retire credits');
+      }
+    } finally {
+      setIsRetiring(false);
     }
   };
 
-  const handleDeleteCredit = async (creditId: string) => {
-    const success = await carbonCreditService.deleteCredit(creditId);
-    if (success) {
-      toast.success('Credit deleted');
-      loadData();
-    } else {
-      toast.error('Failed to delete credit');
+  const handleConfirmDelete = async () => {
+    if (!creditToDelete || isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      const success = await carbonCreditService.deleteCredit(creditToDelete.id);
+      if (success) {
+        toast.success('Credit deleted');
+        loadData();
+      } else {
+        toast.error('Failed to delete credit');
+      }
+    } finally {
+      setIsDeleting(false);
+      setCreditToDelete(null);
     }
   };
 
@@ -328,7 +377,9 @@ export function CarbonCreditPortfolio() {
                     <Input
                       type="number"
                       value={newCredit.vintage_year}
-                      onChange={(e) => setNewCredit({ ...newCredit, vintage_year: parseInt(e.target.value) })}
+                      onChange={(e) => setNewCredit({ ...newCredit, vintage_year: parseInt(e.target.value) || new Date().getFullYear() })}
+                      min={1990}
+                      max={new Date().getFullYear() + 5}
                     />
                   </div>
                 </div>
@@ -337,16 +388,20 @@ export function CarbonCreditPortfolio() {
                     <Label>Quantity (tCO₂e)</Label>
                     <Input
                       type="number"
-                      value={newCredit.quantity}
-                      onChange={(e) => setNewCredit({ ...newCredit, quantity: parseFloat(e.target.value) })}
+                      value={newCredit.quantity || ''}
+                      onChange={(e) => setNewCredit({ ...newCredit, quantity: Math.min(parseFloat(e.target.value) || 0, MAX_QUANTITY) })}
+                      min={0}
+                      max={MAX_QUANTITY}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Purchase Price ($/tonne)</Label>
                     <Input
                       type="number"
-                      value={newCredit.purchase_price}
-                      onChange={(e) => setNewCredit({ ...newCredit, purchase_price: parseFloat(e.target.value) })}
+                      value={newCredit.purchase_price || ''}
+                      onChange={(e) => setNewCredit({ ...newCredit, purchase_price: Math.min(parseFloat(e.target.value) || 0, MAX_PRICE) })}
+                      min={0}
+                      max={MAX_PRICE}
                     />
                   </div>
                 </div>
@@ -378,8 +433,11 @@ export function CarbonCreditPortfolio() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddCredit}>Add Credit</Button>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+                <Button onClick={handleAddCredit} disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Add Credit
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -436,7 +494,7 @@ export function CarbonCreditPortfolio() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteCredit(credit.id)}
+                            onClick={() => setCreditToDelete(credit)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -505,7 +563,7 @@ export function CarbonCreditPortfolio() {
               <Input
                 type="number"
                 value={retireQuantity}
-                onChange={(e) => setRetireQuantity(parseFloat(e.target.value))}
+                onChange={(e) => setRetireQuantity(parseFloat(e.target.value) || 0)}
                 max={selectedCredit?.quantity || 0}
               />
               <p className="text-sm text-muted-foreground">
@@ -522,11 +580,40 @@ export function CarbonCreditPortfolio() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRetireDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleRetireCredits}>Retire Credits</Button>
+            <Button variant="outline" onClick={() => setIsRetireDialogOpen(false)} disabled={isRetiring}>Cancel</Button>
+            <Button onClick={handleRetireCredits} disabled={isRetiring}>
+              {isRetiring && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Retire Credits
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!creditToDelete} onOpenChange={(open) => !open && setCreditToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Carbon Credit</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this {creditToDelete?.credit_type} credit
+              {creditToDelete?.project_name ? ` from "${creditToDelete.project_name}"` : ''}? 
+              This will remove {formatNumber(creditToDelete?.quantity || 0)} tCO₂e from your portfolio. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
