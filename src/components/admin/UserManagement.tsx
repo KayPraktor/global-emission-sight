@@ -4,8 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { Shield, UserX, Mail } from 'lucide-react';
+import { Shield, UserX, Mail, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -13,6 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { feedback } from '@/lib/feedback';
 
 interface OrgMember {
   id: string;
@@ -28,6 +38,8 @@ export const UserManagement = () => {
   const { organization, isAdmin } = useAuth();
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [memberToRemove, setMemberToRemove] = useState<OrgMember | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   useEffect(() => {
     if (organization) {
@@ -61,7 +73,7 @@ export const UserManagement = () => {
 
       setMembers(membersWithProfiles as any);
     } catch (error: any) {
-      toast.error('Failed to load members');
+      feedback.crud.loadError('members', fetchMembers);
     } finally {
       setLoading(false);
     }
@@ -75,32 +87,40 @@ export const UserManagement = () => {
         .eq('id', memberId);
 
       if (error) throw error;
-      toast.success('Role updated successfully');
+      feedback.success('Role updated successfully');
       fetchMembers();
     } catch (error: any) {
-      toast.error('Failed to update role');
+      feedback.error('update role', 'You may not have permission. Please try again.');
     }
   };
 
-  const removeMember = async (memberId: string, userId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
 
+    setIsRemoving(true);
     try {
       const { error } = await supabase
         .from('organization_members')
         .delete()
-        .eq('id', memberId);
+        .eq('id', memberToRemove.id);
 
       if (error) throw error;
-      toast.success('Member removed successfully');
+      feedback.success('Member removed successfully');
       fetchMembers();
     } catch (error: any) {
-      toast.error('Failed to remove member');
+      feedback.crud.deleteError('member');
+    } finally {
+      setIsRemoving(false);
+      setMemberToRemove(null);
     }
   };
 
   if (loading) {
-    return <div>Loading members...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -159,7 +179,7 @@ export const UserManagement = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeMember(member.id, member.user_id)}
+                    onClick={() => setMemberToRemove(member)}
                   >
                     <UserX className="h-4 w-4" />
                   </Button>
@@ -169,6 +189,39 @@ export const UserManagement = () => {
           ))}
         </TableBody>
       </Table>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove{' '}
+              <strong>{memberToRemove?.profiles?.full_name || 'this member'}</strong> (
+              {memberToRemove?.profiles?.email}) from the organization?
+              <br /><br />
+              They will lose access to all organization data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRemoveMember}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isRemoving}
+            >
+              {isRemoving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                'Remove Member'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
