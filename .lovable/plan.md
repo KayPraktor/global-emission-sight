@@ -1,319 +1,370 @@
 
 
-# Data Tracking Strategy for BARYON Carbon Management Platform
+# Application Stress-Test Audit Report
 
 ## Executive Summary
 
-This strategy recommends tracking **45+ key events** across 7 critical user journeys to provide actionable insights into user behavior, retention, and feature adoption. The approach leverages your existing `onboarding_analytics` infrastructure and extends it to cover the full user lifecycle.
+This audit identifies **extreme user behaviors** that could crash the application or cause data corruption. I've analyzed the entire codebase for race conditions, missing protections, and edge cases that typical testing might miss.
 
 ---
 
-## Recommended Analytics Architecture
+## Critical Vulnerabilities Found
 
-### Option 1: Extend Current Supabase Tables (Recommended)
-Build on existing `onboarding_analytics` pattern with new tables:
-- `user_events` - General event tracking
-- `feature_usage` - Feature-level aggregations
-- `session_analytics` - Session-level metrics
-
-### Option 2: Third-Party Integration
-Integrate with Mixpanel, Amplitude, or PostHog via a thin wrapper service.
-
-### Implementation Approach
-Create a centralized `src/services/analyticsTrackingService.ts` that:
-1. Batches events to reduce database writes
-2. Respects user privacy preferences
-3. Provides consistent event naming conventions
-4. Auto-captures page views and session data
+| Category | Issues Found | Severity |
+|----------|-------------|----------|
+| Missing Delete Confirmations | 4 components | High |
+| Double-Submit Vulnerabilities | 3 components | High |
+| Unprotected Rapid-Click Actions | 5+ buttons | Medium |
+| Missing Loading States During Delete | 4 components | Medium |
+| Input Validation Gaps | 3 forms | Medium |
+| Race Condition Risks | 2 services | Medium |
 
 ---
 
-## Critical User Journeys to Track
+## Issue #1: Missing Delete Confirmation Dialogs (Critical)
 
-### Journey 1: Acquisition & Onboarding Funnel
-**Goal**: Identify where users drop off and optimize Time-to-Value
+### Problem
+Several components delete data immediately on click without confirmation:
 
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `landing_page_view` | `LandingPage.tsx` | referrer, utm_params, device_type |
-| `cta_clicked` | `LandingPage.tsx` | cta_type (signup, demo, pricing) |
-| `auth_started` | `AuthPage.tsx` | auth_type (signup, signin, google) |
-| `auth_completed` | `AuthContext.tsx` | method, time_to_complete |
-| `auth_failed` | `AuthContext.tsx` | error_type, attempt_count |
-| `onboarding_step_viewed` | `OnboardingWizard.tsx` | step_number, step_name |
-| `onboarding_step_completed` | `OnboardingWizard.tsx` | step_number, time_on_step |
-| `onboarding_quick_start_selected` | `OnboardingWizard.tsx` | option (sample, import, manual) |
-| `onboarding_skipped` | `OnboardingWizard.tsx` | step_at_skip, time_spent_total |
-| `onboarding_completed` | `OnboardingWizard.tsx` | total_time, path_taken |
+| Component | Line | Current Behavior |
+|-----------|------|------------------|
+| `InterventionList.tsx` | 70-83 | Direct delete on trash icon click |
+| `CarbonCreditPortfolio.tsx` | 126-134 | Direct delete without confirmation |
+| `ValidationRulesManager.tsx` | 120-135 | Direct delete without confirmation |
+| `StakeholderMapping.tsx` | 95-104 | Direct delete without confirmation |
 
-**Implementation Location**: Already partially exists in `OnboardingWizard.tsx` (lines 85-123). Extend with step-level granularity.
+### Impact
+- Accidental clicks permanently delete data
+- No undo capability
+- User has no way to recover from mistakes
 
----
-
-### Journey 2: First Value Moment (Data Entry)
-**Goal**: Track time from signup to first meaningful data entry
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `data_entry_started` | `DataEntryPage.tsx` | entry_method (wizard, csv) |
-| `wizard_step_completed` | `IndustryAwareWizard.tsx` | step_number, step_name, time_on_step |
-| `wizard_step_abandoned` | `IndustryAwareWizard.tsx` | step_number, field_with_focus |
-| `csv_import_opened` | `EmissionsCSVImportDialog.tsx` | source (onboarding, button) |
-| `csv_import_completed` | `EmissionsCSVImportDialog.tsx` | rows_imported, errors_count |
-| `csv_import_failed` | `EmissionsCSVImportDialog.tsx` | error_type, file_size |
-| `emission_entry_created` | `EmissionsService.saveEmissionsData()` | scope, category, facility_id |
-| `first_emission_entry` | `EmissionsService.saveEmissionsData()` | days_since_signup, entry_method |
-
-**Implementation Location**: `src/services/emissionsService.ts` (line 10), `src/components/EmissionsForm/IndustryAwareWizard.tsx`
-
----
-
-### Journey 3: Goal Setting & Progress
-**Goal**: Measure goal adoption and track user engagement with targets
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `goals_page_viewed` | `GoalsPage.tsx` | tab_selected |
-| `goal_creation_started` | `EnhancedGoalForm.tsx` | entry_point (dialog, page) |
-| `goal_form_tab_switched` | `EnhancedGoalForm.tsx` | from_tab, to_tab |
-| `goal_created` | `EnhancedGoalForm.tsx` (line 175) | scope, category, priority, target_year |
-| `goal_creation_failed` | `EnhancedGoalForm.tsx` | validation_errors |
-| `goal_viewed` | `ProfessionalGoalsList.tsx` | goal_id, goal_status |
-| `goal_milestone_reached` | Backend trigger | goal_id, milestone_percent |
-
-**Implementation Location**: `src/components/Goals/EnhancedGoalForm.tsx` (handleSubmit at line 156)
-
----
-
-### Journey 4: Reporting & Export
-**Goal**: Understand which reports are most valuable and export formats preferred
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `reports_page_viewed` | `ReportsPage.tsx` | tab_selected |
-| `report_generation_started` | `ComprehensiveReportGenerator.tsx` | report_type (quarterly, annual) |
-| `report_generated` | `comprehensiveReportService.ts` | report_type, year, quarter, generation_time_ms |
-| `report_export_clicked` | `EmissionsReport.tsx` | format (csv, excel, pdf) |
-| `report_exported` | `reportsService.ts` | format, rows_count, file_size |
-| `template_downloaded` | `templateService.ts` (line 220) | template_id, framework |
-
-**Implementation Location**: `src/components/Reports/EmissionsReport.tsx` (lines 73-125), `src/services/reportsService.ts`
-
----
-
-### Journey 5: Facility Management
-**Goal**: Track multi-facility adoption and organizational complexity
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `facilities_page_viewed` | `FacilitiesPage.tsx` | view_mode (grid, map) |
-| `facility_created` | `FacilitiesPage.tsx` (line 125) | facility_type, country_code |
-| `facility_edited` | `FacilitiesPage.tsx` | fields_changed |
-| `facility_deleted` | `FacilitiesPage.tsx` | emissions_count |
-| `facility_csv_imported` | `CSVImportDialog.tsx` | facilities_count |
-| `facility_emissions_viewed` | `FacilitiesPage.tsx` | facility_id, emissions_count |
-| `organization_created` | `FacilitiesPage.tsx` (line 67) | creation_context |
-
-**Implementation Location**: `src/pages/FacilitiesPage.tsx`, `src/services/facilityService.ts`
-
----
-
-### Journey 6: Feature Adoption & Depth
-**Goal**: Identify power users and underutilized features
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `page_viewed` | `DashboardLayout.tsx` | path, time_on_previous_page |
-| `sidebar_navigation` | `AppSidebar.tsx` | from_path, to_path, section |
-| `dashboard_widget_toggled` | `Index.tsx` | widget_id, visible |
-| `dashboard_view_saved` | `useDashboardLayout.ts` | view_name, widgets_count |
-| `scenario_created` | `ScenarioBuilder.tsx` | intervention_count |
-| `scope3_analysis_run` | `Scope3Dashboard.tsx` | categories_analyzed |
-| `supplier_added` | `SupplierOnboarding.tsx` | supplier_tier |
-| `compliance_framework_viewed` | `CompliancePage.tsx` | framework (CSRD, ISSB) |
-| `materiality_assessment_started` | `MaterialityPage.tsx` | assessment_type |
-| `audit_logs_exported` | `AuditLogViewer.tsx` | date_range, filters |
-
-**Implementation Location**: Various pages and components as specified
-
----
-
-### Journey 7: Retention & Re-engagement Signals
-**Goal**: Predict churn and identify engagement patterns
-
-| Event Name | Trigger Location | Data to Capture |
-|------------|------------------|-----------------|
-| `session_started` | `AuthContext.tsx` | days_since_last_session |
-| `session_ended` | `beforeunload` handler | duration, pages_viewed, actions_taken |
-| `settings_changed` | `SettingsPage.tsx` | setting_category |
-| `feedback_submitted` | `OnboardingWizard.tsx` | rating, context |
-| `help_accessed` | `AppSidebar.tsx` | from_page |
-| `error_encountered` | `ErrorBoundary.tsx` | error_type, page |
-| `approval_submitted` | `ApprovalActions.tsx` | entry_type |
-| `approval_actioned` | `ApprovalActions.tsx` | action (approve, reject) |
-
----
-
-## Database Schema for Event Tracking
-
-```sql
--- Core events table
-CREATE TABLE public.user_events (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  organization_id UUID REFERENCES organizations(id),
-  event_name VARCHAR(100) NOT NULL,
-  event_category VARCHAR(50), -- 'onboarding', 'data_entry', 'reporting', etc.
-  event_properties JSONB DEFAULT '{}',
-  page_path VARCHAR(255),
-  session_id UUID,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Indexes for common queries
-CREATE INDEX idx_events_user_date ON user_events(user_id, created_at DESC);
-CREATE INDEX idx_events_name ON user_events(event_name);
-CREATE INDEX idx_events_category ON user_events(event_category);
-CREATE INDEX idx_events_org ON user_events(organization_id, created_at DESC);
-
--- Feature usage aggregates (updated daily by edge function)
-CREATE TABLE public.feature_usage (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  organization_id UUID REFERENCES organizations(id),
-  feature_name VARCHAR(100) NOT NULL,
-  usage_count INTEGER DEFAULT 0,
-  last_used_at TIMESTAMPTZ,
-  first_used_at TIMESTAMPTZ,
-  period_start DATE NOT NULL,
-  UNIQUE(user_id, feature_name, period_start)
-);
-```
-
----
-
-## Analytics Service Implementation
-
-Create `src/services/analyticsTrackingService.ts`:
+### Fix Required
+Add `AlertDialog` confirmation pattern (like `FacilitiesPage.tsx` and `ScenarioList.tsx`):
 
 ```typescript
-interface TrackingEvent {
-  name: string;
-  category: 'onboarding' | 'data_entry' | 'reporting' | 'goals' | 'facilities' | 'navigation' | 'system';
-  properties?: Record<string, unknown>;
-}
+const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+const [isDeleting, setIsDeleting] = useState(false);
 
-class AnalyticsTrackingService {
-  private eventQueue: TrackingEvent[] = [];
-  private sessionId: string;
-  private flushInterval: number = 5000; // 5 seconds
-  
-  constructor() {
-    this.sessionId = crypto.randomUUID();
-    this.startFlushInterval();
-    this.setupPageViewTracking();
-    this.setupSessionTracking();
-  }
+// Button triggers state, not action
+<Button onClick={() => setItemToDelete(id)}>
+  <Trash2 />
+</Button>
 
-  track(event: TrackingEvent): void {
-    this.eventQueue.push({
-      ...event,
-      properties: {
-        ...event.properties,
-        timestamp: new Date().toISOString(),
-        path: window.location.pathname,
-        sessionId: this.sessionId,
-      }
-    });
-    
-    // Immediate flush for critical events
-    if (this.isCriticalEvent(event.name)) {
-      this.flush();
-    }
-  }
-
-  private isCriticalEvent(name: string): boolean {
-    return ['auth_completed', 'first_emission_entry', 'goal_created', 'report_exported'].includes(name);
-  }
-
-  private async flush(): Promise<void> {
-    if (this.eventQueue.length === 0) return;
-    
-    const events = [...this.eventQueue];
-    this.eventQueue = [];
-    
-    await supabase.from('user_events').insert(
-      events.map(e => ({
-        event_name: e.name,
-        event_category: e.category,
-        event_properties: e.properties,
-        page_path: window.location.pathname,
-        session_id: this.sessionId,
-      }))
-    );
-  }
-}
-
-export const analytics = new AnalyticsTrackingService();
+// AlertDialog handles confirmation
+<AlertDialog open={!!itemToDelete}>
+  <AlertDialogContent>
+    <AlertDialogTitle>Delete Item</AlertDialogTitle>
+    <AlertDialogDescription>
+      This action cannot be undone.
+    </AlertDialogDescription>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
+        {isDeleting && <Loader2 className="animate-spin" />}
+        Delete
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
 ```
 
 ---
 
-## Key Metrics to Derive
+## Issue #2: Double-Submit Vulnerabilities
 
-### Activation Metrics
-- **Time to First Entry**: Days from signup to first `emission_entry_created`
-- **Onboarding Completion Rate**: Users reaching `onboarding_completed` / signups
-- **Quick Start Preference**: Distribution of `sample` vs `import` vs `manual`
+### Good Patterns Found (Protected)
+These components correctly prevent double-submission:
 
-### Engagement Metrics
-- **Weekly Active Users (WAU)**: Unique users with `session_started` in 7 days
-- **Feature Depth Score**: Count of unique `event_category` per user
-- **Report Generation Frequency**: `report_generated` events per user/month
+| Component | Protection Method |
+|-----------|------------------|
+| `EnhancedGoalForm.tsx` | `if (isSubmitting) return;` at line 157 |
+| `FacilityForm.tsx` | `disabled={isSubmitting}` on submit button |
+| `AuthPage.tsx` | `disabled={isLoading}` on buttons |
+| `ApprovalActions.tsx` | `disabled={isLoading}` on all action buttons |
 
-### Retention Indicators
-- **Day 1/7/30 Retention**: Users returning after N days
-- **Churn Signals**: 14+ days without `session_started`
-- **Power User Identification**: Users with 3+ `event_category` engagement
+### Vulnerable Patterns Found
 
-### Conversion Funnels
-1. **Signup Funnel**: `landing_page_view` → `auth_started` → `auth_completed`
-2. **Activation Funnel**: `auth_completed` → `onboarding_completed` → `first_emission_entry`
-3. **Reporting Funnel**: `reports_page_viewed` → `report_generation_started` → `report_exported`
+| Component | Issue |
+|-----------|-------|
+| `CarbonCreditPortfolio.tsx` | `handleAddCredit` has no submission guard |
+| `CarbonCreditPortfolio.tsx` | `handleRetireCredits` has no submission guard |
+| `ValidationRulesManager.tsx` | `handleCreateRule` has no submission guard |
+
+### Current Vulnerable Code
+```typescript
+// CarbonCreditPortfolio.tsx - No isSubmitting guard
+const handleAddCredit = async () => {
+  if (newCredit.quantity <= 0) {
+    toast.error('Please enter a valid quantity');
+    return;
+  }
+  const result = await carbonCreditService.addCredit(newCredit);
+  // User can click multiple times before this completes
+};
+```
+
+### Fix Required
+```typescript
+const [isSubmitting, setIsSubmitting] = useState(false);
+
+const handleAddCredit = async () => {
+  if (isSubmitting) return; // Guard against rapid clicks
+  if (newCredit.quantity <= 0) {
+    toast.error('Please enter a valid quantity');
+    return;
+  }
+  setIsSubmitting(true);
+  try {
+    const result = await carbonCreditService.addCredit(newCredit);
+    // ... success handling
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+// Button with loading state
+<Button onClick={handleAddCredit} disabled={isSubmitting}>
+  {isSubmitting && <Loader2 className="animate-spin mr-2" />}
+  Add Credit
+</Button>
+```
 
 ---
 
-## Implementation Hooks by File
+## Issue #3: Race Conditions in Service Layer
 
-| File | Events to Add | Priority |
-|------|---------------|----------|
-| `src/contexts/AuthContext.tsx` | `auth_completed`, `auth_failed`, `session_started` | Critical |
-| `src/components/onboarding/OnboardingWizard.tsx` | Extend existing tracking | Critical |
-| `src/services/emissionsService.ts` | `emission_entry_created`, `first_emission_entry` | Critical |
-| `src/components/Goals/EnhancedGoalForm.tsx` | `goal_created`, `goal_creation_failed` | High |
-| `src/pages/FacilitiesPage.tsx` | `facility_created`, `facility_deleted` | High |
-| `src/components/Reports/EmissionsReport.tsx` | `report_exported` | High |
-| `src/components/layouts/DashboardLayout.tsx` | `page_viewed` | High |
-| `src/components/navigation/AppSidebar.tsx` | `sidebar_navigation` | Medium |
-| `src/pages/Index.tsx` | `dashboard_widget_toggled` | Medium |
-| `src/components/ErrorBoundary.tsx` | `error_encountered` | Medium |
+### Problem
+The `goalsService.getGoalsWithProgress()` method fetches goals, then makes parallel requests for each goal's emissions. If a goal is deleted mid-request, this could cause errors.
+
+```typescript
+// goalsService.ts lines 89-161
+const goalsWithProgress = await Promise.all(
+  goals.map(async (goal) => {
+    // This could fail if goal was deleted after initial fetch
+    const { data: entries } = await query;
+    // ...
+  })
+);
+```
+
+### Also Vulnerable
+- `EmissionsCSVImportDialog.tsx`: Bulk imports don't handle partial failures gracefully
+- `FacilitiesPage.tsx`: Fetching emissions counts in a loop could race with deletions
+
+### Fix Required
+Add defensive error handling:
+
+```typescript
+const goalsWithProgress = await Promise.allSettled(
+  goals.map(async (goal) => {
+    try {
+      // ... existing logic
+    } catch (error) {
+      console.warn(`Failed to calculate progress for goal ${goal.id}:`, error);
+      return { ...goal, actualEmissions: 0, progressPercentage: 0, isOnTrack: false, trend: 'down' as const };
+    }
+  })
+);
+
+// Filter out rejected promises
+return goalsWithProgress
+  .filter((result): result is PromiseFulfilledResult<GoalWithProgress> => result.status === 'fulfilled')
+  .map(result => result.value);
+```
 
 ---
 
-## Privacy & Compliance Considerations
+## Issue #4: Input Validation Gaps
 
-1. **User Consent**: Add opt-out toggle in Settings (store in `profiles.analytics_consent`)
-2. **Data Retention**: Auto-purge events older than 12 months
-3. **PII Exclusion**: Never log email, names, or sensitive business data in properties
-4. **GDPR Compliance**: Include events in data export and deletion workflows
+### Number Input Edge Cases
+
+| Component | Field | Issue |
+|-----------|-------|-------|
+| `CarbonCreditPortfolio.tsx` | `quantity`, `purchase_price` | No max value, allows scientific notation (e.g., `1e308`) |
+| `EnhancedGoalForm.tsx` | `baselineValue` | Allows negative values in some browsers |
+| `FacilityForm.tsx` | `latitude`, `longitude` | Allows values like `NaN` if empty string is converted |
+
+### Current Vulnerability
+```typescript
+// CarbonCreditPortfolio - No upper bound
+<Input
+  type="number"
+  value={newCredit.quantity}
+  onChange={(e) => setNewCredit({...newCredit, quantity: parseFloat(e.target.value)})}
+/>
+```
+
+### Fix Required
+Add Zod schemas with reasonable bounds:
+
+```typescript
+const creditSchema = z.object({
+  quantity: z.number().positive().max(1_000_000_000, 'Quantity too large'),
+  purchase_price: z.number().min(0).max(1_000_000_000, 'Price too large'),
+  vintage_year: z.number().min(1990).max(new Date().getFullYear() + 5),
+});
+```
 
 ---
 
-## Next Steps
+## Issue #5: Missing Loading States During Delete Operations
 
-1. **Create database tables** - Run migration for `user_events` and `feature_usage`
-2. **Build tracking service** - Implement `analyticsTrackingService.ts`
-3. **Add critical event hooks** - Start with auth and onboarding (highest impact)
-4. **Create dashboard** - Build admin view to visualize funnel metrics
-5. **Set up alerts** - Notify on drop-off rate spikes or churn signals
+### Components Without Delete Loading Indicators
+
+| Component | Issue |
+|-----------|-------|
+| `InterventionList.tsx` | Delete happens instantly, no visual feedback |
+| `CarbonCreditPortfolio.tsx` | No loading indicator on delete button |
+| `ValidationRulesManager.tsx` | No loading indicator on delete button |
+| `StakeholderMapping.tsx` | No loading indicator on delete button |
+
+### Impact
+Users may click multiple times thinking nothing happened, causing multiple delete attempts or errors.
+
+### Fix Required
+Track deletion state per item:
+
+```typescript
+const [deletingId, setDeletingId] = useState<string | null>(null);
+
+const handleDelete = async (id: string) => {
+  setDeletingId(id);
+  try {
+    // ... delete logic
+  } finally {
+    setDeletingId(null);
+  }
+};
+
+// In render
+<Button 
+  onClick={() => handleDelete(item.id)} 
+  disabled={deletingId === item.id}
+>
+  {deletingId === item.id ? (
+    <Loader2 className="h-4 w-4 animate-spin" />
+  ) : (
+    <Trash2 className="h-4 w-4" />
+  )}
+</Button>
+```
+
+---
+
+## Issue #6: Potential XSS via dangerouslySetInnerHTML
+
+### Finding
+Only one usage found in the codebase:
+
+```typescript
+// src/components/ui/chart.tsx line 79
+<style
+  dangerouslySetInnerHTML={{
+    __html: Object.entries(THEMES)
+      .map(...)
+  }}
+/>
+```
+
+### Assessment
+This is **SAFE** because it only uses hardcoded `THEMES` object values, not user input. No action required.
+
+---
+
+## Issue #7: CSV Import Large File Handling
+
+### Problem
+`EmissionsCSVImportDialog.tsx` reads entire file into memory:
+
+```typescript
+const text = await file.text();
+const result = parseEmissionsCSV(text);
+```
+
+### Impact
+A malicious or accidentally huge CSV (e.g., 500MB) could crash the browser tab.
+
+### Fix Required
+Add file size validation:
+
+```typescript
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const handleFileChange = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  
+  if (file.size > MAX_FILE_SIZE) {
+    toast.error('File too large', { 
+      description: 'Please upload a file smaller than 10MB' 
+    });
+    return;
+  }
+  // ... continue processing
+};
+```
+
+---
+
+## Issue #8: Empty Array/Null Safety in Loops
+
+### Potential Issues Found
+
+```typescript
+// FacilitiesPage.tsx line 169 - Could fail if facilities is undefined mid-loop
+for (const facility of facilities) {
+  const { count } = await supabase...
+}
+```
+
+### Fix Required
+Add null checks:
+
+```typescript
+for (const facility of (facilities || [])) {
+```
+
+---
+
+## Priority Implementation Roadmap
+
+### Critical (Immediate)
+1. Add delete confirmation dialogs to 4 components
+2. Add double-submit guards to `CarbonCreditPortfolio` and `ValidationRulesManager`
+
+### High Priority
+3. Add loading states to delete buttons
+4. Add file size validation to CSV import
+5. Add input bounds to number fields
+
+### Medium Priority
+6. Use `Promise.allSettled` for parallel operations
+7. Add null safety checks to loops
+
+---
+
+## Files to Modify
+
+| File | Changes Required |
+|------|-----------------|
+| `src/components/Scenarios/InterventionList.tsx` | Add AlertDialog, loading state, double-click guard |
+| `src/components/Financial/CarbonCreditPortfolio.tsx` | Add AlertDialog for delete, submission guards, loading states |
+| `src/components/Analytics/ValidationRulesManager.tsx` | Add AlertDialog, loading state, submission guard |
+| `src/components/Materiality/StakeholderMapping.tsx` | Add AlertDialog, loading state |
+| `src/components/EmissionsForm/EmissionsCSVImportDialog.tsx` | Add file size validation |
+| `src/services/goalsService.ts` | Use Promise.allSettled for error resilience |
+
+---
+
+## Testing Checklist After Implementation
+
+Test each fixed component with:
+- [ ] Rapid double-click on submit/delete buttons
+- [ ] Click delete, then immediately click again
+- [ ] Enter maximum numeric values (e.g., `999999999999`)
+- [ ] Enter scientific notation (e.g., `1e10`)
+- [ ] Enter special characters in text fields (e.g., `<script>`, `' OR 1=1`)
+- [ ] Upload 50MB+ CSV file
+- [ ] Delete item while another operation is in progress
+- [ ] Switch tabs/pages mid-operation
 
