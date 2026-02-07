@@ -16,6 +16,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { BRAND_NAME } from '@/lib/constants';
 
 interface FirstTimeWelcomeProps {
   onComplete?: () => void;
@@ -114,7 +115,7 @@ const FirstTimeWelcome: React.FC<FirstTimeWelcomeProps> = ({ onComplete }) => {
                   <Sparkles className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl">Welcome to CarbonTrack!</CardTitle>
+              <CardTitle className="text-2xl">Welcome to {BRAND_NAME}!</CardTitle>
               <CardDescription className="text-base">
                 Let's get you started with your carbon emissions tracking
               </CardDescription>

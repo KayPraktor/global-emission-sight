@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -17,20 +18,25 @@ import {
   MessageSquare,
   Sparkles,
   ChevronRight,
-  Star,
-  Send,
-  X
+  X,
+  Clock,
+  Database,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { IndustrySelector } from './IndustrySelector';
 import { SubIndustrySelector } from './SubIndustrySelector';
 import { updateOrganizationIndustry } from '@/services/industryService';
+import { ContextualHelp } from '@/components/ui/contextual-help';
+import { BRAND_NAME } from '@/lib/constants';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
 }
 
 export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
-  const [step, setStep] = useState(0); // Start at step 0 (industry selection)
+  // New flow: Step 0 = Quick Start, Step 1 = Industry (optional), Step 2 = Simple feedback
+  const [step, setStep] = useState(0);
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
   const [selectedSubIndustry, setSelectedSubIndustry] = useState<string | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
@@ -42,10 +48,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     reasoning: string;
     keywords: string[];
   } | null>(null);
-  const [rating, setRating] = useState<number>(0);
-  const [feedbackText, setFeedbackText] = useState<string>('');
-  const [improvements, setImprovements] = useState<string>('');
-  const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
+  const [quickFeedback, setQuickFeedback] = useState<'positive' | 'negative' | null>(null);
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -57,6 +60,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       icon: FileText,
       title: 'Compliance Reporting',
       description: 'CDP, TCFD, CSRD deadlines and audit preparation',
+      outcome: 'See your deadline tracker',
       route: '/analytics'
     },
     {
@@ -64,6 +68,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       icon: Target,
       title: 'Net Zero Tracking',
       description: 'Progress monitoring and goal management',
+      outcome: 'See your progress dashboard',
       route: '/goals'
     },
     {
@@ -71,14 +76,8 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       icon: TrendingDown,
       title: 'Data Consolidation',
       description: 'Multi-facility emissions tracking and validation',
+      outcome: 'See your multi-facility view',
       route: '/data-entry'
-    },
-    {
-      id: 'custom',
-      icon: MessageSquare,
-      title: 'Something Else?',
-      description: 'Tell us about your specific needs',
-      route: ''
     }
   ];
 
@@ -88,7 +87,6 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get organization ID
       const { data: orgMember } = await supabase
         .from('organization_members')
         .select('organization_id')
@@ -116,189 +114,95 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     trackOnboardingStart();
   }, []);
 
-  const handleIndustrySelect = async (industryId: string) => {
-    setSelectedIndustry(industryId);
-    setSelectedSubIndustry(null);
-  };
-
-  const handleIndustryContinue = async () => {
-    if (!selectedIndustry || !organizationId) {
-      toast.error('Please select an industry');
-      return;
-    }
-
-    try {
-      await updateOrganizationIndustry(organizationId, selectedIndustry, selectedSubIndustry);
-      await updateAnalytics({ step_reached: 1 });
-      setStep(1);
-    } catch (error) {
-      console.error('Error saving industry:', error);
-      toast.error('Failed to save industry selection');
-    }
-  };
-
-  // Update analytics when step changes
-  const updateAnalytics = async (updates: any) => {
+  const updateAnalytics = async (updates: Record<string, unknown>) => {
     if (!analyticsId) return;
-
     await supabase
       .from('onboarding_analytics')
       .update(updates)
       .eq('id', analyticsId);
   };
 
-  const handleChallengeSelect = async (challengeId: string) => {
-    if (challengeId === 'custom') {
-      setSelectedChallenge(challengeId);
-      await updateAnalytics({ 
-        challenge_selected: 'custom',
-        step_reached: 1 
-      });
-      return;
-    }
-    setSelectedChallenge(challengeId);
-    setAiRecommendation(null);
-    await updateAnalytics({ 
-      challenge_selected: challengeId,
-      step_reached: 2 
-    });
-    setStep(2);
-  };
-
-  const handleCustomInputSubmit = async () => {
-    if (!customInput.trim()) {
-      toast.error('Please describe your needs');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-onboarding-input', {
-        body: { userInput: customInput }
-      });
-
-      if (error) {
-        console.error('Analysis error:', error);
-        toast.error('Failed to analyze your input. Please try selecting a predefined option.');
-        setSelectedChallenge(null);
-        return;
-      }
-
-      setAiRecommendation(data);
-      setSelectedChallenge(data.recommendedPath === 'net-zero' ? 'netzero' : data.recommendedPath);
-      
-      await updateAnalytics({ 
-        challenge_selected: 'custom',
-        custom_input: customInput,
-        ai_recommended_path: data.recommendedPath,
-        ai_confidence: data.confidence,
-        step_reached: 2 
-      });
-      
-      setStep(2);
-    } catch (error) {
-      console.error('Analysis error:', error);
-      toast.error('Failed to analyze your input. Please try selecting a predefined option.');
-      setSelectedChallenge(null);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const getRecommendedPathLabel = (path: string) => {
-    switch (path) {
-      case 'compliance': return 'Compliance Reporting';
-      case 'net-zero': return 'Net Zero Tracking';
-      case 'data': return 'Data Consolidation';
-      default: return path;
-    }
-  };
-
-  const handleQuickStartSelection = async (action: 'import' | 'sample' | 'manual' | 'skip') => {
-    await updateAnalytics({ step_reached: 3 });
+  const handleQuickStartSelection = async (action: 'import' | 'sample' | 'manual') => {
+    await updateAnalytics({ step_reached: 1 });
     
-    if (action === 'import') {
-      // Navigate to data entry with import flag
-      onComplete();
-      navigate('/data-entry?action=import');
-    } else if (action === 'sample') {
-      // Set flag to show sample data and navigate to dashboard
+    if (action === 'sample') {
+      // Fast path - load sample data immediately
       localStorage.setItem('show_sample_data', 'true');
       onComplete();
       navigate('/');
-      toast.success('Loaded sample data! Explore the dashboard to see what BARYON can do.');
-    } else if (action === 'manual') {
-      // Navigate to data entry for manual wizard
+      toast.success(`Loaded sample data! Explore the dashboard to see what ${BRAND_NAME} can do.`);
+    } else if (action === 'import') {
+      onComplete();
+      navigate('/data-entry?action=import');
+    } else {
       onComplete();
       navigate('/data-entry');
-    } else {
-      // Skip action - go to feedback
-      setStep(3);
     }
   };
 
-  const handleSubmitFeedback = async () => {
-    if (rating === 0) {
-      toast.error('Please provide a rating');
-      return;
+  const handleChallengeSelect = async (challengeId: string) => {
+    setSelectedChallenge(challengeId);
+    await updateAnalytics({ 
+      challenge_selected: challengeId,
+      step_reached: 1 
+    });
+    
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (challenge) {
+      // Navigate directly to the relevant feature
+      onComplete();
+      navigate(challenge.route);
+      toast.success(`Taking you to ${challenge.title}!`);
     }
+  };
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const handleIndustrySelect = async (industryId: string) => {
+    setSelectedIndustry(industryId);
+    setSelectedSubIndustry(null);
+  };
 
-      // Save feedback
-      await supabase.from('onboarding_feedback').insert({
-        user_id: user.id,
-        rating,
-        feedback_text: feedbackText,
-        improvements_suggested: improvements,
-        would_recommend: wouldRecommend,
-      });
-
-      // Complete analytics
-      const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      await updateAnalytics({ 
-        completed: true,
-        completed_at: new Date().toISOString(),
-        time_spent_seconds: timeSpent
-      });
-
-      toast.success('Thank you for your feedback!');
-      
-      const challenge = challenges.find(c => c.id === selectedChallenge);
-      if (challenge && challenge.route) {
-        onComplete();
-        navigate(challenge.route);
-      } else {
-        onComplete();
-        navigate('/');
+  const handleIndustryContinue = async () => {
+    if (selectedIndustry && organizationId) {
+      try {
+        await updateOrganizationIndustry(organizationId, selectedIndustry, selectedSubIndustry);
+        toast.success('Industry preferences saved!');
+      } catch (error) {
+        console.error('Error saving industry:', error);
       }
-    } catch (error) {
-      console.error('Feedback error:', error);
-      toast.error('Failed to save feedback');
     }
+    
+    await updateAnalytics({ step_reached: 2 });
+    setStep(2);
   };
 
-  const handleSkipFeedback = async () => {
+  const handleSkipIndustry = async () => {
+    await updateAnalytics({ step_reached: 2 });
+    setStep(2);
+  };
+
+  const handleFeedbackSubmit = async () => {
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    
+    if (quickFeedback) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('onboarding_feedback').insert({
+          user_id: user.id,
+          rating: quickFeedback === 'positive' ? 5 : 2,
+          would_recommend: quickFeedback === 'positive',
+        });
+      }
+    }
+
     await updateAnalytics({ 
       completed: true,
       completed_at: new Date().toISOString(),
       time_spent_seconds: timeSpent
     });
 
-    const challenge = challenges.find(c => c.id === selectedChallenge);
-    if (challenge && challenge.route) {
-      onComplete();
-      navigate(challenge.route);
-    } else {
-      onComplete();
-      navigate('/');
-    }
+    onComplete();
+    navigate('/');
   };
-
-  const progress = (step / 4) * 100;
 
   const handleSkipOnboarding = async () => {
     const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -309,6 +213,12 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     onComplete();
     navigate('/');
   };
+
+  // 3 steps now: Quick Start → Industry (optional) → Quick Feedback
+  const totalSteps = 3;
+  const progress = ((step + 1) / totalSteps) * 100;
+  
+  const stepLabels = ['Get Started', 'Personalize', 'Done'];
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -331,9 +241,25 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
         <Card className="p-8">
           <div className="mb-8">
+            {/* Step indicators with labels */}
+            <div className="flex justify-between mb-2">
+              {stepLabels.map((label, idx) => (
+                <div 
+                  key={idx} 
+                  className={`text-xs font-medium ${
+                    idx <= step ? 'text-primary' : 'text-muted-foreground'
+                  }`}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
             <Progress value={progress} className="h-2" />
             <div className="flex justify-between items-center mt-2">
-              <p className="text-sm text-muted-foreground">Step {step + 1} of 4</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Clock className="h-3 w-3" />
+                ~{step === 0 ? '30 seconds' : step === 1 ? '1 minute' : '10 seconds'} remaining
+              </p>
               <Button variant="link" size="sm" onClick={handleSkipOnboarding} className="text-muted-foreground h-auto p-0">
                 Skip for now
               </Button>
@@ -341,6 +267,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           </div>
 
           <AnimatePresence mode="wait">
+            {/* Step 0: Quick Start Options - Show value FIRST */}
             {step === 0 && (
               <motion.div
                 key="step0"
@@ -349,9 +276,141 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-3xl font-bold mb-4">Welcome to BARYON!</h2>
+                <h2 className="text-3xl font-bold mb-2">Welcome to {BRAND_NAME}!</h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  See the platform in action in seconds. Choose how you'd like to start:
+                </p>
+
+                <div className="space-y-4">
+                  {/* Sample Data - PRIMARY option with Recommended badge */}
+                  <Card 
+                    className="p-6 cursor-pointer border-primary bg-primary/5 hover:bg-primary/10 transition-all" 
+                    onClick={() => handleQuickStartSelection('sample')}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/20 rounded-lg">
+                        <Database className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-semibold">Explore with Sample Data</h3>
+                          <Badge className="bg-primary text-primary-foreground">Recommended</Badge>
+                        </div>
+                        <p className="text-muted-foreground mb-2">
+                          Instantly see dashboards, reports, and analytics with realistic manufacturing data
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-primary">
+                          <Clock className="h-4 w-4" />
+                          ~5 seconds
+                        </div>
+                      </div>
+                      <Button className="shrink-0">
+                        Start Now
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Import Data */}
+                  <Card 
+                    className="p-6 cursor-pointer hover:border-primary transition-all" 
+                    onClick={() => handleQuickStartSelection('import')}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-1">Import Your Data</h3>
+                        <p className="text-muted-foreground mb-2">
+                          Upload a CSV file with your existing emissions data
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          ~2 minutes
+                        </div>
+                      </div>
+                      <Button variant="outline" className="shrink-0">
+                        Import
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Manual Entry */}
+                  <Card 
+                    className="p-6 cursor-pointer hover:border-primary transition-all" 
+                    onClick={() => handleQuickStartSelection('manual')}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-1">Manual Entry</h3>
+                        <p className="text-muted-foreground mb-2">
+                          Add your first emissions entry with our guided wizard
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          ~10 minutes
+                        </div>
+                      </div>
+                      <Button variant="outline" className="shrink-0">
+                        Start
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+
+                <div className="mt-6 pt-6 border-t">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Or jump to a specific feature:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {challenges.map((challenge) => (
+                      <Button
+                        key={challenge.id}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleChallengeSelect(challenge.id)}
+                        className="gap-2"
+                      >
+                        <challenge.icon className="h-4 w-4" />
+                        {challenge.title}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <Button variant="ghost" onClick={() => setStep(1)}>
+                    Personalize my experience first
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 1: Industry Selection (Optional) */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <h2 className="text-3xl font-bold">Personalize Your Experience</h2>
+                  <ContextualHelp 
+                    content="Selecting your industry helps us show relevant emission factors, report templates, and benchmarks specific to your sector." 
+                    size="md"
+                  />
+                </div>
                 <p className="text-lg text-muted-foreground mb-6">
-                  First, tell us about your industry so we can personalize your experience.
+                  Select your industry for customized emission factors and report templates.
                 </p>
 
                 <IndustrySelector
@@ -369,311 +428,76 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   </div>
                 )}
 
-                <div className="mt-8 flex justify-end">
-                  <Button 
-                    onClick={handleIndustryContinue}
-                    disabled={!selectedIndustry}
-                    size="lg"
-                  >
-                    Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
+                <div className="mt-8 flex justify-between">
+                  <Button variant="ghost" onClick={() => setStep(0)}>
+                    Back
                   </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-3xl font-bold mb-4">
-                  Welcome to BARYON!
-                </h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  Let's get you started. What's your biggest challenge right now?
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  {challenges.map((challenge) => (
-                    <motion.div
-                      key={challenge.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={handleSkipIndustry}>
+                      Skip for now
+                    </Button>
+                    <Button 
+                      onClick={handleIndustryContinue}
+                      disabled={!selectedIndustry}
                     >
-                      <Card
-                        className={`p-6 cursor-pointer transition-all h-full ${
-                          selectedChallenge === challenge.id 
-                            ? 'border-primary bg-primary/5' 
-                            : 'hover:border-primary'
-                        }`}
-                        onClick={() => handleChallengeSelect(challenge.id)}
-                      >
-                        <challenge.icon className="h-10 w-10 mb-4 text-primary" />
-                        <h3 className="text-lg font-semibold mb-2">
-                          {challenge.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {challenge.description}
-                        </p>
-                        
-                        {challenge.id === 'custom' && selectedChallenge === 'custom' && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="mt-4"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Textarea
-                              placeholder="Describe your biggest carbon management challenge in your own words... (e.g., 'We have 50 facilities across 12 countries and need to prepare for CSRD by 2025')"
-                              value={customInput}
-                              onChange={(e) => setCustomInput(e.target.value)}
-                              className="min-h-[120px] mb-3"
-                            />
-                            <Button
-                              onClick={handleCustomInputSubmit}
-                              disabled={isAnalyzing || !customInput.trim()}
-                              className="w-full"
-                            >
-                              {isAnalyzing ? (
-                                <>
-                                  <Sparkles className="mr-2 h-4 w-4 animate-pulse" />
-                                  Analyzing...
-                                </>
-                              ) : (
-                                <>
-                                  Analyze My Needs
-                                  <ChevronRight className="ml-2 h-4 w-4" />
-                                </>
-                              )}
-                            </Button>
-                          </motion.div>
-                        )}
-                      </Card>
-                    </motion.div>
-                  ))}
+                      Continue
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             )}
 
-            {step === 2 && selectedChallenge && (
+            {/* Step 2: Simple Feedback - One question only */}
+            {step === 2 && (
               <motion.div
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
+                className="text-center"
               >
-                {aiRecommendation && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-primary/10 border border-primary/20 rounded-lg p-6 mb-6 space-y-3"
+                <div className="mb-8">
+                  <div className="inline-flex p-4 rounded-full bg-primary/10 mb-4">
+                    <Sparkles className="h-12 w-12 text-primary" />
+                  </div>
+                  <h2 className="text-3xl font-bold mb-2">You're all set!</h2>
+                  <p className="text-lg text-muted-foreground">
+                    Quick question before you explore the dashboard:
+                  </p>
+                </div>
+
+                <div className="max-w-md mx-auto">
+                  <p className="font-medium mb-4">Was this setup process helpful?</p>
+                  <div className="flex justify-center gap-4 mb-8">
+                    <Button
+                      size="lg"
+                      variant={quickFeedback === 'positive' ? 'default' : 'outline'}
+                      onClick={() => setQuickFeedback('positive')}
+                      className="gap-2 px-8"
+                    >
+                      <ThumbsUp className="h-5 w-5" />
+                      Yes
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant={quickFeedback === 'negative' ? 'default' : 'outline'}
+                      onClick={() => setQuickFeedback('negative')}
+                      className="gap-2 px-8"
+                    >
+                      <ThumbsDown className="h-5 w-5" />
+                      Could be better
+                    </Button>
+                  </div>
+
+                  <Button 
+                    size="lg" 
+                    className="w-full" 
+                    onClick={handleFeedbackSubmit}
                   >
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">
-                          AI Recommendation: {getRecommendedPathLabel(aiRecommendation.recommendedPath)}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {aiRecommendation.reasoning}
-                        </p>
-                        {aiRecommendation.keywords.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {aiRecommendation.keywords.map((keyword, idx) => (
-                              <span
-                                key={idx}
-                                className="text-xs bg-primary/20 text-primary px-2 py-1 rounded"
-                              >
-                                {keyword}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                <h2 className="text-3xl font-bold mb-4">
-                  Quick Start Options
-                </h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  {aiRecommendation 
-                    ? 'Here are your personalized options based on your needs:'
-                    : 'Choose how you\'d like to begin:'}
-                </p>
-
-                <div className="space-y-4">
-                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('import')}>
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-lg">
-                        <Upload className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">
-                          Import Existing Data
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          Upload your CSV files and we'll validate and import your emissions data automatically
-                        </p>
-                        <Button>
-                          Start Import
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('sample')}>
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-secondary/10 rounded-lg">
-                        <Target className="h-6 w-6 text-secondary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">
-                          Explore with Sample Data
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          See the platform in action with pre-loaded sample data from a manufacturing company
-                        </p>
-                        <Button variant="outline">
-                          View Sample Dashboard
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className="p-6 card-hover cursor-pointer" onClick={() => handleQuickStartSelection('manual')}>
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-accent/10 rounded-lg">
-                        <CheckCircle2 className="h-6 w-6 text-accent" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">
-                          Manual Entry
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          Add your first emissions entry manually with our guided wizard
-                        </p>
-                        <Button variant="outline">
-                          Add Entry
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                <div className="mt-8 flex justify-between">
-                  <Button variant="ghost" onClick={() => setStep(1)}>
-                    Back
-                  </Button>
-                  <Button variant="ghost" onClick={() => handleQuickStartSelection('skip')}>
-                    Skip for now
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-3xl font-bold mb-4">
-                  How was your experience?
-                </h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  Your feedback helps us improve the onboarding experience for everyone.
-                </p>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-medium mb-3 block">
-                      Rate your onboarding experience *
-                    </label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => setRating(star)}
-                          className="transition-colors"
-                        >
-                          <Star
-                            className={`h-8 w-8 ${
-                              star <= rating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-muted-foreground'
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      What did you think of the onboarding? (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Tell us about your experience..."
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      What could we improve? (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Share your suggestions for improvement..."
-                      value={improvements}
-                      onChange={(e) => setImprovements(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-3 block">
-                      Would you recommend CarbonTrack to a colleague?
-                    </label>
-                    <div className="flex gap-3">
-                      <Button
-                        variant={wouldRecommend === true ? "default" : "outline"}
-                        onClick={() => setWouldRecommend(true)}
-                        className="flex-1"
-                      >
-                        👍 Yes
-                      </Button>
-                      <Button
-                        variant={wouldRecommend === false ? "default" : "outline"}
-                        onClick={() => setWouldRecommend(false)}
-                        className="flex-1"
-                      >
-                        👎 No
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-between">
-                  <Button variant="ghost" onClick={handleSkipFeedback}>
-                    Skip Feedback
-                  </Button>
-                  <Button onClick={handleSubmitFeedback} disabled={rating === 0}>
-                    Submit & Continue
-                    <Send className="ml-2 h-4 w-4" />
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               </motion.div>

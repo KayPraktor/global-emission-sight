@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { InteractiveProductTour } from '@/components/ProductTour/InteractiveProductTour';
 import { DemoVideoSection } from '@/components/ProductTour/DemoVideoSection';
+import { BRAND_NAME } from '@/lib/constants';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Building2 className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold gradient-heading">CarbonTrack</span>
+              <span className="text-2xl font-bold gradient-heading">{BRAND_NAME}</span>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="ghost" onClick={() => navigate('/roi-calculator')}>
@@ -382,10 +383,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-primary" />
-              <span className="font-semibold">CarbonTrack</span>
+              <span className="font-semibold">{BRAND_NAME}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 CarbonTrack. Empowering sustainable manufacturing.
+              © 2024 {BRAND_NAME}. Empowering sustainable manufacturing.
             </p>
           </div>
         </div>
