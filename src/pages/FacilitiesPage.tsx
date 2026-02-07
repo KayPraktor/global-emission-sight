@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { StaggeredList } from '@/components/ui/page-transitions';
 
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -274,7 +275,7 @@ export default function FacilitiesPage() {
       {!isLoading && facilities.length > 0 && (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StaggeredList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.05}>
               {facilities.map((facility) => (
                 <FacilityCard
                   key={facility.id}
@@ -285,7 +286,7 @@ export default function FacilitiesPage() {
                   emissionsCount={getEmissionsCount(facility.id)}
                 />
               ))}
-            </div>
+            </StaggeredList>
           ) : (
             <FacilitiesMap 
               facilities={facilities} 

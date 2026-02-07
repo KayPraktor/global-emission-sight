@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Atom,
   BarChart3,
@@ -105,19 +106,27 @@ export function AppSidebar() {
   };
 
   const renderNavItem = (item: typeof navItems[0]) => (
-    <SidebarMenuItem key={item.name}>
+    <SidebarMenuItem key={item.name} className="relative">
       <SidebarMenuButton 
         asChild 
         isActive={isActive(item.path)}
         tooltip={item.description || item.name}
       >
-        <Link to={item.path} className="flex items-center justify-between w-full">
-          <span className="flex items-center gap-2">
+        <Link to={item.path} className="flex items-center justify-between w-full relative">
+          {isActive(item.path) && (
+            <motion.div
+              layoutId="sidebar-active-indicator"
+              className="absolute inset-0 bg-sidebar-accent rounded-md"
+              initial={false}
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+            />
+          )}
+          <span className="flex items-center gap-2 relative z-10">
             {item.icon}
             <span>{item.name}</span>
           </span>
           {item.showBadge && item.badge && item.badge > 0 && (
-            <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs">
+            <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs relative z-10">
               {item.badge > 99 ? '99+' : item.badge}
             </Badge>
           )}
