@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { analytics, trackAuth } from '@/services/analyticsTrackingService';
 
 interface Organization {
   id: string;
@@ -54,6 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: (orgData.organizations as any)?.name || 'Organization',
           role: orgData.role as 'owner' | 'admin' | 'member',
         });
+        
+        // Update analytics with organization context
+        analytics.setUserContext(userId, orgData.organization_id);
       }
 
       // Fetch user roles
@@ -85,9 +89,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           setTimeout(() => fetchUserData(session.user.id), 0);
+          
+          // Initialize analytics with user context
+          analytics.initialize(session.user.id, null);
+          
+          // Track session start on sign in
+          if (event === 'SIGNED_IN') {
+            trackAuth.sessionStarted();
+          }
         } else {
           setOrganization(null);
           setRoles([]);
+          analytics.setUserContext(null, null);
         }
         
         setLoading(false);
@@ -110,6 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, userData: SignUpData) => {
+    trackAuth.started('signup');
+    const startTime = Date.now();
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -122,8 +137,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     if (error) {
+      trackAuth.failed('signup', error.message);
       toast.error(error.message);
     } else {
+      trackAuth.completed('signup', Date.now() - startTime);
       toast.success('Account created successfully!');
     }
     
@@ -131,14 +148,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
+    trackAuth.started('signin');
+    const startTime = Date.now();
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
     if (error) {
+      trackAuth.failed('signin', error.message);
       toast.error(error.message);
     } else {
+      trackAuth.completed('signin', Date.now() - startTime);
       toast.success('Welcome back!');
     }
     

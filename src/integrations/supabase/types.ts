@@ -1762,6 +1762,50 @@ export type Database = {
           },
         ]
       }
+      feature_usage: {
+        Row: {
+          created_at: string | null
+          feature_name: string
+          first_used_at: string | null
+          id: string
+          last_used_at: string | null
+          organization_id: string | null
+          period_start: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_name: string
+          first_used_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          organization_id?: string | null
+          period_start: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_name?: string
+          first_used_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          organization_id?: string | null
+          period_start?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           baseline_emissions: number | null
@@ -3426,6 +3470,50 @@ export type Database = {
             columns: ["emission_factor_id"]
             isOneToOne: false
             referencedRelation: "emission_factors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_events: {
+        Row: {
+          created_at: string | null
+          event_category: string | null
+          event_name: string
+          event_properties: Json | null
+          id: string
+          organization_id: string | null
+          page_path: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_category?: string | null
+          event_name: string
+          event_properties?: Json | null
+          id?: string
+          organization_id?: string | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_category?: string | null
+          event_name?: string
+          event_properties?: Json | null
+          id?: string
+          organization_id?: string | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
