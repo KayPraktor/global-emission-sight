@@ -13,12 +13,11 @@ import { Settings } from 'lucide-react';
 
 const ReportsPage = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Emissions Reports</h1>
-          <p className="text-gray-500">View, analyze, and export your emissions data</p>
-        </div>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">Emissions Reports</h1>
+        <p className="text-muted-foreground">View, analyze, and export your emissions data</p>
+      </div>
         
         <Tabs defaultValue="monthly" className="mb-6">
           <TabsList className="mb-4 flex-wrap h-auto gap-1">
@@ -78,8 +77,7 @@ const ReportsPage = () => {
           <TabsContent value="templates">
             <ReportTemplates />
           </TabsContent>
-        </Tabs>
-      </main>
+      </Tabs>
     </div>
   );
 };
