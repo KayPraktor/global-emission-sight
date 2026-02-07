@@ -31,13 +31,13 @@ const ProcessFlowMap: React.FC = () => {
           <div className="flex items-center justify-around">
             {/* Step 1 */}
             <div className="flex flex-col items-center">
-              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-white shadow-sm">
+              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-card shadow-sm">
                 <span className="text-sm font-medium">Raw Material Processing</span>
                 <div className="mt-2">
                   <Badge variant="outline" className="bg-green-50 text-green-700">Efficient</Badge>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-muted-foreground">
                 <CheckCircle className="h-4 w-4 inline mr-1 text-green-600" />
                 <span>92% efficiency</span>
               </div>
@@ -48,13 +48,13 @@ const ProcessFlowMap: React.FC = () => {
 
             {/* Step 2 */}
             <div className="flex flex-col items-center">
-              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-white shadow-sm border-red-300">
+              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-card shadow-sm border-red-300">
                 <span className="text-sm font-medium">Assembly</span>
                 <div className="mt-2">
                   <Badge variant="outline" className="bg-red-50 text-red-700">Bottleneck</Badge>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-muted-foreground">
                 <AlertCircle className="h-4 w-4 inline mr-1 text-red-600" />
                 <span>65% efficiency</span>
               </div>
@@ -65,13 +65,13 @@ const ProcessFlowMap: React.FC = () => {
 
             {/* Step 3 */}
             <div className="flex flex-col items-center">
-              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-white shadow-sm">
+              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-card shadow-sm">
                 <span className="text-sm font-medium">Quality Control</span>
                 <div className="mt-2">
                   <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Moderate</Badge>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-muted-foreground">
                 <AlertCircle className="h-4 w-4 inline mr-1 text-yellow-600" />
                 <span>78% efficiency</span>
               </div>
@@ -82,13 +82,13 @@ const ProcessFlowMap: React.FC = () => {
 
             {/* Step 4 */}
             <div className="flex flex-col items-center">
-              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-white shadow-sm">
+              <div className="w-32 h-24 border rounded-lg p-2 flex flex-col items-center justify-center bg-card shadow-sm">
                 <span className="text-sm font-medium">Packaging & Shipping</span>
                 <div className="mt-2">
                   <Badge variant="outline" className="bg-green-50 text-green-700">Efficient</Badge>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-muted-foreground">
                 <CheckCircle className="h-4 w-4 inline mr-1 text-green-600" />
                 <span>85% efficiency</span>
               </div>
