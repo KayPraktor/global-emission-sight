@@ -40,6 +40,7 @@ import {
 import { SankeyNodeTooltip } from './SankeyNodeTooltip';
 import { SankeyLinkTooltip } from './SankeyLinkTooltip';
 import { CategoryBreakdownTreemap } from './CategoryBreakdownTreemap';
+import { TopEmittersTable } from './TopEmittersTable';
 
 // Premium sustainability color palette
 const COLORS = {
@@ -422,6 +423,9 @@ export function Scope3SankeyDiagram({
             onClose={() => setExpandedCategory(undefined)}
           />
         )}
+
+        {/* Top Emitters Table */}
+        <TopEmittersTable totalScope3Emissions={totals.total} />
       </CardContent>
     </Card>
   );
