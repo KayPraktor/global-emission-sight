@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   Atom,
   BarChart3,
@@ -27,9 +26,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { approvalService } from '@/services/approvalService';
 import { IndustryIndicator } from '@/components/navigation/IndustryIndicator';
+import { SidebarSection, type NavItem } from '@/components/navigation/SidebarSection';
+import { PinnedNav } from '@/components/navigation/PinnedNav';
+import { useSidebarPreferences } from '@/hooks/useSidebarPreferences';
 
 import { 
   Sidebar,
@@ -42,11 +43,27 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+interface SectionConfig {
+  id: string;
+  title: string;
+  items: NavItem[];
+}
+
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut, isAdmin, organization } = useAuth();
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [isSupervisor, setIsSupervisor] = useState(false);
+  
+  const {
+    preferences,
+    toggleSection,
+    isSectionCollapsed,
+    expandSection,
+    isPinned,
+    togglePin,
+    unpinItem,
+  } = useSidebarPreferences();
 
   useEffect(() => {
     const checkSupervisorAndPending = async () => {
@@ -61,79 +78,91 @@ export function AppSidebar() {
     };
 
     checkSupervisorAndPending();
-    // Refresh every 30 seconds
     const interval = setInterval(checkSupervisorAndPending, 30000);
     return () => clearInterval(interval);
   }, [user]);
-  
-  const navItems = [
-    // OVERVIEW
-    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', section: 'overview', description: 'Real-time emissions overview and KPIs' },
-    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', section: 'overview', description: 'Strategic dashboards and Net Zero planning' },
-    
-    // DATA MANAGEMENT
-    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', section: 'data', description: 'Record emissions data and activities' },
-    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', section: 'data', badge: pendingApprovals, showBadge: isSupervisor, description: 'Review and approve data submissions' },
-    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', section: 'data', description: 'Manage your sites and locations' },
-    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', section: 'data', description: 'Conversion factors for calculations' },
-    
-    // ANALYSIS & PLANNING
-    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', section: 'analysis', description: 'Trends, anomalies, and forecasting' },
-    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', section: 'analysis', description: 'Indirect emissions in your value chain' },
-    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', section: 'analysis', description: 'Track supplier sustainability data' },
-    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', section: 'analysis', description: 'Model reduction pathways' },
-    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', section: 'analysis', description: 'Set and track reduction targets' },
-    
-    // REPORTING & COMPLIANCE
-    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', section: 'reporting', description: 'Generate compliance reports' },
-    { name: 'Board Reporting', icon: <Presentation className="h-4 w-4" />, path: '/board-reporting', section: 'reporting', description: 'Executive reports and governance' },
-    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', section: 'reporting', description: 'CSRD, ISSB and framework tracking' },
-    { name: 'Materiality', icon: <BarChart3 className="h-4 w-4" />, path: '/materiality', section: 'reporting', description: 'Double materiality assessment' },
-    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', section: 'reporting', description: 'Data change history and logs' },
-    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', section: 'reporting', description: 'Carbon credits and pricing' },
-    
-    // ADMINISTRATION
-    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', section: 'admin', description: 'Configure your preferences' },
-  ];
 
-  const adminNavItems = [
-    { name: 'Admin', icon: <Shield className="h-4 w-4" />, path: '/admin' },
-  ];
+  // Define all navigation items
+  const allNavItems: NavItem[] = useMemo(() => [
+    // Overview
+    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', description: 'Real-time emissions overview and KPIs' },
+    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', description: 'Strategic dashboards and Net Zero planning' },
+    // Data Management
+    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', description: 'Record emissions data and activities' },
+    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', badge: pendingApprovals, showBadge: isSupervisor, description: 'Review and approve data submissions' },
+    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', description: 'Manage your sites and locations' },
+    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', description: 'Conversion factors for calculations' },
+    // Analysis & Planning
+    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', description: 'Trends, anomalies, and forecasting' },
+    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', description: 'Indirect emissions in your value chain' },
+    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', description: 'Track supplier sustainability data' },
+    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', description: 'Model reduction pathways' },
+    { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', description: 'Set and track reduction targets' },
+    // Reporting
+    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', description: 'Generate compliance reports' },
+    { name: 'Board Reporting', icon: <Presentation className="h-4 w-4" />, path: '/board-reporting', description: 'Executive reports and governance' },
+    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', description: 'CSRD, ISSB and framework tracking' },
+    { name: 'Materiality', icon: <BarChart3 className="h-4 w-4" />, path: '/materiality', description: 'Double materiality assessment' },
+    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', description: 'Data change history and logs' },
+    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', description: 'Carbon credits and pricing' },
+    // Admin
+    { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', description: 'Configure your preferences' },
+  ], [pendingApprovals, isSupervisor]);
+
+  // Define sections with their items
+  const sections: SectionConfig[] = useMemo(() => [
+    {
+      id: 'overview',
+      title: 'Overview',
+      items: allNavItems.filter(item => ['/', '/enterprise'].includes(item.path)),
+    },
+    {
+      id: 'data',
+      title: 'Data Management',
+      items: allNavItems.filter(item => 
+        ['/data-entry', '/approvals', '/facilities', '/emission-factors'].includes(item.path)
+      ),
+    },
+    {
+      id: 'analysis',
+      title: 'Analysis & Planning',
+      items: allNavItems.filter(item => 
+        ['/analytics', '/scope3', '/suppliers', '/scenario-planning', '/goals'].includes(item.path)
+      ),
+    },
+    {
+      id: 'reporting',
+      title: 'Reporting',
+      items: allNavItems.filter(item => 
+        ['/reports', '/board-reporting', '/compliance', '/materiality', '/audit', '/financial'].includes(item.path)
+      ),
+    },
+    {
+      id: 'admin',
+      title: 'Administration',
+      items: allNavItems.filter(item => ['/settings'].includes(item.path)),
+    },
+  ], [allNavItems]);
+
+  // Auto-expand section containing active route
+  useEffect(() => {
+    const currentPath = location.pathname;
+    for (const section of sections) {
+      const hasActiveItem = section.items.some(item => {
+        if (item.path === '/') return currentPath === '/';
+        return currentPath.startsWith(item.path);
+      });
+      if (hasActiveItem && isSectionCollapsed(section.id)) {
+        expandSection(section.id);
+        break;
+      }
+    }
+  }, [location.pathname, sections, isSectionCollapsed, expandSection]);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
-
-  const renderNavItem = (item: typeof navItems[0]) => (
-    <SidebarMenuItem key={item.name} className="relative">
-      <SidebarMenuButton 
-        asChild 
-        isActive={isActive(item.path)}
-        tooltip={item.description || item.name}
-      >
-        <Link to={item.path} className="flex items-center justify-between w-full relative">
-          {isActive(item.path) && (
-            <motion.div
-              layoutId="sidebar-active-indicator"
-              className="absolute inset-0 bg-sidebar-accent rounded-md"
-              initial={false}
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            />
-          )}
-          <span className="flex items-center gap-2 relative z-10">
-            {item.icon}
-            <span>{item.name}</span>
-          </span>
-          {item.showBadge && item.badge && item.badge > 0 && (
-            <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs relative z-10">
-              {item.badge > 99 ? '99+' : item.badge}
-            </Badge>
-          )}
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
 
   return (
     <Sidebar>
@@ -146,52 +175,44 @@ export function AppSidebar() {
       </SidebarHeader>
       
       <SidebarContent className="p-2">
-        <SidebarMenu>
-          {/* Overview Section */}
-          <div className="px-3 py-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Overview</span>
-          </div>
-          {navItems.filter(item => item.section === 'overview').map(renderNavItem)}
-          
-          {/* Data Management Section */}
-          <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Data Management</span>
-          </div>
-          {navItems.filter(item => item.section === 'data').map(renderNavItem)}
-          
-          {/* Analysis & Planning Section */}
-          <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Analysis & Planning</span>
-          </div>
-          {navItems.filter(item => item.section === 'analysis').map(renderNavItem)}
-          
-          {/* Reporting Section */}
-          <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Reporting</span>
-          </div>
-          {navItems.filter(item => item.section === 'reporting').map(renderNavItem)}
-          
-          {/* Administration Section */}
-          <div className="px-3 py-2 mt-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">Administration</span>
-          </div>
-          {navItems.filter(item => item.section === 'admin').map(renderNavItem)}
-          
-          {isAdmin && adminNavItems.map((item) => (
-            <SidebarMenuItem key={item.name}>
+        {/* Pinned Quick Access */}
+        <PinnedNav
+          pinnedPaths={preferences.pinnedItems}
+          allItems={allNavItems}
+          onUnpin={unpinItem}
+        />
+
+        {/* Collapsible Sections */}
+        {sections.map(section => (
+          <SidebarSection
+            key={section.id}
+            id={section.id}
+            title={section.title}
+            items={section.items}
+            isCollapsed={isSectionCollapsed(section.id)}
+            onToggle={() => toggleSection(section.id)}
+            isPinned={isPinned}
+            onTogglePin={togglePin}
+          />
+        ))}
+
+        {/* Admin-only items */}
+        {isAdmin && (
+          <SidebarMenu className="mt-2">
+            <SidebarMenuItem>
               <SidebarMenuButton 
                 asChild 
-                isActive={isActive(item.path)}
-                tooltip={item.name}
+                isActive={isActive('/admin')}
+                tooltip="Admin Panel"
               >
-                <Link to={item.path}>
-                  {item.icon}
-                  <span>{item.name}</span>
+                <Link to="/admin">
+                  <Shield className="h-4 w-4" />
+                  <span>Admin</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+          </SidebarMenu>
+        )}
       </SidebarContent>
       
       <SidebarFooter className="p-4 mt-auto border-t">
