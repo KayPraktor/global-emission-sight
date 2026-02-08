@@ -1,170 +1,279 @@
 
 
-# Sidebar Icon & Spacing Enhancement Plan
+# Scope 3 Sankey Diagram Implementation
 
-## Problem Analysis
+## Overview
 
-The current sidebar has these scannability issues:
-
-| Issue | Example | Impact |
-|-------|---------|--------|
-| Duplicate icons | `Building2` used for Executive AND Facilities | Confusion |
-| Generic icons | `Database` for Emission Factors, `BarChart3` for Materiality | Hard to distinguish |
-| Uniform sizing | All icons 16x16px | No visual hierarchy |
-| Tight spacing | 8px gap between icon and text | Visual crowding |
-| No color coding | All icons use same color | Harder to scan |
+This plan replaces the standard bar/pie charts in the Scope 3 Dashboard with an interactive **Sankey Diagram** as the primary visualization, showing the flow of emissions from your organization through the value chain.
 
 ---
 
-## Proposed Icon Replacements
+## Data Flow Visualization
 
-| Item | Current Icon | Proposed Icon | Reason |
-|------|-------------|---------------|--------|
-| Dashboard | `Home` | `LayoutDashboard` | More specific to dashboards |
-| Executive | `Building2` | `Crown` or `Gauge` | Differentiates from Facilities |
-| Data Entry | `ClipboardList` | `PenLine` | Clearer data input metaphor |
-| Approvals | `ClipboardCheck` | `CheckCircle2` | More recognizable approval symbol |
-| Facilities | `Building2` | `Factory` | Industry-specific, distinctive |
-| Emission Factors | `Database` | `Calculator` or `Sigma` | Represents conversion/calculation |
-| Analytics | `LineChart` | `TrendingUp` | Dynamic analysis feel |
-| Scope 3 & Supply Chain | `Link2` | `Network` or `GitBranch` | Chain/network visualization |
-| Suppliers | `Users` | `Truck` or `Package` | Supply chain specific |
-| Scenario Planning | `TrendingUp` | `Route` or `Workflow` | Path/scenario metaphor |
-| Goals | `Target` | Keep | Already distinctive |
-| Reports | `FileSpreadsheet` | `FileText` or `FileOutput` | Cleaner output feel |
-| Board Reporting | `Presentation` | Keep | Already good |
-| Compliance | `FileCheck` | `ShieldCheck` | Authority/compliance feel |
-| Materiality | `BarChart3` | `Scale` or `Layers` | Balance/assessment metaphor |
-| Audit Trail | `ScrollText` | `History` or `Clock` | Time-based tracking |
-| Financial | `Wallet` | `Coins` or `CircleDollarSign` | More distinctive |
-| Settings | `Settings` | Keep | Universal |
+The Sankey diagram will visualize emissions flowing through this hierarchy:
+
+```text
+                                          ┌─► Cat 1: Purchased Goods (45.2K)
+                                          │     └─► Supplier A (12.5K)
+                                          │     └─► Supplier B (8.2K)
+                                          │
+              ┌─► Upstream (84.1K) ───────┼─► Cat 4: Transport (12.8K)
+              │                           │     └─► FastFreight (4.5K)
+              │                           │
+Organization ─┤                           └─► Cat 6: Travel (3.4K)
+(139.5K)      │
+              │                           ┌─► Cat 11: Product Use (32K)
+              └─► Downstream (55.4K) ─────┤
+                                          └─► Cat 9: Distribution (9.6K)
+```
 
 ---
 
-## Spacing Improvements
+## Technical Implementation
 
-### Current Spacing Issues
-```
-┌─────────────────────────┐
-│ 🏠 Dashboard           │  <- gap-2 (8px) feels cramped
-│ 🏢 Executive           │  <- items too close vertically
-└─────────────────────────┘
-```
+### Library Choice
 
-### Proposed Spacing
-```
-┌─────────────────────────┐
-│   🏠  Dashboard        │  <- gap-3 (12px) more breathing room
-│                        │  <- py-2.5 for comfortable touch targets
-│   👑  Executive        │
-└─────────────────────────┘
-```
+**Recharts Sankey** (already installed in `recharts ^2.12.7`)
+- Built-in Sankey component at `recharts/chart/Sankey.js`
+- Consistent API with existing charts in the codebase
+- No additional dependencies required
 
-### Specific Changes
+### Component Architecture
 
-| Element | Current | Proposed | Change |
-|---------|---------|----------|--------|
-| Icon-to-text gap | `gap-2` (8px) | `gap-3` (12px) | +4px |
-| Item vertical padding | Implicit | `py-2` or `py-2.5` | Taller touch targets |
-| Section header margin | `mt-2` | `mt-4` | More section separation |
-| Icon wrapper | None | 24x24px container | Consistent alignment |
+| File | Purpose |
+|------|---------|
+| `src/components/Scope3/Scope3SankeyDiagram.tsx` | Main Sankey visualization component |
+| `src/utils/scope3SankeyTransform.ts` | Data transformation utilities |
+| `src/components/Scope3/SankeyNodeTooltip.tsx` | Custom tooltip for nodes |
+| `src/components/Scope3/SankeyLinkTooltip.tsx` | Custom tooltip for flow links |
 
 ---
 
-## Optional: Subtle Icon Color Coding
+## New File: Sankey Data Transformer
 
-Add category-specific icon colors for instant visual grouping:
+Create a utility to transform the existing `Scope3Summary[]` data into the Sankey format:
 
-| Category | Icon Tint | Rationale |
-|----------|-----------|-----------|
-| Overview | Primary blue | Core navigation |
-| Data Management | Green | Data input/action |
-| Analysis | Purple | Insights/intelligence |
-| Reporting | Amber | Output/documents |
-| Administration | Gray | System settings |
+```typescript
+// src/utils/scope3SankeyTransform.ts
+interface SankeyNode {
+  name: string;
+  category?: number;
+  emissions?: number;
+}
 
-Implementation: Add a subtle `text-{color}-500/70` class to icons based on their section.
+interface SankeyLink {
+  source: number;  // Index into nodes array
+  target: number;
+  value: number;
+}
+
+interface SankeyData {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+}
+
+function transformToSankeyData(
+  summary: Scope3Summary[],
+  hotspots: Scope3Hotspot[],
+  totals: { upstream: number; downstream: number }
+): SankeyData {
+  // Node indices:
+  // 0: Organization (root)
+  // 1: Upstream
+  // 2: Downstream
+  // 3+: Individual categories
+  // Additional nodes for top suppliers/contributors
+}
+```
 
 ---
+
+## New File: Sankey Diagram Component
+
+Create the main visualization component:
+
+```typescript
+// src/components/Scope3/Scope3SankeyDiagram.tsx
+import { Sankey, Tooltip, Rectangle, Layer } from 'recharts';
+
+interface Scope3SankeyDiagramProps {
+  summary: Scope3Summary[];
+  hotspots: Scope3Hotspot[];
+  totals: { total: number; upstream: number; downstream: number };
+  onNodeClick?: (categoryNumber: number) => void;
+}
+```
+
+**Features:**
+- Responsive container filling available width
+- Custom node rendering with category icons and emissions labels
+- Custom link rendering with gradient colors (upstream=blue, downstream=amber)
+- Click-to-drill interaction for viewing category details
+- Hover tooltips showing percentage of total and data quality
+
+---
+
+## Integration with Scope3Dashboard
+
+Update the Overview tab to include the Sankey diagram with a view toggle:
+
+```typescript
+// In Scope3Dashboard.tsx
+const [viewMode, setViewMode] = useState<'sankey' | 'charts'>('sankey');
+
+// Add toggle buttons
+<div className="flex gap-2">
+  <Button 
+    variant={viewMode === 'sankey' ? 'default' : 'outline'}
+    onClick={() => setViewMode('sankey')}
+  >
+    <GitBranch className="h-4 w-4 mr-2" />
+    Flow View
+  </Button>
+  <Button 
+    variant={viewMode === 'charts' ? 'default' : 'outline'}
+    onClick={() => setViewMode('charts')}
+  >
+    <BarChart3 className="h-4 w-4 mr-2" />
+    Chart View
+  </Button>
+</div>
+```
+
+---
+
+## Visual Design Specifications
+
+### Color Scheme
+
+| Element | Color | Purpose |
+|---------|-------|---------|
+| Organization node | Primary (green) | Central hub |
+| Upstream flow | Blue gradient | Categories 1-8 |
+| Downstream flow | Amber gradient | Categories 9-15 |
+| High-impact links | Thicker stroke | Visual weight |
+| Low-quality data | Dashed pattern | Indicates estimation |
+
+### Node Styling
+
+- **Rectangle nodes** with rounded corners (8px radius)
+- **Category icons** from existing `categoryIcons` mapping
+- **Emissions label** below node name
+- **Percentage badge** showing share of total
+
+### Link Styling
+
+- **Gradient fill** transitioning between source and target colors
+- **Width proportional** to emissions value
+- **Hover highlight** with increased opacity
+- **Animated flow** using subtle CSS gradient animation
+
+---
+
+## Interactivity Features
+
+### 1. Click-to-Drill
+
+Clicking a category node:
+- Expands to show top 3 contributors (suppliers/activities)
+- Creates sub-nodes connected to the category
+- Shows reduction potential in tooltip
+
+### 2. Hover Tooltips
+
+Custom tooltip showing:
+- Category name and number
+- Emissions in tCO2e
+- Percentage of total Scope 3
+- Data quality indicator (primary/secondary/estimated)
+- Top contributor preview
+
+### 3. Legend Integration
+
+Interactive legend allowing:
+- Toggle upstream/downstream visibility
+- Filter by data quality level
+- Highlight specific categories
+
+---
+
+## Mobile Responsiveness
+
+Since Sankey diagrams can be complex on small screens:
+
+| Screen Size | Behavior |
+|-------------|----------|
+| Desktop (>1024px) | Full Sankey with all nodes and drill-down |
+| Tablet (768-1024px) | Simplified Sankey, categories only |
+| Mobile (<768px) | Fallback to stacked horizontal bar chart |
+
+Implementation:
+```typescript
+const { width } = useWindowSize();
+const isMobile = width < 768;
+
+return isMobile ? (
+  <Scope3StackedBarFallback data={summary} />
+) : (
+  <Scope3SankeyDiagram ... />
+);
+```
+
+---
+
+## Files to Create
+
+| File | Lines (est.) | Description |
+|------|--------------|-------------|
+| `src/utils/scope3SankeyTransform.ts` | ~120 | Data transformation utilities |
+| `src/components/Scope3/Scope3SankeyDiagram.tsx` | ~280 | Main Sankey component |
+| `src/components/Scope3/SankeyNodeTooltip.tsx` | ~60 | Custom node tooltip |
+| `src/components/Scope3/SankeyLinkTooltip.tsx` | ~50 | Custom link tooltip |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/navigation/AppSidebar.tsx` | Replace icons with more distinctive ones |
-| `src/components/navigation/SidebarSection.tsx` | Improve spacing in nav items |
-| `src/components/navigation/PinnedNav.tsx` | Match new spacing |
+| `src/components/Scope3/Scope3Dashboard.tsx` | Add Sankey import, view toggle, integrate diagram |
+| `src/pages/Scope3Page.tsx` | No changes needed (uses Scope3Dashboard) |
 
 ---
 
-## Implementation Details
+## Demo Data Enhancement
 
-### 1. Icon Updates (AppSidebar.tsx)
+Extend `scope3DemoData.ts` to include supplier breakdown for Sankey sub-nodes:
 
-Replace the icon imports and assignments:
-- Import new icons: `LayoutDashboard`, `Crown`, `PenLine`, `Factory`, `Calculator`, `Network`, `Route`, `ShieldCheck`, `Scale`, `History`, `Coins`
-- Update each nav item with the more distinctive icon
-- Keep icon size at `h-4 w-4` but wrap in a consistent container
-
-### 2. Spacing Updates (SidebarSection.tsx)
-
-Modify the nav item layout:
-- Increase `gap-2` to `gap-3` for icon-to-text spacing
-- Add explicit padding to menu items
-- Increase section header top margin from `mt-2` to `mt-4`
-
-### 3. Icon Container (Optional Enhancement)
-
-Wrap icons in a subtle rounded container:
-```tsx
-<span className="flex items-center justify-center w-6 h-6 rounded-md bg-sidebar-accent/30">
-  {item.icon}
-</span>
-```
-
-This provides:
-- Consistent icon alignment
-- Visual weight to the icon column
-- Easier eye tracking down the sidebar
-
----
-
-## Visual Before/After
-
-```text
-BEFORE:                         AFTER:
-┌───────────────────────┐      ┌───────────────────────┐
-│▶ DATA MANAGEMENT      │      │▶ DATA MANAGEMENT      │
-│ 📋 Data Entry         │      │                       │
-│ ✓ Approvals       3   │      │  ✏️  Data Entry       │
-│ 🏢 Facilities         │      │                       │
-│ 💾 Emission Factors   │      │  ✓  Approvals      3  │
-├───────────────────────┤      │                       │
-│▶ REPORTING            │      │  🏭  Facilities       │
-│ 📊 Reports            │      │                       │
-│ 📊 Materiality        │      │  🧮  Emission Factors │
-│ 📊 Compliance         │      │                       │
-└───────────────────────┘      ├───────────────────────┤
-                               │                       │
-Same icon for 3 items!         │▶ REPORTING            │
-Hard to scan quickly           │                       │
-                               │  📄  Reports          │
-                               │                       │
-                               │  ⚖️  Materiality      │
-                               │                       │
-                               │  🛡️  Compliance       │
-                               └───────────────────────┘
-                               
-                               Unique icons per item!
-                               More vertical breathing room
+```typescript
+export interface SankeySupplierNode {
+  categoryNumber: number;
+  suppliers: {
+    name: string;
+    emissions: number;
+    dataQuality: string;
+  }[];
+}
 ```
 
 ---
 
-## Technical Summary
+## Technical Considerations
 
-1. **Icon replacements**: 11 icons updated for better semantic clarity
-2. **Spacing increase**: Icon-to-text gap from 8px to 12px
-3. **Section separation**: Header margin from 8px to 16px
-4. **Touch targets**: More comfortable vertical spacing for items
+### Performance
+
+- Memoize Sankey data transformation with `useMemo`
+- Limit visible nodes to prevent overcrowding (max 25 nodes)
+- Use virtualization for large supplier lists in drill-down
+
+### Accessibility
+
+- ARIA labels for nodes describing emissions values
+- Keyboard navigation between nodes
+- High-contrast mode support for links
+- Screen reader announcements for drill-down actions
+
+### Animation
+
+- Entry animation: nodes fade in, links draw from left to right
+- Drill-down animation: new nodes expand from parent
+- Hover animation: link opacity and thickness increase
 
