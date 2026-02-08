@@ -39,6 +39,7 @@ import {
 } from '@/utils/scope3SankeyTransform';
 import { SankeyNodeTooltip } from './SankeyNodeTooltip';
 import { SankeyLinkTooltip } from './SankeyLinkTooltip';
+import { CategoryBreakdownTreemap } from './CategoryBreakdownTreemap';
 
 // Premium sustainability color palette
 const COLORS = {
@@ -398,12 +399,29 @@ export function Scope3SankeyDiagram({
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-          <p className="flex items-center gap-2">
-            <ChevronRight className="h-4 w-4" />
-            Click on a category node to expand and see top contributors
-          </p>
-        </div>
+        {!expandedCategory && (
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
+              Click on a category node to see detailed breakdown below
+            </p>
+          </div>
+        )}
+
+        {/* Treemap drill-down view */}
+        {expandedCategory && (
+          <CategoryBreakdownTreemap
+            categoryNumber={expandedCategory}
+            categoryName={
+              summary.find(s => s.category_number === expandedCategory)?.category_name || 
+              `Category ${expandedCategory}`
+            }
+            totalEmissions={
+              summary.find(s => s.category_number === expandedCategory)?.emissions_tco2e || 0
+            }
+            onClose={() => setExpandedCategory(undefined)}
+          />
+        )}
       </CardContent>
     </Card>
   );
