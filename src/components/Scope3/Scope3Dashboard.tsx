@@ -14,7 +14,8 @@ import {
   Plane,
   Car,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  GitBranch
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +24,11 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { scope3Service, Scope3Summary } from '@/services/scope3Service';
-import { DEMO_SCOPE3_SUMMARY } from '@/utils/scope3DemoData';
+import { DEMO_SCOPE3_SUMMARY, getDemoHotspots, getDemoScope3Totals } from '@/utils/scope3DemoData';
 import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { HotspotAnalysis } from './HotspotAnalysis';
+import { Scope3SankeyDiagram } from './Scope3SankeyDiagram';
 import {
   BarChart,
   Bar,
@@ -71,6 +73,7 @@ export function Scope3Dashboard() {
   const { organization } = useAuth();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [viewMode, setViewMode] = useState<'sankey' | 'charts'>('sankey');
 
   const { data: summary = [], isLoading } = useQuery({
     queryKey: ['scope3-summary', organization?.id, selectedYear],
@@ -217,70 +220,110 @@ export function Scope3Dashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Emissions by Category Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Emission Categories</CardTitle>
-                <CardDescription>Scope 3 emissions by GHG Protocol category</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={chartData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={60} />
-                      <Tooltip 
-                        formatter={(value: number) => [`${formatNumber(value)} tCO₂e`, 'Emissions']}
-                        labelFormatter={(label) => chartData.find(d => d.name === label)?.fullName || label}
-                      />
-                      <Bar dataKey="emissions" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No Scope 3 data available for {selectedYear}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Upstream vs Downstream */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Upstream vs Downstream</CardTitle>
-                <CardDescription>Distribution of Scope 3 emissions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => [`${formatNumber(value)} tCO₂e`, 'Emissions']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={viewMode === 'sankey' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('sankey')}
+            >
+              <GitBranch className="h-4 w-4 mr-2" />
+              Flow View
+            </Button>
+            <Button 
+              variant={viewMode === 'charts' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('charts')}
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Chart View
+            </Button>
           </div>
+
+          {/* Sankey Diagram View */}
+          {viewMode === 'sankey' && (
+            <Scope3SankeyDiagram
+              summary={summary.length > 0 ? summary.map(s => ({
+                category_number: s.category_number,
+                category_name: s.category_name,
+                emissions_tco2e: s.emissions_tco2e,
+                data_quality: s.data_quality || 'estimated',
+                supplier_data_percentage: s.supplier_data_percentage || 0,
+                spend_based_percentage: s.spend_based_percentage || 0,
+                industry_average_percentage: s.industry_average_percentage || 0,
+              })) : DEMO_SCOPE3_SUMMARY}
+              hotspots={getDemoHotspots()}
+              totals={totals || getDemoScope3Totals()}
+            />
+          )}
+
+          {/* Chart View */}
+          {viewMode === 'charts' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Emissions by Category Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Emission Categories</CardTitle>
+                  <CardDescription>Scope 3 emissions by GHG Protocol category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={chartData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={60} />
+                        <Tooltip 
+                          formatter={(value: number) => [`${formatNumber(value)} tCO₂e`, 'Emissions']}
+                          labelFormatter={(label) => chartData.find(d => d.name === label)?.fullName || label}
+                        />
+                        <Bar dataKey="emissions" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                      No Scope 3 data available for {selectedYear}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Upstream vs Downstream */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upstream vs Downstream</CardTitle>
+                  <CardDescription>Distribution of Scope 3 emissions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {pieData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => [`${formatNumber(value)} tCO₂e`, 'Emissions']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                      No data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* All Categories Summary */}
           <Card>
