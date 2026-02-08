@@ -60,6 +60,7 @@ export function PinnedNav({ pinnedPaths, allItems, onUnpin }: PinnedNavProps) {
                     asChild
                     isActive={isActive(item.path)}
                     tooltip={item.description || item.name}
+                    className="py-2.5 h-auto"
                   >
                     <Link
                       to={item.path}
@@ -76,8 +77,10 @@ export function PinnedNav({ pinnedPaths, allItems, onUnpin }: PinnedNavProps) {
                           transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                         />
                       )}
-                      <span className="flex items-center gap-2 relative z-10">
-                        {item.icon}
+                      <span className="flex items-center gap-3 relative z-10">
+                        <span className="flex items-center justify-center w-5 h-5 shrink-0 text-sidebar-foreground/70">
+                          {item.icon}
+                        </span>
                         <span>{item.name}</span>
                       </span>
                       {item.showBadge && item.badge && item.badge > 0 && (

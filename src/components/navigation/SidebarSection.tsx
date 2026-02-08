@@ -62,7 +62,7 @@ export function SidebarSection({
       <CollapsibleTrigger asChild>
         <button
           className={cn(
-            "flex items-center justify-between w-full px-3 py-2 mt-2 rounded-md",
+            "flex items-center justify-between w-full px-3 py-2.5 mt-4 rounded-md",
             "text-xs font-semibold uppercase tracking-wider",
             "text-sidebar-foreground/50 hover:text-sidebar-foreground/70",
             "hover:bg-sidebar-accent/50 transition-colors duration-200",
@@ -96,7 +96,7 @@ export function SidebarSection({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               style={{ overflow: 'hidden' }}
             >
-              <SidebarMenu>
+              <SidebarMenu className="py-1">
                 {items.map((item, index) => (
                   <motion.div
                     key={item.path}
@@ -111,6 +111,7 @@ export function SidebarSection({
                             asChild
                             isActive={isActive(item.path)}
                             tooltip={item.description || item.name}
+                            className="py-2.5 h-auto"
                           >
                             <Link to={item.path} className="flex items-center justify-between w-full relative">
                               {isActive(item.path) && (
@@ -121,8 +122,10 @@ export function SidebarSection({
                                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                                 />
                               )}
-                              <span className="flex items-center gap-2 relative z-10">
-                                {item.icon}
+                              <span className="flex items-center gap-3 relative z-10">
+                                <span className="flex items-center justify-center w-5 h-5 shrink-0 text-sidebar-foreground/70">
+                                  {item.icon}
+                                </span>
                                 <span>{item.name}</span>
                                 {isPinned(item.path) && (
                                   <Pin className="h-3 w-3 text-primary/60" />
