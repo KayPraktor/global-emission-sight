@@ -156,10 +156,10 @@ function getHeatMapColor(value: number, maxValue: number): string {
 function CustomTreemapContent(props: any) {
   const { x, y, width, height, name, size, maxValue, type, trend } = props;
   
-  // Don't render if too small
-  if (width < 40 || height < 30) return null;
+  // Don't render if too small or missing required data
+  if (width < 40 || height < 30 || !name || size === undefined) return null;
   
-  const color = getHeatMapColor(size, maxValue);
+  const color = getHeatMapColor(size, maxValue || 1);
   const showDetails = width > 80 && height > 50;
   
   return (
