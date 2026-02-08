@@ -1,279 +1,329 @@
 
 
-# Scope 3 Sankey Diagram Implementation
+# Premium Sankey Diagram Visual Upgrade
 
 ## Overview
 
-This plan replaces the standard bar/pie charts in the Scope 3 Dashboard with an interactive **Sankey Diagram** as the primary visualization, showing the flow of emissions from your organization through the value chain.
+Transform the current Sankey diagram from a utilitarian visualization into a **premium, polished** experience with refined colors, smoother curves, better spacing, and enhanced interactivity.
 
 ---
 
-## Data Flow Visualization
+## Current vs. Target State
 
-The Sankey diagram will visualize emissions flowing through this hierarchy:
+| Aspect | Current | Target |
+|--------|---------|--------|
+| Container height | 400px | 600px |
+| Node padding | 30px | 50px |
+| Link style | Solid gradient (0.6-0.3 opacity) | Semi-transparent (0.15-0.25 opacity) |
+| Link curvature | Default bezier | Smoother control points |
+| Color palette | Blue/Amber (HSL values) | Emerald/Sky/Amber sustainability palette |
+| Link hover | opacity-80 | Highlight to opacity 0.6 + tooltip |
+| Font size | text-xs (~11px) | 12px explicit with better contrast |
+| Label overlap | Common | Eliminated with increased padding |
+
+---
+
+## Color Palette: Modern Sustainability Theme
 
 ```text
-                                          ┌─► Cat 1: Purchased Goods (45.2K)
-                                          │     └─► Supplier A (12.5K)
-                                          │     └─► Supplier B (8.2K)
-                                          │
-              ┌─► Upstream (84.1K) ───────┼─► Cat 4: Transport (12.8K)
-              │                           │     └─► FastFreight (4.5K)
-              │                           │
-Organization ─┤                           └─► Cat 6: Travel (3.4K)
-(139.5K)      │
-              │                           ┌─► Cat 11: Product Use (32K)
-              └─► Downstream (55.4K) ─────┤
-                                          └─► Cat 9: Distribution (9.6K)
+┌─────────────────────────────────────────────────────────────┐
+│  SOURCE (Organization)                                       │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
+│  Emerald Green: hsl(158, 64%, 52%) / #10b981                 │
+│                                                              │
+│  UPSTREAM (Categories 1-8)                                   │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
+│  Sky Blue: hsl(199, 89%, 48%) / #0ea5e9                      │
+│                                                              │
+│  DOWNSTREAM (Categories 9-15)                                │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
+│  Amber/Orange: hsl(38, 92%, 50%) / #f59e0b                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Technical Implementation
+## Technical Changes
 
-### Library Choice
+### 1. Container & Layout (Scope3SankeyDiagram.tsx)
 
-**Recharts Sankey** (already installed in `recharts ^2.12.7`)
-- Built-in Sankey component at `recharts/chart/Sankey.js`
-- Consistent API with existing charts in the codebase
-- No additional dependencies required
+```tsx
+// BEFORE
+<div className="h-[400px] w-full">
 
-### Component Architecture
+// AFTER
+<div className="h-[600px] w-full">
+```
 
-| File | Purpose |
-|------|---------|
-| `src/components/Scope3/Scope3SankeyDiagram.tsx` | Main Sankey visualization component |
-| `src/utils/scope3SankeyTransform.ts` | Data transformation utilities |
-| `src/components/Scope3/SankeyNodeTooltip.tsx` | Custom tooltip for nodes |
-| `src/components/Scope3/SankeyLinkTooltip.tsx` | Custom tooltip for flow links |
+```tsx
+// BEFORE
+<Sankey
+  nodePadding={30}
+  nodeWidth={12}
+  margin={{ top: 20, right: 160, bottom: 20, left: 20 }}
+>
+
+// AFTER
+<Sankey
+  nodePadding={50}
+  nodeWidth={14}
+  margin={{ top: 30, right: 200, bottom: 30, left: 30 }}
+>
+```
 
 ---
 
-## New File: Sankey Data Transformer
+### 2. Premium Color Constants
 
-Create a utility to transform the existing `Scope3Summary[]` data into the Sankey format:
+Add a dedicated color palette at the top of the component:
 
-```typescript
-// src/utils/scope3SankeyTransform.ts
-interface SankeyNode {
-  name: string;
-  category?: number;
-  emissions?: number;
+```tsx
+// Premium sustainability color palette
+const COLORS = {
+  organization: '#10b981',    // Emerald-500
+  upstream: '#0ea5e9',        // Sky-500
+  downstream: '#f59e0b',      // Amber-500
+  upstreamLight: '#38bdf8',   // Sky-400
+  downstreamLight: '#fbbf24', // Amber-400
+};
+```
+
+---
+
+### 3. CustomSankeyNode Refinements
+
+Update the node rendering with better colors and font sizing:
+
+```tsx
+const getNodeColor = () => {
+  if (node.type === 'organization') return COLORS.organization;
+  if (node.type === 'stream') {
+    return node.isUpstream ? COLORS.upstream : COLORS.downstream;
+  }
+  if (node.type === 'category') {
+    return node.isUpstream ? COLORS.upstreamLight : COLORS.downstreamLight;
+  }
+  // Supplier nodes
+  return node.isUpstream 
+    ? 'hsl(199, 75%, 65%)'   // Lighter sky
+    : 'hsl(38, 80%, 65%)';   // Lighter amber
+};
+```
+
+Label styling with explicit 12px font:
+
+```tsx
+<text
+  x={x + width + 12}
+  y={y + height / 2}
+  textAnchor="start"
+  dominantBaseline="middle"
+  className="fill-foreground font-medium"
+  style={{ fontSize: '12px' }}
+>
+  {displayName}
+</text>
+```
+
+---
+
+### 4. CustomSankeyLink - Premium Gradient with Hover
+
+This is the core visual upgrade:
+
+```tsx
+function CustomSankeyLink(props: any) {
+  const { 
+    sourceX, targetX, sourceY, targetY, 
+    sourceControlX, targetControlX, 
+    linkWidth, payload 
+  } = props;
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const isUpstream = payload.isUpstream;
+  const gradientId = `premium-gradient-${payload.source}-${payload.target}`;
+  
+  // Source color based on flow direction
+  const sourceColor = isUpstream ? COLORS.organization : COLORS.organization;
+  const targetColor = isUpstream ? COLORS.upstream : COLORS.downstream;
+  
+  // Opacity increases on hover
+  const baseOpacity = isHovered ? 0.5 : 0.2;
+  const endOpacity = isHovered ? 0.35 : 0.15;
+
+  return (
+    <Layer>
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={sourceColor} stopOpacity={baseOpacity} />
+          <stop offset="100%" stopColor={targetColor} stopOpacity={endOpacity} />
+        </linearGradient>
+      </defs>
+      <path
+        d={`
+          M${sourceX},${sourceY}
+          C${sourceControlX * 1.1},${sourceY} ${targetControlX * 0.9},${targetY} ${targetX},${targetY}
+          L${targetX},${targetY + linkWidth}
+          C${targetControlX * 0.9},${targetY + linkWidth} ${sourceControlX * 1.1},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
+          Z
+        `}
+        fill={`url(#${gradientId})`}
+        stroke={isHovered ? targetColor : 'none'}
+        strokeWidth={isHovered ? 1 : 0}
+        strokeOpacity={0.3}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="cursor-pointer transition-all duration-200"
+      />
+    </Layer>
+  );
 }
+```
 
-interface SankeyLink {
-  source: number;  // Index into nodes array
-  target: number;
-  value: number;
-}
+**Key improvements:**
+- Gradient flows from source node color → target node color
+- Base opacity: 0.2 (subtle, not heavy)
+- Hover opacity: 0.5 (clear highlight)
+- Subtle stroke on hover for definition
+- Smoother curves via adjusted control point multipliers (1.1, 0.9)
 
-interface SankeyData {
-  nodes: SankeyNode[];
-  links: SankeyLink[];
-}
+---
 
-function transformToSankeyData(
-  summary: Scope3Summary[],
-  hotspots: Scope3Hotspot[],
-  totals: { upstream: number; downstream: number }
-): SankeyData {
-  // Node indices:
-  // 0: Organization (root)
-  // 1: Upstream
-  // 2: Downstream
-  // 3+: Individual categories
-  // Additional nodes for top suppliers/contributors
+### 5. Link Tooltip Integration
+
+Currently the tooltip only shows for nodes. We need to add link tooltip support:
+
+```tsx
+// In the Sankey component, we'll use a custom tooltip that detects payload type
+<Tooltip 
+  content={(props) => {
+    const payload = props.payload?.[0]?.payload;
+    if (!payload) return null;
+    
+    // Detect if this is a link (has source/target) vs node
+    if (payload.source !== undefined && payload.target !== undefined) {
+      return <SankeyLinkTooltip {...props} totalEmissions={totals.total} />;
+    }
+    return <SankeyNodeTooltip {...props} totalEmissions={totals.total} />;
+  }}
+/>
+```
+
+---
+
+### 6. Enhanced SankeyLinkTooltip
+
+Update to show category name with the CO2e value prominently:
+
+```tsx
+export function SankeyLinkTooltip({ active, payload, totalEmissions }: SankeyLinkTooltipProps) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const link = payload[0].payload;
+  const percentage = calculatePercentage(link.value, totalEmissions);
+  const isUpstream = link.isUpstream;
+
+  return (
+    <div className="bg-popover/95 backdrop-blur-sm border rounded-xl shadow-xl p-4 min-w-[220px]">
+      {/* Flow direction indicator */}
+      <div className="flex items-center gap-2 mb-3">
+        <div 
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: isUpstream ? '#0ea5e9' : '#f59e0b' }}
+        />
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {isUpstream ? 'Upstream Flow' : 'Downstream Flow'}
+        </span>
+      </div>
+
+      {/* Source → Target */}
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <span>{link.source?.name}</span>
+        <span className="text-muted-foreground">→</span>
+        <span>{link.target?.name}</span>
+      </div>
+
+      {/* Prominent CO2e value */}
+      <div className="mt-3 p-2 rounded-lg bg-muted/50">
+        <div className="text-2xl font-bold text-foreground">
+          {formatEmissions(link.value)} <span className="text-sm font-normal">tCO₂e</span>
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          {percentage.toFixed(1)}% of total Scope 3
+        </div>
+      </div>
+    </div>
+  );
 }
 ```
 
 ---
 
-## New File: Sankey Diagram Component
+### 7. Legend Color Update
 
-Create the main visualization component:
+Match the legend to the new color palette:
 
-```typescript
-// src/components/Scope3/Scope3SankeyDiagram.tsx
-import { Sankey, Tooltip, Rectangle, Layer } from 'recharts';
-
-interface Scope3SankeyDiagramProps {
-  summary: Scope3Summary[];
-  hotspots: Scope3Hotspot[];
-  totals: { total: number; upstream: number; downstream: number };
-  onNodeClick?: (categoryNumber: number) => void;
-}
-```
-
-**Features:**
-- Responsive container filling available width
-- Custom node rendering with category icons and emissions labels
-- Custom link rendering with gradient colors (upstream=blue, downstream=amber)
-- Click-to-drill interaction for viewing category details
-- Hover tooltips showing percentage of total and data quality
-
----
-
-## Integration with Scope3Dashboard
-
-Update the Overview tab to include the Sankey diagram with a view toggle:
-
-```typescript
-// In Scope3Dashboard.tsx
-const [viewMode, setViewMode] = useState<'sankey' | 'charts'>('sankey');
-
-// Add toggle buttons
-<div className="flex gap-2">
-  <Button 
-    variant={viewMode === 'sankey' ? 'default' : 'outline'}
-    onClick={() => setViewMode('sankey')}
-  >
-    <GitBranch className="h-4 w-4 mr-2" />
-    Flow View
-  </Button>
-  <Button 
-    variant={viewMode === 'charts' ? 'default' : 'outline'}
-    onClick={() => setViewMode('charts')}
-  >
-    <BarChart3 className="h-4 w-4 mr-2" />
-    Chart View
-  </Button>
+```tsx
+<div className="flex items-center gap-4">
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.upstream }} />
+    <span className="text-xs text-muted-foreground font-medium">Upstream</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.downstream }} />
+    <span className="text-xs text-muted-foreground font-medium">Downstream</span>
+  </div>
 </div>
 ```
 
 ---
 
-## Visual Design Specifications
+## Visual Before/After Comparison
 
-### Color Scheme
-
-| Element | Color | Purpose |
-|---------|-------|---------|
-| Organization node | Primary (green) | Central hub |
-| Upstream flow | Blue gradient | Categories 1-8 |
-| Downstream flow | Amber gradient | Categories 9-15 |
-| High-impact links | Thicker stroke | Visual weight |
-| Low-quality data | Dashed pattern | Indicates estimation |
-
-### Node Styling
-
-- **Rectangle nodes** with rounded corners (8px radius)
-- **Category icons** from existing `categoryIcons` mapping
-- **Emissions label** below node name
-- **Percentage badge** showing share of total
-
-### Link Styling
-
-- **Gradient fill** transitioning between source and target colors
-- **Width proportional** to emissions value
-- **Hover highlight** with increased opacity
-- **Animated flow** using subtle CSS gradient animation
-
----
-
-## Interactivity Features
-
-### 1. Click-to-Drill
-
-Clicking a category node:
-- Expands to show top 3 contributors (suppliers/activities)
-- Creates sub-nodes connected to the category
-- Shows reduction potential in tooltip
-
-### 2. Hover Tooltips
-
-Custom tooltip showing:
-- Category name and number
-- Emissions in tCO2e
-- Percentage of total Scope 3
-- Data quality indicator (primary/secondary/estimated)
-- Top contributor preview
-
-### 3. Legend Integration
-
-Interactive legend allowing:
-- Toggle upstream/downstream visibility
-- Filter by data quality level
-- Highlight specific categories
-
----
-
-## Mobile Responsiveness
-
-Since Sankey diagrams can be complex on small screens:
-
-| Screen Size | Behavior |
-|-------------|----------|
-| Desktop (>1024px) | Full Sankey with all nodes and drill-down |
-| Tablet (768-1024px) | Simplified Sankey, categories only |
-| Mobile (<768px) | Fallback to stacked horizontal bar chart |
-
-Implementation:
-```typescript
-const { width } = useWindowSize();
-const isMobile = width < 768;
-
-return isMobile ? (
-  <Scope3StackedBarFallback data={summary} />
-) : (
-  <Scope3SankeyDiagram ... />
-);
+```text
+BEFORE (Cluttered, Heavy)              AFTER (Premium, Breathable)
+┌─────────────────────────────┐        ┌─────────────────────────────────────┐
+│ ■ Org ████████ Upstream     │        │                                     │
+│       ██████████ Cat 1      │        │  ■ Organization                     │
+│       ████████ Cat 4        │        │       ╲                             │
+│       █████ Cat 6           │        │        ╲ ─────── ■ Upstream         │
+│       ██████████ Downstream │        │        ╱           ╲                │
+│       █████ Cat 9           │        │       ╱             ▸ Cat 1         │
+│       █████ Cat 11          │        │      ╱              ▸ Cat 4         │
+│                             │        │     ╱               ▸ Cat 6         │
+│ [Black/heavy links]         │        │                                     │
+│ [Labels overlap]            │        │        ╲ ─────── ■ Downstream       │
+│ [400px height crammed]      │        │                     ▸ Cat 9         │
+└─────────────────────────────┘        │                     ▸ Cat 11        │
+                                       │                                     │
+                                       │  [Soft gradient links, 0.2 opacity] │
+                                       │  [600px height, plenty of space]    │
+                                       │  [Labels clearly separated]         │
+                                       └─────────────────────────────────────┘
 ```
 
 ---
-
-## Files to Create
-
-| File | Lines (est.) | Description |
-|------|--------------|-------------|
-| `src/utils/scope3SankeyTransform.ts` | ~120 | Data transformation utilities |
-| `src/components/Scope3/Scope3SankeyDiagram.tsx` | ~280 | Main Sankey component |
-| `src/components/Scope3/SankeyNodeTooltip.tsx` | ~60 | Custom node tooltip |
-| `src/components/Scope3/SankeyLinkTooltip.tsx` | ~50 | Custom link tooltip |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/Scope3/Scope3Dashboard.tsx` | Add Sankey import, view toggle, integrate diagram |
-| `src/pages/Scope3Page.tsx` | No changes needed (uses Scope3Dashboard) |
+| `src/components/Scope3/Scope3SankeyDiagram.tsx` | Color palette, container height, node padding, link component with hover state, tooltip integration |
+| `src/components/Scope3/SankeyLinkTooltip.tsx` | Premium styling with backdrop blur, category name display, prominent CO2e value |
+| `src/components/Scope3/SankeyNodeTooltip.tsx` | Match styling consistency with link tooltip |
 
 ---
 
-## Demo Data Enhancement
+## Summary of Premium Upgrades
 
-Extend `scope3DemoData.ts` to include supplier breakdown for Sankey sub-nodes:
-
-```typescript
-export interface SankeySupplierNode {
-  categoryNumber: number;
-  suppliers: {
-    name: string;
-    emissions: number;
-    dataQuality: string;
-  }[];
-}
-```
-
----
-
-## Technical Considerations
-
-### Performance
-
-- Memoize Sankey data transformation with `useMemo`
-- Limit visible nodes to prevent overcrowding (max 25 nodes)
-- Use virtualization for large supplier lists in drill-down
-
-### Accessibility
-
-- ARIA labels for nodes describing emissions values
-- Keyboard navigation between nodes
-- High-contrast mode support for links
-- Screen reader announcements for drill-down actions
-
-### Animation
-
-- Entry animation: nodes fade in, links draw from left to right
-- Drill-down animation: new nodes expand from parent
-- Hover animation: link opacity and thickness increase
+| Feature | Implementation |
+|---------|---------------|
+| **Softer links** | 0.2 base opacity with source→target gradient |
+| **Hover highlight** | 0.5 opacity + subtle stroke on hover |
+| **Smoother curves** | Control point multipliers for organic flow |
+| **Better spacing** | nodePadding: 50, height: 600px |
+| **Legible labels** | 12px font, increased right margin (200px) |
+| **Sustainability palette** | Emerald/Sky/Amber color scheme |
+| **Link tooltips** | Shows category + CO2e value on hover |
+| **Premium feel** | backdrop-blur, rounded-xl, shadow-xl on tooltips |
 
