@@ -2,26 +2,27 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Atom,
-  BarChart3,
-  ClipboardList,
-  Home,
-  FileSpreadsheet,
+  LayoutDashboard,
+  Gauge,
+  PenLine,
+  CheckCircle2,
+  Factory,
+  Calculator,
+  TrendingUp,
+  Network,
+  Truck,
+  Route,
+  Target,
+  FileText,
+  Presentation,
+  ShieldCheck,
+  Scale,
+  History,
+  Coins,
   Settings,
   HelpCircle,
-  Target,
-  Building2,
   LogOut,
-  Database,
-  TrendingUp,
-  LineChart,
   Shield,
-  ClipboardCheck,
-  Wallet,
-  ScrollText,
-  Link2,
-  Users,
-  FileCheck,
-  Presentation
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -82,29 +83,29 @@ export function AppSidebar() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Define all navigation items
+  // Define all navigation items with distinctive icons
   const allNavItems: NavItem[] = useMemo(() => [
     // Overview
-    { name: 'Dashboard', icon: <Home className="h-4 w-4" />, path: '/', description: 'Real-time emissions overview and KPIs' },
-    { name: 'Executive', icon: <Building2 className="h-4 w-4" />, path: '/enterprise', description: 'Strategic dashboards and Net Zero planning' },
+    { name: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" />, path: '/', description: 'Real-time emissions overview and KPIs' },
+    { name: 'Executive', icon: <Gauge className="h-4 w-4" />, path: '/enterprise', description: 'Strategic dashboards and Net Zero planning' },
     // Data Management
-    { name: 'Data Entry', icon: <ClipboardList className="h-4 w-4" />, path: '/data-entry', description: 'Record emissions data and activities' },
-    { name: 'Approvals', icon: <ClipboardCheck className="h-4 w-4" />, path: '/approvals', badge: pendingApprovals, showBadge: isSupervisor, description: 'Review and approve data submissions' },
-    { name: 'Facilities', icon: <Building2 className="h-4 w-4" />, path: '/facilities', description: 'Manage your sites and locations' },
-    { name: 'Emission Factors', icon: <Database className="h-4 w-4" />, path: '/emission-factors', description: 'Conversion factors for calculations' },
+    { name: 'Data Entry', icon: <PenLine className="h-4 w-4" />, path: '/data-entry', description: 'Record emissions data and activities' },
+    { name: 'Approvals', icon: <CheckCircle2 className="h-4 w-4" />, path: '/approvals', badge: pendingApprovals, showBadge: isSupervisor, description: 'Review and approve data submissions' },
+    { name: 'Facilities', icon: <Factory className="h-4 w-4" />, path: '/facilities', description: 'Manage your sites and locations' },
+    { name: 'Emission Factors', icon: <Calculator className="h-4 w-4" />, path: '/emission-factors', description: 'Conversion factors for calculations' },
     // Analysis & Planning
-    { name: 'Analytics', icon: <LineChart className="h-4 w-4" />, path: '/analytics', description: 'Trends, anomalies, and forecasting' },
-    { name: 'Scope 3 & Supply Chain', icon: <Link2 className="h-4 w-4" />, path: '/scope3', description: 'Indirect emissions in your value chain' },
-    { name: 'Suppliers', icon: <Users className="h-4 w-4" />, path: '/suppliers', description: 'Track supplier sustainability data' },
-    { name: 'Scenario Planning', icon: <TrendingUp className="h-4 w-4" />, path: '/scenario-planning', description: 'Model reduction pathways' },
+    { name: 'Analytics', icon: <TrendingUp className="h-4 w-4" />, path: '/analytics', description: 'Trends, anomalies, and forecasting' },
+    { name: 'Scope 3 & Supply Chain', icon: <Network className="h-4 w-4" />, path: '/scope3', description: 'Indirect emissions in your value chain' },
+    { name: 'Suppliers', icon: <Truck className="h-4 w-4" />, path: '/suppliers', description: 'Track supplier sustainability data' },
+    { name: 'Scenario Planning', icon: <Route className="h-4 w-4" />, path: '/scenario-planning', description: 'Model reduction pathways' },
     { name: 'Goals', icon: <Target className="h-4 w-4" />, path: '/goals', description: 'Set and track reduction targets' },
     // Reporting
-    { name: 'Reports', icon: <FileSpreadsheet className="h-4 w-4" />, path: '/reports', description: 'Generate compliance reports' },
+    { name: 'Reports', icon: <FileText className="h-4 w-4" />, path: '/reports', description: 'Generate compliance reports' },
     { name: 'Board Reporting', icon: <Presentation className="h-4 w-4" />, path: '/board-reporting', description: 'Executive reports and governance' },
-    { name: 'Compliance', icon: <FileCheck className="h-4 w-4" />, path: '/compliance', description: 'CSRD, ISSB and framework tracking' },
-    { name: 'Materiality', icon: <BarChart3 className="h-4 w-4" />, path: '/materiality', description: 'Double materiality assessment' },
-    { name: 'Audit Trail', icon: <ScrollText className="h-4 w-4" />, path: '/audit', description: 'Data change history and logs' },
-    { name: 'Financial', icon: <Wallet className="h-4 w-4" />, path: '/financial', description: 'Carbon credits and pricing' },
+    { name: 'Compliance', icon: <ShieldCheck className="h-4 w-4" />, path: '/compliance', description: 'CSRD, ISSB and framework tracking' },
+    { name: 'Materiality', icon: <Scale className="h-4 w-4" />, path: '/materiality', description: 'Double materiality assessment' },
+    { name: 'Audit Trail', icon: <History className="h-4 w-4" />, path: '/audit', description: 'Data change history and logs' },
+    { name: 'Financial', icon: <Coins className="h-4 w-4" />, path: '/financial', description: 'Carbon credits and pricing' },
     // Admin
     { name: 'Settings', icon: <Settings className="h-4 w-4" />, path: '/settings', description: 'Configure your preferences' },
   ], [pendingApprovals, isSupervisor]);
