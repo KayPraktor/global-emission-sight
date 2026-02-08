@@ -77,9 +77,9 @@ interface Scope3SankeyDiagramProps {
   onNodeClick?: (categoryNumber: number) => void;
 }
 
-// Custom node component for Sankey diagram
+// Custom node component for Sankey diagram - Premium styling
 function CustomSankeyNode(props: any) {
-  const { x, y, width, height, payload } = props;
+  const { x, y, width, height, payload, index } = props;
   const node = payload as SankeyNode;
   
   // Premium color based on node type and stream
@@ -100,95 +100,113 @@ function CustomSankeyNode(props: any) {
     ? getShortCategoryName(node.category)
     : node.name;
 
+  // Always show labels regardless of height
+  const showLabel = true;
+  const showEmissions = node.emissions && node.emissions > 0;
+
   return (
-    <Layer>
-      <Rectangle
+    <g>
+      {/* Node rectangle - wider with rounded corners */}
+      <rect
         x={x}
         y={y}
         width={width}
-        height={height}
+        height={Math.max(height, 8)}
         fill={fillColor}
-        fillOpacity={0.95}
-        rx={6}
-        ry={6}
-        className="cursor-pointer transition-all hover:fill-opacity-100"
-        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
+        rx={4}
+        ry={4}
+        style={{ 
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+          cursor: 'pointer'
+        }}
       />
-      {/* Node label */}
-      {height > 18 && (
+      {/* Node label - always visible in Dark Gray */}
+      {showLabel && (
         <text
-          x={x + width + 14}
-          y={y + height / 2}
+          x={x + width + 16}
+          y={y + Math.max(height, 8) / 2}
           textAnchor="start"
           dominantBaseline="middle"
-          className="fill-foreground font-medium"
-          style={{ fontSize: '12px' }}
+          fill="#374151"
+          fontWeight="500"
+          fontSize="13px"
+          style={{ pointerEvents: 'none' }}
         >
           {displayName}
         </text>
       )}
-      {/* Emissions value */}
-      {height > 35 && node.emissions && (
+      {/* Emissions value below label */}
+      {showEmissions && height > 20 && (
         <text
-          x={x + width + 14}
-          y={y + height / 2 + 14}
+          x={x + width + 16}
+          y={y + Math.max(height, 8) / 2 + 16}
           textAnchor="start"
           dominantBaseline="middle"
-          className="fill-muted-foreground"
-          style={{ fontSize: '11px' }}
+          fill="#6B7280"
+          fontSize="11px"
+          style={{ pointerEvents: 'none' }}
         >
-          {formatEmissions(node.emissions)} tCO₂e
+          {formatEmissions(node.emissions!)} tCO₂e
         </text>
       )}
-    </Layer>
+    </g>
   );
 }
 
-// Custom link component with premium gradient and hover
+// Custom link component with beautiful semi-transparent gradients
 function CustomSankeyLink(props: any) {
-  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, payload } = props;
+  const { 
+    sourceX, targetX, sourceY, targetY, 
+    sourceControlX, targetControlX, 
+    linkWidth, payload, index 
+  } = props;
   const [isHovered, setIsHovered] = useState(false);
   
   const isUpstream = payload.isUpstream;
-  const gradientId = `premium-gradient-${payload.source}-${payload.target}`;
   
-  // Premium gradient: source to target color
+  // Create unique gradient ID using index to avoid conflicts
+  const gradientId = `sankey-link-gradient-${index}-${isUpstream ? 'up' : 'down'}`;
+  
+  // Source color (organization) to target color (upstream/downstream)
   const sourceColor = COLORS.organization;
   const targetColor = isUpstream ? COLORS.upstream : COLORS.downstream;
   
-  // Opacity increases on hover for highlight effect
-  const baseOpacity = isHovered ? 0.5 : 0.2;
-  const endOpacity = isHovered ? 0.35 : 0.15;
+  // Base opacity 0.15, hover opacity 0.6 as specified
+  const opacity = isHovered ? 0.6 : 0.15;
 
-  // Smoother curve with adjusted control points
-  const smoothSourceControlX = sourceControlX + (targetX - sourceX) * 0.1;
-  const smoothTargetControlX = targetControlX - (targetX - sourceX) * 0.1;
+  // Smoother bezier curves
+  const path = `
+    M${sourceX},${sourceY}
+    C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}
+    L${targetX},${targetY + linkWidth}
+    C${targetControlX},${targetY + linkWidth} ${sourceControlX},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
+    Z
+  `;
 
   return (
-    <Layer>
+    <g
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ cursor: 'pointer' }}
+    >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} stopOpacity={baseOpacity} />
-          <stop offset="100%" stopColor={targetColor} stopOpacity={endOpacity} />
+          <stop offset="0%" stopColor={sourceColor} />
+          <stop offset="100%" stopColor={targetColor} />
         </linearGradient>
       </defs>
       <path
-        d={`
-          M${sourceX},${sourceY}
-          C${smoothSourceControlX},${sourceY} ${smoothTargetControlX},${targetY} ${targetX},${targetY}
-          L${targetX},${targetY + linkWidth}
-          C${smoothTargetControlX},${targetY + linkWidth} ${smoothSourceControlX},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
-          Z
-        `}
+        d={path}
         fill={`url(#${gradientId})`}
-        stroke={isHovered ? targetColor : 'transparent'}
-        strokeWidth={isHovered ? 1 : 0}
-        strokeOpacity={0.4}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="cursor-pointer transition-all duration-200"
+        fillOpacity={opacity}
+        stroke={isHovered ? targetColor : 'none'}
+        strokeWidth={isHovered ? 2 : 0}
+        strokeOpacity={0.5}
+        style={{
+          transition: 'fill-opacity 0.2s ease, stroke-width 0.2s ease'
+        }}
       />
-    </Layer>
+    </g>
   );
 }
 
@@ -352,15 +370,15 @@ export function Scope3SankeyDiagram({
         )}
       </CardHeader>
       <CardContent>
-        <div className="h-[600px] w-full">
+        <div className="h-[800px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <Sankey
               data={sankeyData}
               node={<CustomSankeyNode />}
               link={<CustomSankeyLink />}
-              nodePadding={50}
-              nodeWidth={14}
-              margin={{ top: 30, right: 200, bottom: 30, left: 30 }}
+              nodePadding={60}
+              nodeWidth={16}
+              margin={{ top: 40, right: 220, bottom: 40, left: 40 }}
               onClick={handleNodeClick}
             >
               <Tooltip 
@@ -374,6 +392,7 @@ export function Scope3SankeyDiagram({
                   }
                   return <SankeyNodeTooltip {...props} totalEmissions={totals.total} />;
                 }}
+                wrapperStyle={{ zIndex: 1000 }}
               />
             </Sankey>
           </ResponsiveContainer>
