@@ -99,9 +99,9 @@ export function TopEmittersTable({ totalScope3Emissions }: TopEmittersTableProps
   const getTrendColor = (direction: 'up' | 'down' | 'stable') => {
     switch (direction) {
       case 'up':
-        return 'hsl(var(--destructive))';
+        return '#dc2626'; // Red-600
       case 'down':
-        return 'hsl(var(--primary))';
+        return '#16a34a'; // Green-600
       default:
         return 'hsl(var(--muted-foreground))';
     }
@@ -111,24 +111,24 @@ export function TopEmittersTable({ totalScope3Emissions }: TopEmittersTableProps
     switch (direction) {
       case 'up':
         return (
-          <Badge variant="destructive" className="text-xs gap-1">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-destructive/10 text-destructive">
             {getTrendIcon(direction)}
             Rising
-          </Badge>
+          </span>
         );
       case 'down':
         return (
-          <Badge variant="secondary" className="text-xs gap-1 bg-primary/10 text-primary border-primary/20">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-primary/10 text-primary">
             {getTrendIcon(direction)}
             Declining
-          </Badge>
+          </span>
         );
       default:
         return (
-          <Badge variant="outline" className="text-xs gap-1">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-muted text-muted-foreground">
             {getTrendIcon(direction)}
             Stable
-          </Badge>
+          </span>
         );
     }
   };
@@ -172,7 +172,7 @@ export function TopEmittersTable({ totalScope3Emissions }: TopEmittersTableProps
                 return (
                   <TableRow 
                     key={supplier.name}
-                    className="hover:bg-muted/30 transition-colors"
+                    className="hover:bg-muted/40 transition-colors cursor-default"
                   >
                     <TableCell className="text-center font-medium text-muted-foreground">
                       {index + 1}
@@ -181,15 +181,15 @@ export function TopEmittersTable({ totalScope3Emissions }: TopEmittersTableProps
                       {supplier.name}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <span className="inline-flex px-2 py-0.5 text-xs font-normal rounded bg-muted/50 text-muted-foreground">
                         {supplier.category}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums">
+                    <TableCell className="text-right font-semibold font-mono tabular-nums">
                       {formatEmissions(supplier.co2e)}
-                      <span className="text-xs text-muted-foreground ml-1">tCO₂e</span>
+                      <span className="text-xs text-muted-foreground ml-1 font-sans">tCO₂e</span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-right font-mono tabular-nums">
                       <span className="font-medium">{percentOfTotal.toFixed(1)}%</span>
                     </TableCell>
                     <TableCell>
@@ -198,6 +198,7 @@ export function TopEmittersTable({ totalScope3Emissions }: TopEmittersTableProps
                           data={supplier.trend} 
                           color={getTrendColor(supplier.trendDirection)}
                           height={28}
+                          showFill={false}
                         />
                       </div>
                     </TableCell>

@@ -372,15 +372,15 @@ export function Scope3SankeyDiagram({
         )}
       </CardHeader>
       <CardContent>
-        <div className="h-[800px] w-full">
+        <div className="h-[850px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <Sankey
               data={sankeyData}
               node={<CustomSankeyNode />}
               link={<CustomSankeyLink />}
-              nodePadding={60}
-              nodeWidth={16}
-              margin={{ top: 40, right: 220, bottom: 40, left: 40 }}
+              nodePadding={75}
+              nodeWidth={18}
+              margin={{ top: 50, right: 240, bottom: 50, left: 50 }}
               onClick={handleNodeClick}
             >
               <Tooltip 
