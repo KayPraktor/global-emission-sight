@@ -6,13 +6,15 @@ interface SparklineProps {
   color?: string;
   height?: number;
   className?: string;
+  showFill?: boolean;
 }
 
 export const Sparkline: React.FC<SparklineProps> = ({ 
   data, 
   color = 'hsl(var(--primary))',
   height = 32,
-  className = ''
+  className = '',
+  showFill = false
 }) => {
   if (!data || data.length === 0) return null;
 
@@ -38,24 +40,26 @@ export const Sparkline: React.FC<SparklineProps> = ({
         preserveAspectRatio="none"
         className="overflow-visible"
       >
-        {/* Gradient fill */}
-        <defs>
-          <linearGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.05" />
-          </linearGradient>
-        </defs>
+        {/* Optional gradient fill */}
+        {showFill && (
+          <>
+            <defs>
+              <linearGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+                <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+            <motion.path
+              d={`${path} L 100,100 L 0,100 Z`}
+              fill={`url(#gradient-${color})`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            />
+          </>
+        )}
         
-        {/* Fill area */}
-        <motion.path
-          d={`${path} L 100,100 L 0,100 Z`}
-          fill={`url(#gradient-${color})`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        />
-        
-        {/* Line */}
+        {/* Clean line */}
         <motion.path
           d={path}
           fill="none"
