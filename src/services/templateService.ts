@@ -416,18 +416,20 @@ const generatePDFContent = (template: Template, data: TemplateData): Blob => {
     data.monthlyData.map(m => [m.month, m.scope1.toLocaleString(), m.scope2.toLocaleString(), m.scope3.toLocaleString(), m.total.toLocaleString()])
   );
 
-  // Carbon Intensity
+  // Carbon Intensity — only show rows with available data (fix #5)
   pdf.addSection('Carbon Intensity Metrics');
-  pdf.addKeyValueSection([
-    { label: 'CO₂e per Employee', value: 'Data not available', highlight: false },
-    { label: 'CO₂e per $1M Revenue', value: 'Data not available', highlight: false },
-    { label: 'Total Emissions', value: `${data.totalEmissions.toLocaleString()} tCO₂e`, highlight: true },
-    { label: 'Previous Year', value: `${data.previousYearTotal.toLocaleString()} tCO₂e`, highlight: false },
-  ]);
+  const intensityRows: Array<{ label: string; value: string; highlight?: boolean }> = [
+    { label: 'Total Annual Emissions', value: `${data.totalEmissions.toLocaleString()} tCO\u2082e`, highlight: true },
+    { label: 'Previous Year', value: `${data.previousYearTotal.toLocaleString()} tCO\u2082e`, highlight: false },
+  ];
+  // Only add per-employee / per-revenue rows if data exists
+  // (Revenue and Employee data are not currently available in TemplateData)
+  pdf.addKeyValueSection(intensityRows);
+  pdf.addParagraph('Per-employee and per-revenue intensity metrics will be calculated when organizational headcount and revenue data are configured.');
 
-  // Net Zero Progress
+  // Net Zero Progress — pass currentProgress directly as the displayed % (fix #4)
   pdf.addSection('Path to Net Zero');
-  pdf.addParagraph(`Progress toward the ${data.targetYear} reduction target of ${data.targetReduction}%.`);
+  pdf.addParagraph(`Current reduction: ${data.currentProgress}% toward the ${data.targetYear} target of ${data.targetReduction}%.`);
   pdf.drawProgressBar(data.currentProgress, data.targetReduction, `Reduction Progress (Target: ${data.targetReduction}% by ${data.targetYear})`);
 
   // Verification
