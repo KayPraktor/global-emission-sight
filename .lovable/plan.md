@@ -1,131 +1,127 @@
 
 
-# Full Implementation: Replace Mock Behavior with Real Logic
+# Fix and Upgrade PDF Report Styling
 
-## Summary
+## Problem Summary
 
-This plan replaces all toast-only placeholder behaviors with actual business logic across 5 components. The key changes are: real PDF/CSV exports using jsPDF and xlsx, preview modals rendering live data, and real data-driven operations.
+The "All Templates" tab PDF reports (generated via `templateService.ts`) have several issues:
+- **Black boxes in tables**: The manual table drawing uses `doc.rect(xPos, yPos, ..., 'FD')` with default black stroke/fill, causing solid black backgrounds on cells
+- **No charts or visual data**: Emissions are only shown as text/tables
+- **No methodology or glossary sections**: Missing for non-technical executives
+- **Cramped layout**: Insufficient margins and line spacing
+- **Inconsistent styling**: `templateService.ts` uses raw jsPDF drawing while other services use the professional `ProfessionalPDFGenerator`
 
-## Components to Modify
+## Root Cause
 
-### 1. ExecutiveReportBuilder.tsx -- Real PDF Export and Preview Modal
+In `src/services/templateService.ts` (lines 428-450), the scope breakdown table is drawn manually:
+```typescript
+doc.rect(xPos, yPos, colWidths[colIndex], cellHeight, 'FD'); // FD = Fill + Draw with black stroke
+```
+The `'FD'` flag draws a border using the default black draw color, and when `setFillColor` isn't called for every cell correctly, cells render as solid black.
 
-**Current:** "Export PDF" shows a toast after 2s timeout. "Preview" shows a toast. "Generate Report" shows a toast.
+## Solution
 
-**Fix:**
-- **Export PDF:** Use `ProfessionalPDFGenerator` (already exists in `professionalPDFGenerator.ts`) to build a real board report PDF with:
-  - Cover page with company name and report period
-  - Executive summary section with emissions breakdown (data from `getExecutiveSummary()`)
-  - Key-value metrics cards for Scope 1/2/3 totals
-  - Risks and Opportunities tables
-  - Quarterly progress table
-  - Only include sections the user toggled on via the checkboxes
-  - Trigger a real browser file download
-- **Preview:** Open a Dialog/modal that renders a formatted preview of the report data (emissions summary, targets, risks, opportunities) using the existing data from `getExecutiveSummary()`.
-- **Generate Report:** Same as Export PDF (generate + download). The "Customize" button will scroll to the section toggles and show a toast explaining usage.
+Rewrite the `generatePDFContent` function in `templateService.ts` to use the existing `ProfessionalPDFGenerator` class and `jspdf-autotable`. This ensures consistency with the rest of the app's PDF output and eliminates manual table drawing entirely.
 
-### 2. FiduciaryDutyTracker.tsx -- Real Export and Filter/Sort
+### Changes to `src/services/templateService.ts`
 
-**Current:** "Export Report" shows a toast. "Filter" and "Sort" show toasts. "Schedule Review" / "Assign Duty" show toasts.
+**1. Replace manual table drawing with ProfessionalPDFGenerator**
 
-**Fix:**
-- **Export Report:** Use jsPDF + autoTable to generate a real PDF listing all fiduciary duties with columns: Title, Category, Status, Priority, Due Date, Assigned To, Linked Regulations. Trigger browser download.
-- **Filter button:** Implement a real filter dropdown (popover) that filters duties by category (disclosure, risk_oversight, strategic_planning, etc.) using existing `categoryLabels` data.
-- **Sort button:** Toggle between sorting by priority (current default) and by due date. Track sort state with `useState`.
-- **Schedule Review / Assign Duty:** Keep toast for now -- these require backend features (calendar integration, user assignment) that don't have supporting tables yet. Update toast to clearly explain: "This feature requires team member management to be configured."
+- Import `ProfessionalPDFGenerator` and `BrandingConfig` from `professionalPDFGenerator.ts`
+- Rewrite `generatePDFContent()` to use:
+  - `pdf.createCoverPage()` for a professional title page
+  - `pdf.addSection()` and `pdf.addParagraph()` for executive summary
+  - `pdf.addMetricsRow()` for Scope 1/2/3 KPI cards
+  - `pdf.addTable()` (which uses `autoTable` internally) for all data tables -- eliminates black box issue entirely
+  - `pdf.addMethodologySection()` for methodology
+  - `pdf.addDeclarationSection()` for auditor signature placeholder
 
-### 3. ComplianceIntelligence.tsx -- Real Navigation and Preview
+**2. Add embedded donut chart for Scope breakdown**
 
-**Current:** "Generate Report" navigates to /reports with a toast. "Subscribe to Updates" shows a toast. "Review" shows a toast.
+Using jsPDF's native drawing capabilities, draw a donut/pie chart directly in the PDF:
+- Three colored arcs for Scope 1 (emerald), Scope 2 (blue), Scope 3 (amber)
+- Legend with color swatches and percentages
+- This is drawn using `doc.circle()` and arc math -- no external library needed
 
-**Fix:**
-- **Generate Report:** Keep navigation to `/reports` (this is correct behavior already).
-- **Subscribe to Updates:** Keep as toast -- this is a notification preference that would need a backend table for subscriptions. Toast is acceptable here as it mimics a real subscription toggle.
-- **Review buttons (regulatory updates):** Open a Dialog/modal showing the full regulatory update details (title, description, action required, deadline, impact level) instead of a toast.
+**3. Add bar chart for emission sources**
 
-### 4. CSRDDashboard.tsx -- Real CSRD Report Export
+Draw horizontal bar chart using `doc.rect()` with proper colors:
+- Each source category gets a proportional bar
+- Labels on the left, values on the right
+- Uses emerald green gradient from dashboard branding
 
-**Current:** "Export Report" shows a loading toast then a success toast.
+**4. Add Carbon Intensity section**
 
-**Fix:**
-- Use `ProfessionalPDFGenerator` to build a real CSRD compliance PDF:
-  - Cover page: "CSRD Compliance Report - ESRS E1 Climate Change"
-  - Readiness score summary with overall percentage
-  - Disclosure checklist table (disclosure ID, name, status, completeness %, data quality %)
-  - Data gaps table (disclosure ID, description, severity, recommendation, effort)
-  - Compliance timeline/roadmap
-  - Recommendations list
-  - All data sourced from the existing `csrdComplianceService` which already queries real database data
+New key-value section calculating:
+- CO2e per employee (if data available, else show "Data not available")
+- CO2e per $1M revenue (if data available)
+- Uses `pdf.addKeyValueSection()` for clean rendering
 
-### 5. ExecutiveReportBuilder.tsx -- Preview Modal Component
+**5. Add Net Zero progress tracker**
 
-Create a new `BoardReportPreview` dialog component that renders:
-- Emissions summary with Scope 1/2/3 breakdown
-- Quarterly progress table
-- Key risks and opportunities lists
-- Only sections the user has toggled on
-- "Download PDF" button within the preview
+Draw a progress bar visual:
+- Shows current reduction % (e.g., 24%) against target (e.g., 50% by 2030)
+- Colored progress bar with milestone markers
+- Uses emerald green for completed portion, gray for remaining
 
-## Files to Create
+**6. Add Methodology section**
 
-| File | Purpose |
-|------|---------|
-| `src/components/BoardReporting/BoardReportPreview.tsx` | Preview modal for executive report |
-| `src/components/Enterprise/RegulatoryUpdateDialog.tsx` | Detail dialog for regulatory update review |
+Using `pdf.addMethodologySection()` with entries for:
+- GHG Protocol Corporate Standard methodology description
+- Emission factor sources (EPA, DEFRA, IEA)
+- Organizational boundary approach
+- Data quality assessment methodology
+
+**7. Add Glossary section**
+
+New section at the end with key terms:
+- tCO2e: Tonnes of carbon dioxide equivalent
+- Scope 1/2/3 definitions
+- GHG Protocol
+- Net Zero
+- SBTi
+- Rendered as a two-column table (Term | Definition)
+
+**8. Typography and layout improvements**
+
+- Use emerald green (`#059669`) as primary color for headers/highlights (matching dashboard)
+- 20mm margins (already set in ProfessionalPDFGenerator: `marginLeft: 15`, will increase to 20)
+- Increased line height in paragraphs (adjust `fontSize * 0.5` multiplier to `0.6`)
+- Professional footer with "Generated by BARYON" and page numbers (handled by `pdf.finalize()`)
+
+### Changes to `src/services/professionalPDFGenerator.ts`
+
+Minor enhancements to support the new visuals:
+
+- Add `drawDonutChart(data, x, y, radius)` method -- draws a donut chart at specified position using arc segments
+- Add `drawHorizontalBarChart(data, x, y, width, height)` method -- draws labeled horizontal bars
+- Add `drawProgressBar(current, target, label)` method -- draws a labeled progress bar with percentage
+- Add `addGlossary(terms)` method -- renders a two-column term/definition table
+
+### Changes to `src/services/comprehensiveReportService.ts`
+
+Apply the same fixes to the quarterly and annual PDF generators:
+- Replace raw `jsPDF` + manual drawing with `ProfessionalPDFGenerator`
+- Add donut chart for scope breakdown
+- Add bar chart for top emission sources
+- Add methodology and glossary sections
+- Add carbon intensity metrics when data is available
+- Add Net Zero progress visual
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/BoardReporting/ExecutiveReportBuilder.tsx` | Replace mock export/preview with ProfessionalPDFGenerator and preview modal |
-| `src/components/BoardReporting/FiduciaryDutyTracker.tsx` | Real PDF export, real filter popover, real sort toggle |
-| `src/components/Enterprise/ComplianceIntelligence.tsx` | Replace review toast with dialog modal |
-| `src/components/Compliance/CSRDDashboard.tsx` | Real CSRD PDF export using csrdComplianceService data |
+| `src/services/professionalPDFGenerator.ts` | Add `drawDonutChart`, `drawHorizontalBarChart`, `drawProgressBar`, `addGlossary` methods |
+| `src/services/templateService.ts` | Rewrite `generatePDFContent` using ProfessionalPDFGenerator with charts, methodology, glossary |
+| `src/services/comprehensiveReportService.ts` | Rewrite `generateQuarterlyPDF` and `generateAnnualPDF` using ProfessionalPDFGenerator with same upgrades |
 
-## Technical Details
+## Technical Notes
 
-### PDF Generation Pattern (consistent across all components)
-
-```typescript
-import { ProfessionalPDFGenerator, BrandingConfig } from '@/services/professionalPDFGenerator';
-
-const branding: BrandingConfig = {
-  companyName: 'Your Company', // Could read from branding_settings table
-  primaryColor: '#2563eb',
-  secondaryColor: '#7c3aed',
-  footerText: 'Confidential - Generated by Baryon ESG Platform',
-};
-
-const pdf = new ProfessionalPDFGenerator(branding);
-pdf.createCoverPage('Report Title', 'Subtitle', dateStr, 'Report Type');
-pdf.addSection('Section Name');
-pdf.addTable(headers, rows);
-pdf.finalize('filename.pdf'); // triggers browser download
-```
-
-### Branding Settings Integration
-
-All PDF exports will attempt to load branding from the `branding_settings` database table first (if it exists), falling back to sensible defaults. This pattern already exists in `monthlyReportService.ts`.
-
-### Filter Popover Pattern (FiduciaryDutyTracker)
-
-Use Radix Popover with checkbox list for category filtering:
-- State: `useState<string[]>` for selected categories
-- Categories sourced from existing `categoryLabels` constant
-- Applied to existing `filteredDuties` logic
-
-### Sort Toggle Pattern
-
-- State: `useState<'priority' | 'date'>('priority')`
-- Toggle button switches between the two sort modes
-- Already has sorting logic in place -- just needs to be parameterized
-
-### No Database Changes Required
-
-All data sources already exist:
-- `getExecutiveSummary()` provides board report data
-- `getFiduciaryDuties()` provides duty data
-- `csrdComplianceService` queries real database tables
-- `ProfessionalPDFGenerator` is fully built and tested
-- `branding_settings` table may already exist for branding config
+- All charts are drawn using jsPDF's native drawing API (`arc`, `rect`, `circle`, `line`) -- no additional dependencies needed
+- The donut chart uses trigonometric arc calculation: `startAngle` and `endAngle` computed from each scope's percentage
+- Color palette: Scope 1 = `#059669` (emerald), Scope 2 = `#2563eb` (blue), Scope 3 = `#d97706` (amber)
+- The `ProfessionalPDFGenerator` already handles page breaks, headers, footers, and page numbering
+- Branding settings are loaded from the `report_branding_settings` database table with fallback defaults
+- The emerald green (`#059669`) replaces the current blue as the primary report color to match dashboard theming
 
