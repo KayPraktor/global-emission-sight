@@ -389,13 +389,12 @@ class ComprehensiveReportService {
       );
     }
 
-    // Carbon Intensity
+    // Carbon Intensity - conditional rendering (fix #5)
     pdf.addSection('Carbon Intensity Metrics');
     pdf.addKeyValueSection([
-      { label: 'CO₂e per Employee', value: 'Data not available', highlight: false },
-      { label: 'CO₂e per $1M Revenue', value: 'Data not available', highlight: false },
-      { label: 'Total Annual Emissions', value: `${current.totalEmissions.toFixed(2)} tCO₂e`, highlight: true },
+      { label: 'Total Annual Emissions', value: `${current.totalEmissions.toFixed(2)} tCO\u2082e`, highlight: true },
     ]);
+    pdf.addParagraph('Per-employee and per-revenue intensity metrics will be calculated when organizational headcount and revenue data are configured.');
 
     // Methodology
     pdf.addMethodologySection([
