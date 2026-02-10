@@ -30,8 +30,8 @@ export class ProfessionalPDFGenerator {
   private currentY: number = 0;
   private pageWidth: number = 210;
   private pageHeight: number = 297;
-  private marginLeft: number = 15;
-  private marginRight: number = 15;
+  private marginLeft: number = 20;
+  private marginRight: number = 20;
   private contentWidth: number;
   private pageNumber: number = 1;
   private tocEntries: Array<{ title: string; page: number; level: number }> = [];
@@ -214,7 +214,7 @@ export class ProfessionalPDFGenerator {
         this.pageNumber++;
       }
       this.doc.text(line, this.marginLeft, this.currentY);
-      this.currentY += fontSize * 0.5;
+      this.currentY += fontSize * 0.6;
     });
     
     this.currentY += 5;
@@ -537,5 +537,222 @@ export class ProfessionalPDFGenerator {
   // Add spacing
   addSpacing(pixels: number) {
     this.currentY += pixels;
+  }
+
+  // Get the internal doc for advanced drawing
+  getDoc(): jsPDF {
+    return this.doc;
+  }
+
+  // Draw donut chart
+  drawDonutChart(data: Array<{ label: string; value: number; color: string }>, x: number, y: number, radius: number) {
+    if (this.currentY > 200) {
+      this.doc.addPage();
+      this.currentY = 30;
+      this.pageNumber++;
+    }
+
+    const total = data.reduce((sum, d) => sum + d.value, 0);
+    if (total === 0) return;
+
+    const innerRadius = radius * 0.55;
+    let startAngle = -Math.PI / 2; // Start from top
+
+    data.forEach((item) => {
+      const sliceAngle = (item.value / total) * 2 * Math.PI;
+      const endAngle = startAngle + sliceAngle;
+      const [r, g, b] = hexToRGB(item.color);
+      
+      this.doc.setFillColor(r, g, b);
+      
+      // Draw arc segment using small triangles
+      const steps = Math.max(20, Math.ceil(sliceAngle * 30));
+      for (let i = 0; i < steps; i++) {
+        const a1 = startAngle + (sliceAngle * i) / steps;
+        const a2 = startAngle + (sliceAngle * (i + 1)) / steps;
+        
+        const points: Array<[number, number]> = [
+          [x + Math.cos(a1) * innerRadius, y + Math.sin(a1) * innerRadius],
+          [x + Math.cos(a1) * radius, y + Math.sin(a1) * radius],
+          [x + Math.cos(a2) * radius, y + Math.sin(a2) * radius],
+          [x + Math.cos(a2) * innerRadius, y + Math.sin(a2) * innerRadius],
+        ];
+        
+        this.doc.triangle(
+          points[0][0], points[0][1],
+          points[1][0], points[1][1],
+          points[2][0], points[2][1],
+          'F'
+        );
+        this.doc.triangle(
+          points[0][0], points[0][1],
+          points[2][0], points[2][1],
+          points[3][0], points[3][1],
+          'F'
+        );
+      }
+      
+      startAngle = endAngle;
+    });
+
+    // White center circle for donut effect
+    this.doc.setFillColor(255, 255, 255);
+    this.doc.circle(x, y, innerRadius - 0.5, 'F');
+
+    // Center text
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.text(total.toLocaleString(), x, y - 2, { align: 'center' });
+    this.doc.setFontSize(7);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(100, 100, 100);
+    this.doc.text('tCO₂e', x, y + 4, { align: 'center' });
+
+    // Legend
+    const legendX = x + radius + 15;
+    let legendY = y - (data.length * 8);
+    
+    data.forEach((item) => {
+      const [r, g, b] = hexToRGB(item.color);
+      const pct = ((item.value / total) * 100).toFixed(1);
+      
+      this.doc.setFillColor(r, g, b);
+      this.doc.rect(legendX, legendY - 3, 8, 5, 'F');
+      
+      this.doc.setFontSize(9);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(0, 0, 0);
+      this.doc.text(`${item.label}`, legendX + 12, legendY + 1);
+      
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(80, 80, 80);
+      this.doc.text(`${item.value.toLocaleString()} tCO₂e (${pct}%)`, legendX + 12, legendY + 7);
+      
+      legendY += 16;
+    });
+
+    this.currentY = y + radius + 15;
+  }
+
+  // Draw horizontal bar chart
+  drawHorizontalBarChart(data: Array<{ label: string; value: number }>, x: number, y: number, width: number, barHeight: number = 12) {
+    if (this.currentY > 200) {
+      this.doc.addPage();
+      this.currentY = 30;
+      this.pageNumber++;
+      y = this.currentY;
+    }
+
+    const maxValue = Math.max(...data.map(d => d.value));
+    if (maxValue === 0) return;
+
+    const [r, g, b] = hexToRGB(this.branding.primaryColor);
+    const labelWidth = 55;
+    const barAreaWidth = width - labelWidth - 30;
+    let currentBarY = y;
+
+    data.forEach((item, index) => {
+      if (currentBarY > 270) {
+        this.doc.addPage();
+        this.currentY = 30;
+        this.pageNumber++;
+        currentBarY = 30;
+      }
+
+      // Label
+      this.doc.setFontSize(8);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(60, 60, 60);
+      const truncatedLabel = item.label.length > 22 ? item.label.substring(0, 20) + '…' : item.label;
+      this.doc.text(truncatedLabel, x, currentBarY + barHeight * 0.65);
+
+      // Bar background
+      this.doc.setFillColor(240, 240, 240);
+      this.doc.roundedRect(x + labelWidth, currentBarY, barAreaWidth, barHeight - 2, 2, 2, 'F');
+
+      // Bar fill
+      const barWidth = (item.value / maxValue) * barAreaWidth;
+      const opacity = 0.7 + (0.3 * (1 - index / data.length));
+      this.doc.setFillColor(
+        Math.round(r * opacity + 255 * (1 - opacity)),
+        Math.round(g * opacity + 255 * (1 - opacity)),
+        Math.round(b * opacity + 255 * (1 - opacity))
+      );
+      if (barWidth > 0) {
+        this.doc.roundedRect(x + labelWidth, currentBarY, Math.max(barWidth, 4), barHeight - 2, 2, 2, 'F');
+      }
+
+      // Value label
+      this.doc.setFontSize(8);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(0, 0, 0);
+      this.doc.text(`${item.value.toLocaleString()} tCO₂e`, x + labelWidth + barAreaWidth + 3, currentBarY + barHeight * 0.65);
+
+      currentBarY += barHeight + 3;
+    });
+
+    this.currentY = currentBarY + 5;
+  }
+
+  // Draw progress bar for Net Zero tracking
+  drawProgressBar(currentValue: number, targetValue: number, label: string) {
+    if (this.currentY > 250) {
+      this.doc.addPage();
+      this.currentY = 30;
+      this.pageNumber++;
+    }
+
+    const [r, g, b] = hexToRGB(this.branding.primaryColor);
+    const barX = this.marginLeft;
+    const barWidth = this.contentWidth;
+    const barHeight = 14;
+    const progress = Math.min(Math.max(currentValue / targetValue, 0), 1);
+
+    // Label
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.text(label, barX, this.currentY);
+    this.currentY += 8;
+
+    // Background bar
+    this.doc.setFillColor(230, 230, 230);
+    this.doc.roundedRect(barX, this.currentY, barWidth, barHeight, 3, 3, 'F');
+
+    // Progress fill
+    this.doc.setFillColor(r, g, b);
+    const fillWidth = progress * barWidth;
+    if (fillWidth > 0) {
+      this.doc.roundedRect(barX, this.currentY, Math.max(fillWidth, 6), barHeight, 3, 3, 'F');
+    }
+
+    // Progress text
+    this.doc.setFontSize(8);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    if (fillWidth > 25) {
+      this.doc.text(`${(progress * 100).toFixed(0)}%`, barX + fillWidth - 3, this.currentY + barHeight * 0.7, { align: 'right' });
+    }
+
+    // Target label
+    this.doc.setFontSize(8);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(100, 100, 100);
+    this.doc.text(`Target: ${targetValue}%`, barX + barWidth, this.currentY + barHeight + 8, { align: 'right' });
+    this.doc.text(`Current: ${currentValue}%`, barX, this.currentY + barHeight + 8);
+
+    this.currentY += barHeight + 15;
+  }
+
+  // Add glossary section
+  addGlossary(terms: Array<{ term: string; definition: string }>) {
+    this.addSection('Glossary', 1);
+
+    this.addTable(
+      ['Term', 'Definition'],
+      terms.map(t => [t.term, t.definition]),
+      { highlightFirstColumn: true }
+    );
   }
 }
