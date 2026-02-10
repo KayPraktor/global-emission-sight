@@ -25,6 +25,17 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { RegulatoryUpdateDialog } from './RegulatoryUpdateDialog';
+
+interface RegulatoryUpdate {
+  id: string;
+  title: string;
+  impact: string;
+  date: string;
+  description: string;
+  action: string;
+  deadline: string;
+}
 
 interface ComplianceIntelligenceProps {
   frameworks: any[];
@@ -34,6 +45,8 @@ interface ComplianceIntelligenceProps {
 const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ frameworks, deadlines }) => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedUpdate, setSelectedUpdate] = useState<RegulatoryUpdate | null>(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   const handleFrameworkClick = (framework: any) => {
     toast.info(`Opening ${framework.framework_name} documentation`, {
@@ -327,7 +340,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                           <span>Deadline: {new Date(update.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => toast.info(`Review: ${update.title}`, { description: `Action required: ${update.action}` })}>
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedUpdate(update); setReviewDialogOpen(true); }}>
                         Review
                       </Button>
                     </div>
@@ -466,6 +479,12 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      <RegulatoryUpdateDialog
+        open={reviewDialogOpen}
+        onOpenChange={setReviewDialogOpen}
+        update={selectedUpdate}
+      />
     </motion.div>
   );
 };
