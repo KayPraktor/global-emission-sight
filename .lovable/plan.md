@@ -1,127 +1,153 @@
 
 
-# Fix and Upgrade PDF Report Styling
+# Dynamic Template Engine: Template-Specific PDF Generation
 
-## Problem Summary
+## Problem
 
-The "All Templates" tab PDF reports (generated via `templateService.ts`) have several issues:
-- **Black boxes in tables**: The manual table drawing uses `doc.rect(xPos, yPos, ..., 'FD')` with default black stroke/fill, causing solid black backgrounds on cells
-- **No charts or visual data**: Emissions are only shown as text/tables
-- **No methodology or glossary sections**: Missing for non-technical executives
-- **Cramped layout**: Insufficient margins and line spacing
-- **Inconsistent styling**: `templateService.ts` uses raw jsPDF drawing while other services use the professional `ProfessionalPDFGenerator`
-
-## Root Cause
-
-In `src/services/templateService.ts` (lines 428-450), the scope breakdown table is drawn manually:
-```typescript
-doc.rect(xPos, yPos, colWidths[colIndex], cellHeight, 'FD'); // FD = Fill + Draw with black stroke
-```
-The `'FD'` flag draws a border using the default black draw color, and when `setFillColor` isn't called for every cell correctly, cells render as solid black.
+Every template's "Use" button calls the same `generatePDFContent()` function in `templateService.ts`, which always produces an identical Executive Summary-style PDF regardless of which template was selected (GHG Protocol, CDP, TCFD, etc.).
 
 ## Solution
 
-Rewrite the `generatePDFContent` function in `templateService.ts` to use the existing `ProfessionalPDFGenerator` class and `jspdf-autotable`. This ensures consistency with the rest of the app's PDF output and eliminates manual table drawing entirely.
+Implement a template routing system that maps each template to a distinct PDF rendering pipeline with template-specific content, data fetching, and visual structure.
 
-### Changes to `src/services/templateService.ts`
+## Architecture
 
-**1. Replace manual table drawing with ProfessionalPDFGenerator**
+The `generatePDFContent` function will be refactored into a dispatcher that calls template-specific rendering functions based on the template's `fileName` slug:
 
-- Import `ProfessionalPDFGenerator` and `BrandingConfig` from `professionalPDFGenerator.ts`
-- Rewrite `generatePDFContent()` to use:
-  - `pdf.createCoverPage()` for a professional title page
-  - `pdf.addSection()` and `pdf.addParagraph()` for executive summary
-  - `pdf.addMetricsRow()` for Scope 1/2/3 KPI cards
-  - `pdf.addTable()` (which uses `autoTable` internally) for all data tables -- eliminates black box issue entirely
-  - `pdf.addMethodologySection()` for methodology
-  - `pdf.addDeclarationSection()` for auditor signature placeholder
+```text
+generatePDFContent(template, data)
+  |
+  +-- switch (template.fileName)
+       |
+       +-- 'ghg_protocol_corporate_standard'   -> renderGHGProtocolPDF()
+       +-- 'cdp_climate_change_questionnaire'   -> renderCDPQuestionnairePDF()
+       +-- 'tcfd_financial_disclosure'          -> renderTCFDDisclosurePDF()
+       +-- 'executive_summary_dashboard'        -> renderExecutiveSummaryPDF()  (current behavior)
+       +-- 'scope3_detailed_analysis'           -> renderScope3AnalysisPDF()
+       +-- default                             -> renderExecutiveSummaryPDF()   (fallback)
+```
 
-**2. Add embedded donut chart for Scope breakdown**
+## Template Profiles
 
-Using jsPDF's native drawing capabilities, draw a donut/pie chart directly in the PDF:
-- Three colored arcs for Scope 1 (emerald), Scope 2 (blue), Scope 3 (amber)
-- Legend with color swatches and percentages
-- This is drawn using `doc.circle()` and arc math -- no external library needed
+### 1. Executive Summary Dashboard (current default -- minimal changes)
+- Donut chart, summary cards, progress bar
+- High-level KPIs only
+- Cover title: "Executive Summary Dashboard"
 
-**3. Add bar chart for emission sources**
+### 2. GHG Protocol Corporate Standard (compliance-style)
+- Cover: "GHG Protocol Corporate Standard Report"
+- Detailed inventory tables for all 3 scopes with uncertainty and data quality columns
+- Organizational boundary explanation section
+- Emission factor sources table
+- Expanded methodology section with calculation approach per scope
+- Verification and assurance details
+- No donut chart -- replaced with detailed breakdown tables
+- Glossary focused on GHG Protocol terminology
 
-Draw horizontal bar chart using `doc.rect()` with proper colors:
-- Each source category gets a proportional bar
-- Labels on the left, values on the right
-- Uses emerald green gradient from dashboard branding
+### 3. CDP Climate Change Questionnaire (questionnaire-style)
+- Cover: "CDP Climate Change Response"
+- Structured as numbered sections matching CDP modules (C0-C12)
+- Governance section (board oversight, management responsibility)
+- Risks and Opportunities section with long-form text descriptions
+- Targets and performance against targets
+- Emissions data in CDP-specific format (base year, reporting year, methodology)
+- Verification statement details
+- No charts -- focus on text and tables
 
-**4. Add Carbon Intensity section**
+### 4. TCFD Financial Disclosure (disclosure-style)
+- Cover: "TCFD Climate-Related Financial Disclosures"
+- Four pillar structure: Governance, Strategy, Risk Management, Metrics & Targets
+- Scenario analysis placeholder section
+- Financial impact of climate risks (qualitative descriptions)
+- Metrics table with current/target values
+- Risk and opportunity register table
 
-New key-value section calculating:
-- CO2e per employee (if data available, else show "Data not available")
-- CO2e per $1M revenue (if data available)
-- Uses `pdf.addKeyValueSection()` for clean rendering
+### 5. Scope 3 Detailed Analysis (data-heavy)
+- Cover: "Scope 3 Value Chain Emissions Analysis"
+- Category-by-category breakdown (all 15 Scope 3 categories)
+- Horizontal bar chart for category comparison
+- Hotspot identification table
+- Data quality assessment per category
+- Supplier engagement metrics (placeholder if no data)
+- Reduction opportunities table
+- No Scope 1/2 content -- purely Scope 3 focused
 
-**5. Add Net Zero progress tracker**
+## Data Strategy
 
-Draw a progress bar visual:
-- Shows current reduction % (e.g., 24%) against target (e.g., 50% by 2030)
-- Colored progress bar with milestone markers
-- Uses emerald green for completed portion, gray for remaining
+Each template renderer will use the existing `TemplateData` object but emphasize different parts:
+- Executive: Totals, charts, progress
+- GHG Protocol: All source tables, uncertainty, methodology
+- CDP: Governance text, targets, verification
+- TCFD: Risk/opportunity data, financial metrics
+- Scope 3: Only `scope3Sources`, category breakdowns
 
-**6. Add Methodology section**
-
-Using `pdf.addMethodologySection()` with entries for:
-- GHG Protocol Corporate Standard methodology description
-- Emission factor sources (EPA, DEFRA, IEA)
-- Organizational boundary approach
-- Data quality assessment methodology
-
-**7. Add Glossary section**
-
-New section at the end with key terms:
-- tCO2e: Tonnes of carbon dioxide equivalent
-- Scope 1/2/3 definitions
-- GHG Protocol
-- Net Zero
-- SBTi
-- Rendered as a two-column table (Term | Definition)
-
-**8. Typography and layout improvements**
-
-- Use emerald green (`#059669`) as primary color for headers/highlights (matching dashboard)
-- 20mm margins (already set in ProfessionalPDFGenerator: `marginLeft: 15`, will increase to 20)
-- Increased line height in paragraphs (adjust `fontSize * 0.5` multiplier to `0.6`)
-- Professional footer with "Generated by BARYON" and page numbers (handled by `pdf.finalize()`)
-
-### Changes to `src/services/professionalPDFGenerator.ts`
-
-Minor enhancements to support the new visuals:
-
-- Add `drawDonutChart(data, x, y, radius)` method -- draws a donut chart at specified position using arc segments
-- Add `drawHorizontalBarChart(data, x, y, width, height)` method -- draws labeled horizontal bars
-- Add `drawProgressBar(current, target, label)` method -- draws a labeled progress bar with percentage
-- Add `addGlossary(terms)` method -- renders a two-column term/definition table
-
-### Changes to `src/services/comprehensiveReportService.ts`
-
-Apply the same fixes to the quarterly and annual PDF generators:
-- Replace raw `jsPDF` + manual drawing with `ProfessionalPDFGenerator`
-- Add donut chart for scope breakdown
-- Add bar chart for top emission sources
-- Add methodology and glossary sections
-- Add carbon intensity metrics when data is available
-- Add Net Zero progress visual
+The cover page title and subtitle are dynamically set from `template.title` (already passed but previously ignored for internal content structure).
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/services/professionalPDFGenerator.ts` | Add `drawDonutChart`, `drawHorizontalBarChart`, `drawProgressBar`, `addGlossary` methods |
-| `src/services/templateService.ts` | Rewrite `generatePDFContent` using ProfessionalPDFGenerator with charts, methodology, glossary |
-| `src/services/comprehensiveReportService.ts` | Rewrite `generateQuarterlyPDF` and `generateAnnualPDF` using ProfessionalPDFGenerator with same upgrades |
+| `src/services/templateService.ts` | Refactor `generatePDFContent` into a dispatcher with 5 template-specific renderers |
 
-## Technical Notes
+No new files needed. No database changes. All rendering stays within `templateService.ts` using the existing `ProfessionalPDFGenerator` API.
 
-- All charts are drawn using jsPDF's native drawing API (`arc`, `rect`, `circle`, `line`) -- no additional dependencies needed
-- The donut chart uses trigonometric arc calculation: `startAngle` and `endAngle` computed from each scope's percentage
-- Color palette: Scope 1 = `#059669` (emerald), Scope 2 = `#2563eb` (blue), Scope 3 = `#d97706` (amber)
-- The `ProfessionalPDFGenerator` already handles page breaks, headers, footers, and page numbering
-- Branding settings are loaded from the `report_branding_settings` database table with fallback defaults
-- The emerald green (`#059669`) replaces the current blue as the primary report color to match dashboard theming
+## Technical Details
+
+### Dispatcher Pattern
+
+```typescript
+const generatePDFContent = (template: Template, data: TemplateData): Blob => {
+  switch (template.fileName) {
+    case 'ghg_protocol_corporate_standard':
+      return renderGHGProtocolPDF(template, data);
+    case 'cdp_climate_change_questionnaire':
+      return renderCDPQuestionnairePDF(template, data);
+    case 'tcfd_financial_disclosure':
+      return renderTCFDDisclosurePDF(template, data);
+    case 'scope3_detailed_analysis':
+      return renderScope3AnalysisPDF(template, data);
+    case 'executive_summary_dashboard':
+    default:
+      return renderExecutiveSummaryPDF(template, data);
+  }
+};
+```
+
+### Shared Branding Setup
+
+All renderers share the same branding initialization and finalization pattern to maintain visual consistency:
+
+```typescript
+const createPDF = (template: Template, data: TemplateData) => {
+  const branding = {
+    companyName: data.companyName,
+    primaryColor: '#059669',
+    secondaryColor: '#2563eb',
+    headerText: 'Confidential',
+    footerText: `Generated by BARYON`,
+  };
+  const pdf = new ProfessionalPDFGenerator(branding);
+  pdf.createCoverPage(template.title, data.reportingPeriod, data.reportDate, data.verificationStatus);
+  return pdf;
+};
+```
+
+### CDP Section Structure
+
+The CDP renderer will output sections labeled C0 through C7 matching the real CDP questionnaire modules:
+- C0: Introduction (company info, reporting boundary)
+- C1: Governance (board oversight description)
+- C2: Risks and Opportunities (table of identified risks)
+- C3: Business Strategy (targets and pathway)
+- C4: Targets and Performance (progress metrics)
+- C5: Emissions Methodology (calculation approach)
+- C6: Emissions Data (scope tables)
+- C7: Verification (assurance details)
+
+### TCFD Four-Pillar Structure
+
+- Governance: Board and management roles in climate oversight
+- Strategy: Climate risks, opportunities, scenario analysis
+- Risk Management: How climate risks are identified and managed
+- Metrics and Targets: Current emissions, targets, progress tracking
 
