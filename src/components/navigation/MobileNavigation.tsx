@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,6 @@ import {
   FileSpreadsheet,
   BarChart3,
   Target,
-  MonitorSmartphone,
-  Zap,
   Settings,
   X
 } from 'lucide-react';
@@ -28,14 +26,13 @@ const navigationItems = [
   { name: 'Reports', icon: FileSpreadsheet, path: '/reports', color: 'text-orange-500' },
   { name: 'Analytics', icon: BarChart3, path: '/analytics', color: 'text-red-500' },
   { name: 'Goals', icon: Target, path: '/goals', color: 'text-pink-500' },
-  { name: 'Monitoring', icon: MonitorSmartphone, path: '/monitoring', color: 'text-cyan-500' },
-  { name: 'AI Assistant', icon: Zap, path: '/ai-assistant', color: 'text-yellow-500' },
   { name: 'Settings', icon: Settings, path: '/settings', color: 'text-gray-500' },
 ];
 
 export function MobileNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -108,11 +105,11 @@ export function MobileNavigation() {
                 </h3>
               </div>
               <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" size="sm">
+                <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => { setIsOpen(false); navigate('/data-entry'); }}>
                   <ClipboardList className="mr-2 h-4 w-4" />
                   New Entry
                 </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
+                <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => { setIsOpen(false); navigate('/reports'); }}>
                   <FileSpreadsheet className="mr-2 h-4 w-4" />
                   Generate Report
                 </Button>
@@ -150,7 +147,7 @@ export function MobileBottomNav() {
     { name: 'Data', icon: ClipboardList, path: '/data-entry' },
     { name: 'Reports', icon: FileSpreadsheet, path: '/reports' },
     { name: 'Analytics', icon: BarChart3, path: '/analytics' },
-    { name: 'More', icon: Menu, path: '/more' },
+    { name: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   const isActive = (path: string) => {
