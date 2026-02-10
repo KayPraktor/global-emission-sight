@@ -264,6 +264,7 @@ export class ProfessionalPDFGenerator {
     showRowNumbers?: boolean;
     highlightFirstColumn?: boolean;
   }) {
+    // If table would start near page bottom, move to next page entirely (fix #6)
     if (this.currentY > 200) {
       this.doc.addPage();
       this.currentY = 30;
@@ -299,11 +300,14 @@ export class ProfessionalPDFGenerator {
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'left',
-        cellPadding: 4
+        cellPadding: 4,
+        overflow: 'visible' as any, // prevent header text wrapping (fix #1)
+        minCellWidth: 25, // minimum column width to prevent splits (fix #1)
       },
       bodyStyles: {
         textColor: [50, 50, 50],
-        cellPadding: 3
+        cellPadding: 3,
+        minCellWidth: 20,
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
@@ -312,6 +316,8 @@ export class ProfessionalPDFGenerator {
         0: { fontStyle: 'bold', fillColor: [240, 240, 250] as [number, number, number] }
       } : {},
       margin: { left: this.marginLeft, right: this.marginRight },
+      // Prevent awkward table splits: keep at least 3 rows together (fix #6)
+      rowPageBreak: 'avoid' as any,
       didDrawPage: () => {
         this.pageNumber++;
       }
@@ -350,20 +356,22 @@ export class ProfessionalPDFGenerator {
       this.doc.setTextColor(100, 100, 100);
       this.doc.text(metric.label, x + 5, this.currentY + 12);
       
-      // Value
+      // Value + Unit with clear spacing (fix #3)
       this.doc.setFontSize(16);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 0, 0);
-      this.doc.text(metric.value, x + 5, this.currentY + 24);
-      
-      // Unit
-      if (metric.unit) {
-        this.doc.setFontSize(9);
-        this.doc.setFont('helvetica', 'normal');
-        this.doc.setTextColor(100, 100, 100);
-        const valueWidth = this.doc.getTextWidth(metric.value);
-        this.doc.text(metric.unit, x + 7 + valueWidth, this.currentY + 24);
+      const displayValue = metric.unit 
+        ? `${metric.value} ${metric.unit}` 
+        : metric.value;
+      // Auto-shrink if text overflows card
+      const maxTextWidth = cardWidth - 10;
+      let valueFontSize = 16;
+      this.doc.setFontSize(valueFontSize);
+      while (this.doc.getTextWidth(displayValue) > maxTextWidth && valueFontSize > 9) {
+        valueFontSize -= 1;
+        this.doc.setFontSize(valueFontSize);
       }
+      this.doc.text(displayValue, x + 5, this.currentY + 24);
       
       // Change indicator
       if (metric.change) {
@@ -546,17 +554,26 @@ export class ProfessionalPDFGenerator {
 
   // Draw donut chart
   drawDonutChart(data: Array<{ label: string; value: number; color: string }>, x: number, y: number, radius: number) {
-    if (this.currentY > 200) {
+    // Increase chart size to fill ~50% page width (fix #4)
+    const effectiveRadius = Math.max(radius, this.contentWidth * 0.2);
+    
+    // Reposition: center chart in left half of content area
+    const chartCenterX = this.marginLeft + effectiveRadius + 5;
+    const chartCenterY = Math.max(y, this.currentY + effectiveRadius + 10);
+    
+    // Page break check with larger chart
+    if (chartCenterY + effectiveRadius + 10 > 270) {
       this.doc.addPage();
       this.currentY = 30;
       this.pageNumber++;
+      return this.drawDonutChart(data, x, this.currentY, radius);
     }
 
     const total = data.reduce((sum, d) => sum + d.value, 0);
     if (total === 0) return;
 
-    const innerRadius = radius * 0.55;
-    let startAngle = -Math.PI / 2; // Start from top
+    const innerRadius = effectiveRadius * 0.55;
+    let startAngle = -Math.PI / 2;
 
     data.forEach((item) => {
       const sliceAngle = (item.value / total) * 2 * Math.PI;
@@ -565,17 +582,16 @@ export class ProfessionalPDFGenerator {
       
       this.doc.setFillColor(r, g, b);
       
-      // Draw arc segment using small triangles
       const steps = Math.max(20, Math.ceil(sliceAngle * 30));
       for (let i = 0; i < steps; i++) {
         const a1 = startAngle + (sliceAngle * i) / steps;
         const a2 = startAngle + (sliceAngle * (i + 1)) / steps;
         
         const points: Array<[number, number]> = [
-          [x + Math.cos(a1) * innerRadius, y + Math.sin(a1) * innerRadius],
-          [x + Math.cos(a1) * radius, y + Math.sin(a1) * radius],
-          [x + Math.cos(a2) * radius, y + Math.sin(a2) * radius],
-          [x + Math.cos(a2) * innerRadius, y + Math.sin(a2) * innerRadius],
+          [chartCenterX + Math.cos(a1) * innerRadius, chartCenterY + Math.sin(a1) * innerRadius],
+          [chartCenterX + Math.cos(a1) * effectiveRadius, chartCenterY + Math.sin(a1) * effectiveRadius],
+          [chartCenterX + Math.cos(a2) * effectiveRadius, chartCenterY + Math.sin(a2) * effectiveRadius],
+          [chartCenterX + Math.cos(a2) * innerRadius, chartCenterY + Math.sin(a2) * innerRadius],
         ];
         
         this.doc.triangle(
@@ -595,48 +611,51 @@ export class ProfessionalPDFGenerator {
       startAngle = endAngle;
     });
 
-    // White center circle for donut effect
+    // White center circle
     this.doc.setFillColor(255, 255, 255);
-    this.doc.circle(x, y, innerRadius - 0.5, 'F');
+    this.doc.circle(chartCenterX, chartCenterY, innerRadius - 0.5, 'F');
 
     // Center text
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(0, 0, 0);
-    this.doc.text(total.toLocaleString(), x, y - 2, { align: 'center' });
-    this.doc.setFontSize(7);
+    this.doc.text(total.toLocaleString(), chartCenterX, chartCenterY - 2, { align: 'center' });
+    this.doc.setFontSize(8);
     this.doc.setFont('helvetica', 'normal');
     this.doc.setTextColor(100, 100, 100);
-    this.doc.text('tCO₂e', x, y + 4, { align: 'center' });
+    this.doc.text('tCO\u2082e', chartCenterX, chartCenterY + 5, { align: 'center' });
 
-    // Legend
-    const legendX = x + radius + 15;
-    let legendY = y - (data.length * 8);
+    // Legend aligned to right of chart (fix #4)
+    const legendX = chartCenterX + effectiveRadius + 12;
+    const legendStartY = chartCenterY - (data.length * 10);
     
-    data.forEach((item) => {
+    data.forEach((item, idx) => {
       const [r, g, b] = hexToRGB(item.color);
       const pct = ((item.value / total) * 100).toFixed(1);
+      const ly = legendStartY + idx * 20;
       
+      // Color swatch
       this.doc.setFillColor(r, g, b);
-      this.doc.rect(legendX, legendY - 3, 8, 5, 'F');
+      this.doc.roundedRect(legendX, ly - 3, 10, 6, 1, 1, 'F');
       
-      this.doc.setFontSize(9);
+      // Label
+      this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 0, 0);
-      this.doc.text(`${item.label}`, legendX + 12, legendY + 1);
+      this.doc.text(item.label, legendX + 14, ly + 1);
       
+      // Value line
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(80, 80, 80);
-      this.doc.text(`${item.value.toLocaleString()} tCO₂e (${pct}%)`, legendX + 12, legendY + 7);
-      
-      legendY += 16;
+      this.doc.text(`${item.value.toLocaleString()} tCO\u2082e (${pct}%)`, legendX + 14, ly + 8);
     });
 
-    this.currentY = y + radius + 15;
+    this.currentY = chartCenterY + effectiveRadius + 15;
   }
 
   // Draw horizontal bar chart
-  drawHorizontalBarChart(data: Array<{ label: string; value: number }>, x: number, y: number, width: number, barHeight: number = 12) {
+  drawHorizontalBarChart(data: Array<{ label: string; value: number }>, x: number, y: number, width: number, barHeight: number = 14) {
     if (this.currentY > 200) {
       this.doc.addPage();
       this.currentY = 30;
@@ -648,8 +667,10 @@ export class ProfessionalPDFGenerator {
     if (maxValue === 0) return;
 
     const [r, g, b] = hexToRGB(this.branding.primaryColor);
-    const labelWidth = 55;
-    const barAreaWidth = width - labelWidth - 30;
+    // Increase label area to prevent truncation (fix #2)
+    const labelWidth = 70;
+    const valueWidth = 45;
+    const barAreaWidth = width - labelWidth - valueWidth;
     let currentBarY = y;
 
     data.forEach((item, index) => {
@@ -660,34 +681,37 @@ export class ProfessionalPDFGenerator {
         currentBarY = 30;
       }
 
-      // Label
-      this.doc.setFontSize(8);
+      // Label - smaller font to fit, no truncation unless very long (fix #2)
+      this.doc.setFontSize(7.5);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(60, 60, 60);
-      const truncatedLabel = item.label.length > 22 ? item.label.substring(0, 20) + '…' : item.label;
-      this.doc.text(truncatedLabel, x, currentBarY + barHeight * 0.65);
+      const maxLabelChars = 30;
+      const displayLabel = item.label.length > maxLabelChars 
+        ? item.label.substring(0, maxLabelChars - 1) + '…' 
+        : item.label;
+      this.doc.text(displayLabel, x, currentBarY + barHeight * 0.6);
 
       // Bar background
       this.doc.setFillColor(240, 240, 240);
       this.doc.roundedRect(x + labelWidth, currentBarY, barAreaWidth, barHeight - 2, 2, 2, 'F');
 
       // Bar fill
-      const barWidth = (item.value / maxValue) * barAreaWidth;
+      const barW = (item.value / maxValue) * barAreaWidth;
       const opacity = 0.7 + (0.3 * (1 - index / data.length));
       this.doc.setFillColor(
         Math.round(r * opacity + 255 * (1 - opacity)),
         Math.round(g * opacity + 255 * (1 - opacity)),
         Math.round(b * opacity + 255 * (1 - opacity))
       );
-      if (barWidth > 0) {
-        this.doc.roundedRect(x + labelWidth, currentBarY, Math.max(barWidth, 4), barHeight - 2, 2, 2, 'F');
+      if (barW > 0) {
+        this.doc.roundedRect(x + labelWidth, currentBarY, Math.max(barW, 4), barHeight - 2, 2, 2, 'F');
       }
 
-      // Value label
-      this.doc.setFontSize(8);
+      // Value label (fix #7 - consistent unit)
+      this.doc.setFontSize(7.5);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 0, 0);
-      this.doc.text(`${item.value.toLocaleString()} tCO₂e`, x + labelWidth + barAreaWidth + 3, currentBarY + barHeight * 0.65);
+      this.doc.text(`${item.value.toLocaleString()} tCO\u2082e`, x + labelWidth + barAreaWidth + 3, currentBarY + barHeight * 0.6);
 
       currentBarY += barHeight + 3;
     });
