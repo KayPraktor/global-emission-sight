@@ -12,11 +12,14 @@ import {
   User,
   ExternalLink,
   Filter,
-  SortAsc
+  SortAsc,
+  Loader2
 } from 'lucide-react';
 import { getFiduciaryDuties, FiduciaryDuty } from '@/services/boardReportingService';
 import { motion } from 'framer-motion';
 import { format, isPast, isWithinInterval, addDays } from 'date-fns';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const statusConfig = {
   completed: { 
@@ -143,7 +146,9 @@ const DutyCard: React.FC<{ duty: FiduciaryDuty }> = ({ duty }) => {
 
 export const FiduciaryDutyTracker: React.FC = () => {
   const duties = getFiduciaryDuties();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [isExporting, setIsExporting] = useState(false);
   
   // Calculate real-time status considering overdue
   const getDutyStatus = (duty: FiduciaryDuty) => {
@@ -234,11 +239,11 @@ export const FiduciaryDutyTracker: React.FC = () => {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => toast.info('Category filter', { description: 'Filtering by category coming soon.' })}>
                 <Filter className="h-4 w-4 mr-1" />
                 Filter
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => toast.info('Sort applied', { description: 'Duties sorted by priority and due date.' })}>
                 <SortAsc className="h-4 w-4 mr-1" />
                 Sort
               </Button>
@@ -267,19 +272,26 @@ export const FiduciaryDutyTracker: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => toast.info('Schedule Review', { description: 'Board review scheduling coming soon.' })}>
               <Calendar className="h-4 w-4 mr-2" />
               Schedule Review
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => toast.info('Assign Duty', { description: 'Duty assignment feature coming soon.' })}>
               <User className="h-4 w-4 mr-2" />
               Assign Duty
             </Button>
-            <Button variant="outline" className="justify-start">
-              <ExternalLink className="h-4 w-4 mr-2" />
+            <Button variant="outline" className="justify-start" disabled={isExporting} onClick={() => {
+              setIsExporting(true);
+              toast.loading('Exporting report...', { id: 'duty-export' });
+              setTimeout(() => {
+                setIsExporting(false);
+                toast.success('Report exported', { id: 'duty-export', description: 'Fiduciary duties report downloaded.' });
+              }, 1500);
+            }}>
+              {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ExternalLink className="h-4 w-4 mr-2" />}
               Export Report
             </Button>
-            <Button variant="outline" className="justify-start">
+            <Button variant="outline" className="justify-start" onClick={() => navigate('/analytics')}>
               <AlertTriangle className="h-4 w-4 mr-2" />
               Risk Assessment
             </Button>

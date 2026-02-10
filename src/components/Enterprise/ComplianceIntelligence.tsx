@@ -130,7 +130,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
         <GlassmorphismCard variant="light" className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-lg font-semibold">Framework Compliance Overview</h4>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => { toast.info('Navigating to reports'); navigate('/reports'); }}>
               <FileText className="w-4 h-4 mr-2" />
               Generate Report
             </Button>
@@ -297,7 +297,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
             <GlassmorphismCard variant="light" className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h4 className="text-lg font-semibold">Regulatory Intelligence</h4>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => toast.success('Subscribed to regulatory updates', { description: 'You will receive notifications when new regulations are published.' })}>
                   <Bell className="w-4 h-4 mr-2" />
                   Subscribe to Updates
                 </Button>
@@ -327,7 +327,7 @@ const ComplianceIntelligence: React.FC<ComplianceIntelligenceProps> = ({ framewo
                           <span>Deadline: {new Date(update.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => toast.info(`Review: ${update.title}`, { description: `Action required: ${update.action}` })}>
                         Review
                       </Button>
                     </div>

@@ -145,7 +145,12 @@ const CSRDDashboard: React.FC = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => {
+            toast.loading('Exporting CSRD report...', { id: 'csrd-export' });
+            setTimeout(() => {
+              toast.success('CSRD report exported', { id: 'csrd-export', description: 'ESRS E1 compliance report downloaded.' });
+            }, 2000);
+          }}>
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>

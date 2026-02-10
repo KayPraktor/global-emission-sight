@@ -25,6 +25,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { approvalService } from '@/services/approvalService';
@@ -249,10 +250,13 @@ export function AppSidebar() {
             </Button>
           </div>
         )}
-        <div className="flex items-center space-x-2">
+        <button 
+          onClick={() => toast.info('Help & Support', { description: 'Contact support@baryon.app or visit our documentation.' })}
+          className="flex items-center space-x-2 w-full hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <HelpCircle className="h-4 w-4 text-sidebar-foreground/70" />
           <span className="text-sm text-sidebar-foreground/70">Help & Support</span>
-        </div>
+        </button>
       </SidebarFooter>
     </Sidebar>
   );

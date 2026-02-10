@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ import { motion } from 'framer-motion';
 import { isPast } from 'date-fns';
 
 export const BoardReportDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   const metrics = getGovernanceMetrics();
   const duties = getFiduciaryDuties();
   const { overall, rating } = calculateGovernanceScore(metrics);
@@ -118,7 +119,7 @@ export const BoardReportDashboard: React.FC = () => {
                   Review and address overdue board obligations to maintain compliance
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="shrink-0">
+              <Button variant="outline" size="sm" className="shrink-0" onClick={() => setActiveTab('duties')}>
                 Review Now
               </Button>
             </div>
@@ -127,7 +128,7 @@ export const BoardReportDashboard: React.FC = () => {
       )}
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
@@ -173,7 +174,7 @@ export const BoardReportDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <Button variant="ghost" className="w-full mt-4" size="sm">
+                <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setActiveTab('reports')}>
                   View All Reports
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -209,7 +210,7 @@ export const BoardReportDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <Button variant="ghost" className="w-full mt-4" size="sm">
+                <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setActiveTab('governance')}>
                   View Full Scorecard
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>

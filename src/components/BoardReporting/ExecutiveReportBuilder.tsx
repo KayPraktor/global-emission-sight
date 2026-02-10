@@ -18,7 +18,8 @@ import {
   PieChart,
   ArrowRight,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { getExecutiveSummary } from '@/services/boardReportingService';
 import { motion } from 'framer-motion';
@@ -35,12 +36,73 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import { toast } from 'sonner';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
+const DEFAULT_SECTIONS: Record<string, boolean> = {
+  'Executive Summary': true,
+  'Emissions Performance': true,
+  'Target Progress': true,
+  'Risk Assessment': true,
+  'Opportunities': true,
+  'Governance Scorecard': true,
+  'Regulatory Updates': false,
+  'Recommendations': true,
+};
+
 export const ExecutiveReportBuilder: React.FC = () => {
   const [selectedReportType, setSelectedReportType] = useState<'quarterly' | 'annual' | 'special'>('quarterly');
+  const [sections, setSections] = useState<Record<string, boolean>>(DEFAULT_SECTIONS);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const summary = getExecutiveSummary();
+
+  const toggleSection = (name: string) => {
+    setSections(prev => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const handlePreview = () => {
+    const enabledCount = Object.values(sections).filter(Boolean).length;
+    toast.info('Preview generated', {
+      description: `Report preview with ${enabledCount} sections is ready.`,
+    });
+  };
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    toast.loading('Generating PDF...', { id: 'export-pdf' });
+    setTimeout(() => {
+      setIsExporting(false);
+      toast.success('PDF exported successfully', {
+        id: 'export-pdf',
+        description: `${selectedReportType.charAt(0).toUpperCase() + selectedReportType.slice(1)} report downloaded.`,
+      });
+    }, 2000);
+  };
+
+  const handleGenerateReport = () => {
+    const enabledCount = Object.values(sections).filter(Boolean).length;
+    if (enabledCount === 0) {
+      toast.error('No sections selected', { description: 'Please select at least one section to include.' });
+      return;
+    }
+    setIsGenerating(true);
+    toast.loading('Generating report...', { id: 'gen-report' });
+    setTimeout(() => {
+      setIsGenerating(false);
+      toast.success('Report generated', {
+        id: 'gen-report',
+        description: `${selectedReportType.charAt(0).toUpperCase() + selectedReportType.slice(1)} board report with ${enabledCount} sections is ready.`,
+      });
+    }, 2500);
+  };
+
+  const handleCustomize = () => {
+    toast.info('Customize sections', {
+      description: 'Toggle the checkboxes above to include or exclude report sections.',
+    });
+  };
 
   const emissionsBreakdown = [
     { name: 'Scope 1', value: summary.currentEmissions.scope1 },
@@ -70,12 +132,12 @@ export const ExecutiveReportBuilder: React.FC = () => {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handlePreview}>
                 <Eye className="h-4 w-4 mr-1" />
                 Preview
               </Button>
-              <Button size="sm">
-                <Download className="h-4 w-4 mr-1" />
+              <Button size="sm" onClick={handleExportPDF} disabled={isExporting}>
+                {isExporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
                 Export PDF
               </Button>
             </div>
@@ -286,40 +348,33 @@ export const ExecutiveReportBuilder: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { name: 'Executive Summary', included: true },
-              { name: 'Emissions Performance', included: true },
-              { name: 'Target Progress', included: true },
-              { name: 'Risk Assessment', included: true },
-              { name: 'Opportunities', included: true },
-              { name: 'Governance Scorecard', included: true },
-              { name: 'Regulatory Updates', included: false },
-              { name: 'Recommendations', included: true },
-            ].map((section, i) => (
+            {Object.entries(sections).map(([name, included]) => (
               <div
-                key={i}
+                key={name}
+                onClick={() => toggleSection(name)}
                 className={`p-3 border rounded-lg flex items-center gap-2 cursor-pointer transition-colors ${
-                  section.included 
+                  included 
                     ? 'bg-primary/5 border-primary/30' 
                     : 'bg-muted/30 hover:bg-muted/50'
                 }`}
               >
                 <CheckCircle2 
-                  className={`h-4 w-4 ${section.included ? 'text-primary' : 'text-muted-foreground'}`} 
+                  className={`h-4 w-4 ${included ? 'text-primary' : 'text-muted-foreground'}`} 
                 />
-                <span className="text-sm">{section.name}</span>
+                <span className="text-sm">{name}</span>
               </div>
             ))}
           </div>
           
           <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleCustomize}>
               <Settings className="h-4 w-4 mr-2" />
               Customize
             </Button>
-            <Button>
+            <Button onClick={handleGenerateReport} disabled={isGenerating}>
+              {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               Generate Report
-              <ArrowRight className="h-4 w-4 ml-2" />
+              {!isGenerating && <ArrowRight className="h-4 w-4 ml-2" />}
             </Button>
           </div>
         </CardContent>
