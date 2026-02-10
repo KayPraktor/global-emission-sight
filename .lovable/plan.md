@@ -1,329 +1,118 @@
 
 
-# Premium Sankey Diagram Visual Upgrade
+# Full-Scale "Dead UI" Audit and Fix
 
-## Overview
+## Problem Summary
 
-Transform the current Sankey diagram from a utilitarian visualization into a **premium, polished** experience with refined colors, smoother curves, better spacing, and enhanced interactivity.
+The application has dozens of buttons, links, and interactive elements that are visually present but do nothing when clicked. This makes the product feel broken and unfinished.
 
----
+## Identified Dead Interactive Elements
 
-## Current vs. Target State
+### Category 1: Buttons with No `onClick` Handler (Completely Inert)
 
-| Aspect | Current | Target |
-|--------|---------|--------|
-| Container height | 400px | 600px |
-| Node padding | 30px | 50px |
-| Link style | Solid gradient (0.6-0.3 opacity) | Semi-transparent (0.15-0.25 opacity) |
-| Link curvature | Default bezier | Smoother control points |
-| Color palette | Blue/Amber (HSL values) | Emerald/Sky/Amber sustainability palette |
-| Link hover | opacity-80 | Highlight to opacity 0.6 + tooltip |
-| Font size | text-xs (~11px) | 12px explicit with better contrast |
-| Label overlap | Common | Eliminated with increased padding |
+| Component | Element | Fix |
+|-----------|---------|-----|
+| `BoardReportDashboard.tsx` (line 121) | "Review Now" button (overdue duties alert) | Navigate to Fiduciary Duties tab |
+| `BoardReportDashboard.tsx` (line 176) | "View All Reports" button | Switch to Executive Reports tab |
+| `BoardReportDashboard.tsx` (line 212) | "View Full Scorecard" button | Switch to Governance Scorecard tab |
+| `ExecutiveReportBuilder.tsx` (line 73) | "Preview" button | Show toast with preview simulation |
+| `ExecutiveReportBuilder.tsx` (line 77) | "Export PDF" button | Trigger PDF generation with loading state |
+| `ExecutiveReportBuilder.tsx` (line 316) | "Customize" button | Toggle report sections (make them interactive checkboxes) |
+| `ExecutiveReportBuilder.tsx` (line 320) | "Generate Report" button | Trigger report generation with progress simulation |
+| `ExecutiveReportBuilder.tsx` (lines 298-306) | Report section toggles (e.g., "Regulatory Updates") | Add onClick to toggle inclusion state |
+| `FiduciaryDutyTracker.tsx` (line 237) | "Filter" button | Show toast "Feature coming soon" or implement simple filter |
+| `FiduciaryDutyTracker.tsx` (line 241) | "Sort" button | Show toast "Feature coming soon" or implement sort toggle |
+| `FiduciaryDutyTracker.tsx` (lines 270-285) | "Schedule Review", "Assign Duty", "Export Report", "Risk Assessment" quick actions | Add toast feedback for each |
+| `ComplianceIntelligence.tsx` (line 133) | "Generate Report" button | Navigate to reports page with toast |
+| `ComplianceIntelligence.tsx` (line 300) | "Subscribe to Updates" button | Show toast "Subscribed to regulatory updates" |
+| `ComplianceIntelligence.tsx` (line 330) | "Review" button (regulatory updates) | Show toast with update details |
+| `CSRDDashboard.tsx` (line 148) | "Export Report" button | Trigger export with mock loading |
+| `MobileNavigation.tsx` (line 111) | "New Entry" quick action | Navigate to `/data-entry` |
+| `MobileNavigation.tsx` (line 115) | "Generate Report" quick action | Navigate to `/reports` |
+| `AppSidebar.tsx` (line 252) | "Help & Support" link | Navigate to a help page or show toast |
 
----
+### Category 2: Navigation Issues
 
-## Color Palette: Modern Sustainability Theme
+| Component | Element | Fix |
+|-----------|---------|-----|
+| `MobileNavigation.tsx` (line 31) | "Monitoring" link (`/monitoring`) | Route does not exist; remove or map to `/analytics` |
+| `MobileNavigation.tsx` (line 32) | "AI Assistant" link (`/ai-assistant`) | Route does not exist; remove or map to existing page |
+| `MobileNavigation.tsx` (line 153) | "More" link (`/more`) in bottom nav | Route does not exist; should open the mobile sheet instead |
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  SOURCE (Organization)                                       │
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
-│  Emerald Green: hsl(158, 64%, 52%) / #10b981                 │
-│                                                              │
-│  UPSTREAM (Categories 1-8)                                   │
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
-│  Sky Blue: hsl(199, 89%, 48%) / #0ea5e9                      │
-│                                                              │
-│  DOWNSTREAM (Categories 9-15)                                │
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │
-│  Amber/Orange: hsl(38, 92%, 50%) / #f59e0b                   │
-└─────────────────────────────────────────────────────────────┘
-```
+### Category 3: Report Section Toggles (Static UI pretending to be interactive)
 
----
-
-## Technical Changes
-
-### 1. Container & Layout (Scope3SankeyDiagram.tsx)
-
-```tsx
-// BEFORE
-<div className="h-[400px] w-full">
-
-// AFTER
-<div className="h-[600px] w-full">
-```
-
-```tsx
-// BEFORE
-<Sankey
-  nodePadding={30}
-  nodeWidth={12}
-  margin={{ top: 20, right: 160, bottom: 20, left: 20 }}
->
-
-// AFTER
-<Sankey
-  nodePadding={50}
-  nodeWidth={14}
-  margin={{ top: 30, right: 200, bottom: 30, left: 30 }}
->
-```
+| Component | Element | Fix |
+|-----------|---------|-----|
+| `ExecutiveReportBuilder.tsx` (lines 289-312) | Report section checkboxes ("Executive Summary", "Emissions Performance", etc.) | Convert to controlled state with `useState` so clicking toggles inclusion |
 
 ---
 
-### 2. Premium Color Constants
+## Implementation Approach
 
-Add a dedicated color palette at the top of the component:
+### 1. Board Reporting Dashboard (`BoardReportDashboard.tsx`)
 
-```tsx
-// Premium sustainability color palette
-const COLORS = {
-  organization: '#10b981',    // Emerald-500
-  upstream: '#0ea5e9',        // Sky-500
-  downstream: '#f59e0b',      // Amber-500
-  upstreamLight: '#38bdf8',   // Sky-400
-  downstreamLight: '#fbbf24', // Amber-400
-};
-```
+- Accept a new `onTabChange` callback or use a `ref` to the Tabs component to programmatically switch tabs.
+- Since the Tabs are controlled by Radix UI and the component owns the state, convert to a controlled `Tabs` with `useState` for `activeTab`.
+- Wire "Review Now" to set tab to `duties`, "View All Reports" to `reports`, and "View Full Scorecard" to `governance`.
 
----
+### 2. Executive Report Builder (`ExecutiveReportBuilder.tsx`)
 
-### 3. CustomSankeyNode Refinements
+- **Report Sections:** Convert the static `section.included` array to `useState` so clicking toggles each section's inclusion.
+- **Preview button:** Show a toast: "Preview generated -- opening in new window..." (mock).
+- **Export PDF button:** Add a loading spinner, simulate 2-second delay, then show success toast.
+- **Generate Report button:** Similar mock with progress indicator and success toast.
+- **Customize button:** Toggle the section toggles between view-only and edit mode, or simply show a toast saying "Use the checkboxes above to customize sections."
 
-Update the node rendering with better colors and font sizing:
+### 3. Fiduciary Duty Tracker (`FiduciaryDutyTracker.tsx`)
 
-```tsx
-const getNodeColor = () => {
-  if (node.type === 'organization') return COLORS.organization;
-  if (node.type === 'stream') {
-    return node.isUpstream ? COLORS.upstream : COLORS.downstream;
-  }
-  if (node.type === 'category') {
-    return node.isUpstream ? COLORS.upstreamLight : COLORS.downstreamLight;
-  }
-  // Supplier nodes
-  return node.isUpstream 
-    ? 'hsl(199, 75%, 65%)'   // Lighter sky
-    : 'hsl(38, 80%, 65%)';   // Lighter amber
-};
-```
+- **Filter button:** Show toast "Filtering feature coming soon" (or implement basic category filter dropdown).
+- **Sort button:** Show toast "Sorting feature coming soon" (or toggle sort between priority/date).
+- **Quick Action buttons:** Each shows a toast with contextual message:
+  - "Schedule Review" -> "Opening calendar to schedule board review..."
+  - "Assign Duty" -> "Assignment feature coming soon"
+  - "Export Report" -> Trigger mock CSV/PDF export with loading state
+  - "Risk Assessment" -> Navigate to `/analytics`
 
-Label styling with explicit 12px font:
+### 4. Compliance Intelligence (`ComplianceIntelligence.tsx`)
 
-```tsx
-<text
-  x={x + width + 12}
-  y={y + height / 2}
-  textAnchor="start"
-  dominantBaseline="middle"
-  className="fill-foreground font-medium"
-  style={{ fontSize: '12px' }}
->
-  {displayName}
-</text>
-```
+- **Generate Report:** Navigate to `/reports` with a toast.
+- **Subscribe to Updates:** Toast "Subscribed to regulatory updates successfully!"
+- **Review buttons (regulatory updates):** Toast showing the update's action requirement.
 
----
+### 5. CSRD Dashboard (`CSRDDashboard.tsx`)
 
-### 4. CustomSankeyLink - Premium Gradient with Hover
+- **Export Report button:** Add an `onClick` handler that simulates export with a loading toast.
 
-This is the core visual upgrade:
+### 6. Mobile Navigation (`MobileNavigation.tsx`)
 
-```tsx
-function CustomSankeyLink(props: any) {
-  const { 
-    sourceX, targetX, sourceY, targetY, 
-    sourceControlX, targetControlX, 
-    linkWidth, payload 
-  } = props;
-  const [isHovered, setIsHovered] = useState(false);
-  
-  const isUpstream = payload.isUpstream;
-  const gradientId = `premium-gradient-${payload.source}-${payload.target}`;
-  
-  // Source color based on flow direction
-  const sourceColor = isUpstream ? COLORS.organization : COLORS.organization;
-  const targetColor = isUpstream ? COLORS.upstream : COLORS.downstream;
-  
-  // Opacity increases on hover
-  const baseOpacity = isHovered ? 0.5 : 0.2;
-  const endOpacity = isHovered ? 0.35 : 0.15;
+- **Fix broken routes:** Change `/monitoring` to `/analytics`, `/ai-assistant` to `/enterprise`, and `/more` to open the side sheet.
+- **Quick Action buttons:** "New Entry" navigates to `/data-entry`, "Generate Report" navigates to `/reports`, both closing the sheet.
 
-  return (
-    <Layer>
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} stopOpacity={baseOpacity} />
-          <stop offset="100%" stopColor={targetColor} stopOpacity={endOpacity} />
-        </linearGradient>
-      </defs>
-      <path
-        d={`
-          M${sourceX},${sourceY}
-          C${sourceControlX * 1.1},${sourceY} ${targetControlX * 0.9},${targetY} ${targetX},${targetY}
-          L${targetX},${targetY + linkWidth}
-          C${targetControlX * 0.9},${targetY + linkWidth} ${sourceControlX * 1.1},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
-          Z
-        `}
-        fill={`url(#${gradientId})`}
-        stroke={isHovered ? targetColor : 'none'}
-        strokeWidth={isHovered ? 1 : 0}
-        strokeOpacity={0.3}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="cursor-pointer transition-all duration-200"
-      />
-    </Layer>
-  );
-}
-```
+### 7. Help & Support (`AppSidebar.tsx`)
 
-**Key improvements:**
-- Gradient flows from source node color → target node color
-- Base opacity: 0.2 (subtle, not heavy)
-- Hover opacity: 0.5 (clear highlight)
-- Subtle stroke on hover for definition
-- Smoother curves via adjusted control point multipliers (1.1, 0.9)
-
----
-
-### 5. Link Tooltip Integration
-
-Currently the tooltip only shows for nodes. We need to add link tooltip support:
-
-```tsx
-// In the Sankey component, we'll use a custom tooltip that detects payload type
-<Tooltip 
-  content={(props) => {
-    const payload = props.payload?.[0]?.payload;
-    if (!payload) return null;
-    
-    // Detect if this is a link (has source/target) vs node
-    if (payload.source !== undefined && payload.target !== undefined) {
-      return <SankeyLinkTooltip {...props} totalEmissions={totals.total} />;
-    }
-    return <SankeyNodeTooltip {...props} totalEmissions={totals.total} />;
-  }}
-/>
-```
-
----
-
-### 6. Enhanced SankeyLinkTooltip
-
-Update to show category name with the CO2e value prominently:
-
-```tsx
-export function SankeyLinkTooltip({ active, payload, totalEmissions }: SankeyLinkTooltipProps) {
-  if (!active || !payload || payload.length === 0) return null;
-
-  const link = payload[0].payload;
-  const percentage = calculatePercentage(link.value, totalEmissions);
-  const isUpstream = link.isUpstream;
-
-  return (
-    <div className="bg-popover/95 backdrop-blur-sm border rounded-xl shadow-xl p-4 min-w-[220px]">
-      {/* Flow direction indicator */}
-      <div className="flex items-center gap-2 mb-3">
-        <div 
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: isUpstream ? '#0ea5e9' : '#f59e0b' }}
-        />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {isUpstream ? 'Upstream Flow' : 'Downstream Flow'}
-        </span>
-      </div>
-
-      {/* Source → Target */}
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <span>{link.source?.name}</span>
-        <span className="text-muted-foreground">→</span>
-        <span>{link.target?.name}</span>
-      </div>
-
-      {/* Prominent CO2e value */}
-      <div className="mt-3 p-2 rounded-lg bg-muted/50">
-        <div className="text-2xl font-bold text-foreground">
-          {formatEmissions(link.value)} <span className="text-sm font-normal">tCO₂e</span>
-        </div>
-        <div className="text-xs text-muted-foreground mt-1">
-          {percentage.toFixed(1)}% of total Scope 3
-        </div>
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-### 7. Legend Color Update
-
-Match the legend to the new color palette:
-
-```tsx
-<div className="flex items-center gap-4">
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.upstream }} />
-    <span className="text-xs text-muted-foreground font-medium">Upstream</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.downstream }} />
-    <span className="text-xs text-muted-foreground font-medium">Downstream</span>
-  </div>
-</div>
-```
-
----
-
-## Visual Before/After Comparison
-
-```text
-BEFORE (Cluttered, Heavy)              AFTER (Premium, Breathable)
-┌─────────────────────────────┐        ┌─────────────────────────────────────┐
-│ ■ Org ████████ Upstream     │        │                                     │
-│       ██████████ Cat 1      │        │  ■ Organization                     │
-│       ████████ Cat 4        │        │       ╲                             │
-│       █████ Cat 6           │        │        ╲ ─────── ■ Upstream         │
-│       ██████████ Downstream │        │        ╱           ╲                │
-│       █████ Cat 9           │        │       ╱             ▸ Cat 1         │
-│       █████ Cat 11          │        │      ╱              ▸ Cat 4         │
-│                             │        │     ╱               ▸ Cat 6         │
-│ [Black/heavy links]         │        │                                     │
-│ [Labels overlap]            │        │        ╲ ─────── ■ Downstream       │
-│ [400px height crammed]      │        │                     ▸ Cat 9         │
-└─────────────────────────────┘        │                     ▸ Cat 11        │
-                                       │                                     │
-                                       │  [Soft gradient links, 0.2 opacity] │
-                                       │  [600px height, plenty of space]    │
-                                       │  [Labels clearly separated]         │
-                                       └─────────────────────────────────────┘
-```
+- Wrap in a clickable element that shows a toast: "Help & Support -- Contact support@baryon.app or visit our documentation."
 
 ---
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/components/Scope3/Scope3SankeyDiagram.tsx` | Color palette, container height, node padding, link component with hover state, tooltip integration |
-| `src/components/Scope3/SankeyLinkTooltip.tsx` | Premium styling with backdrop blur, category name display, prominent CO2e value |
-| `src/components/Scope3/SankeyNodeTooltip.tsx` | Match styling consistency with link tooltip |
+| File | Type of Changes |
+|------|----------------|
+| `src/components/BoardReporting/BoardReportDashboard.tsx` | Add controlled Tabs state, wire 3 dead buttons to tab switches |
+| `src/components/BoardReporting/ExecutiveReportBuilder.tsx` | Add section toggle state, wire Preview/Export/Generate/Customize buttons with mock logic |
+| `src/components/BoardReporting/FiduciaryDutyTracker.tsx` | Wire Filter/Sort/Quick Action buttons with toasts |
+| `src/components/Enterprise/ComplianceIntelligence.tsx` | Wire Generate Report/Subscribe/Review buttons |
+| `src/components/Compliance/CSRDDashboard.tsx` | Wire Export Report button |
+| `src/components/navigation/MobileNavigation.tsx` | Fix broken routes, wire quick action buttons with navigation |
+| `src/components/navigation/AppSidebar.tsx` | Make Help & Support clickable with feedback |
 
 ---
 
-## Summary of Premium Upgrades
+## Technical Notes
 
-| Feature | Implementation |
-|---------|---------------|
-| **Softer links** | 0.2 base opacity with source→target gradient |
-| **Hover highlight** | 0.5 opacity + subtle stroke on hover |
-| **Smoother curves** | Control point multipliers for organic flow |
-| **Better spacing** | nodePadding: 50, height: 600px |
-| **Legible labels** | 12px font, increased right margin (200px) |
-| **Sustainability palette** | Emerald/Sky/Amber color scheme |
-| **Link tooltips** | Shows category + CO2e value on hover |
-| **Premium feel** | backdrop-blur, rounded-xl, shadow-xl on tooltips |
+- All "coming soon" toasts will use `toast.info()` from sonner with a descriptive message so users know the system responded.
+- All export/generate buttons will use a simulated loading pattern: `setLoading(true)` -> `setTimeout` (1.5s) -> success toast -> `setLoading(false)`.
+- Navigation wiring will use the `useNavigate` hook from react-router-dom.
+- Report section toggles will use a `useState<Record<string, boolean>>` pattern to track which sections are included.
+- No backend changes are needed -- this is purely a frontend interactivity pass.
 
