@@ -264,8 +264,11 @@ export class ProfessionalPDFGenerator {
     showRowNumbers?: boolean;
     highlightFirstColumn?: boolean;
   }) {
-    // If table would start near page bottom, move to next page entirely (fix #6)
-    if (this.currentY > 200) {
+    // Estimate table height: header + rows * ~10mm each
+    const estimatedHeight = 12 + rows.length * 10;
+    const remainingSpace = 270 - this.currentY;
+    // If table won't fit and we're past halfway, move to next page entirely (fix #6)
+    if (estimatedHeight > remainingSpace && this.currentY > 140) {
       this.doc.addPage();
       this.currentY = 30;
       this.pageNumber++;
@@ -301,13 +304,13 @@ export class ProfessionalPDFGenerator {
         fontStyle: 'bold',
         halign: 'left',
         cellPadding: 4,
-        overflow: 'visible' as any, // prevent header text wrapping (fix #1)
-        minCellWidth: 25, // minimum column width to prevent splits (fix #1)
+        overflow: 'visible' as any, // prevent header text wrapping (fix #2)
+        minCellWidth: 28, // wider minimum to prevent word splits (fix #2)
       },
       bodyStyles: {
         textColor: [50, 50, 50],
         cellPadding: 3,
-        minCellWidth: 20,
+        minCellWidth: 22,
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
@@ -316,7 +319,7 @@ export class ProfessionalPDFGenerator {
         0: { fontStyle: 'bold', fillColor: [240, 240, 250] as [number, number, number] }
       } : {},
       margin: { left: this.marginLeft, right: this.marginRight },
-      // Prevent awkward table splits: keep at least 3 rows together (fix #6)
+      // Prevent awkward table splits: keep rows together (fix #6)
       rowPageBreak: 'avoid' as any,
       didDrawPage: () => {
         this.pageNumber++;
@@ -344,7 +347,7 @@ export class ProfessionalPDFGenerator {
       this.doc.setFillColor(248, 250, 252);
       this.doc.setDrawColor(r, g, b);
       this.doc.setLineWidth(0.5);
-      this.doc.roundedRect(x, this.currentY, cardWidth, 35, 3, 3, 'FD');
+      this.doc.roundedRect(x, this.currentY, cardWidth, 38, 3, 3, 'FD');
       
       // Top accent line
       this.doc.setFillColor(r, g, b);
@@ -356,22 +359,27 @@ export class ProfessionalPDFGenerator {
       this.doc.setTextColor(100, 100, 100);
       this.doc.text(metric.label, x + 5, this.currentY + 12);
       
-      // Value + Unit with clear spacing (fix #3)
-      this.doc.setFontSize(16);
+      // Value and Unit rendered separately with explicit spacing (fix #1 & #6)
+      const maxTextWidth = cardWidth - 10;
+      let valueFontSize = 15;
+      this.doc.setFontSize(valueFontSize);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 0, 0);
-      const displayValue = metric.unit 
-        ? `${metric.value} ${metric.unit}` 
-        : metric.value;
-      // Auto-shrink if text overflows card
-      const maxTextWidth = cardWidth - 10;
-      let valueFontSize = 16;
-      this.doc.setFontSize(valueFontSize);
-      while (this.doc.getTextWidth(displayValue) > maxTextWidth && valueFontSize > 9) {
+      
+      // Shrink font if value alone overflows
+      while (this.doc.getTextWidth(metric.value) > maxTextWidth && valueFontSize > 9) {
         valueFontSize -= 1;
         this.doc.setFontSize(valueFontSize);
       }
-      this.doc.text(displayValue, x + 5, this.currentY + 24);
+      this.doc.text(metric.value, x + 5, this.currentY + 24);
+      
+      // Unit on separate line below value to avoid overlap (fix #1)
+      if (metric.unit) {
+        this.doc.setFontSize(8);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setTextColor(100, 100, 100);
+        this.doc.text(metric.unit, x + 5, this.currentY + 30);
+      }
       
       // Change indicator
       if (metric.change) {
@@ -379,28 +387,30 @@ export class ProfessionalPDFGenerator {
                            metric.changeType === 'negative' ? [220, 38, 38] : [100, 100, 100];
         this.doc.setFontSize(8);
         this.doc.setTextColor(changeColor[0], changeColor[1], changeColor[2]);
-        this.doc.text(metric.change, x + cardWidth - 5, this.currentY + 30, { align: 'right' });
+        this.doc.text(metric.change, x + cardWidth - 5, this.currentY + 34, { align: 'right' });
       }
     });
     
-    this.currentY += 45;
+    this.currentY += 48;
   }
 
   // Add declaration/signature section
   addDeclarationSection(declarant: string, position: string, date: string) {
-    if (this.currentY > 220) {
+    // Always push to next page if insufficient room for the full declaration box (fix #7)
+    if (this.currentY > 200) {
       this.doc.addPage();
       this.currentY = 30;
       this.pageNumber++;
     }
     
     const [r, g, b] = hexToRGB(this.branding.primaryColor);
+    const boxHeight = 70;
     
-    // Declaration box
+    // Declaration box with padding to prevent cutoff (fix #7)
     this.doc.setFillColor(248, 250, 252);
     this.doc.setDrawColor(r, g, b);
     this.doc.setLineWidth(1);
-    this.doc.roundedRect(this.marginLeft, this.currentY, this.contentWidth, 60, 5, 5, 'FD');
+    this.doc.roundedRect(this.marginLeft, this.currentY, this.contentWidth, boxHeight, 5, 5, 'FD');
     
     this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
@@ -414,19 +424,21 @@ export class ProfessionalPDFGenerator {
     const lines = this.doc.splitTextToSize(declarationText, this.contentWidth - 20);
     this.doc.text(lines, this.marginLeft + 10, this.currentY + 25);
     
-    // Signature line
+    // Signature line — inset within box with proper margin (fix #7)
+    const sigLineY = this.currentY + boxHeight - 18;
     this.doc.setDrawColor(0, 0, 0);
     this.doc.setLineWidth(0.5);
-    this.doc.line(this.marginLeft + 10, this.currentY + 50, this.marginLeft + 80, this.currentY + 50);
+    this.doc.line(this.marginLeft + 10, sigLineY, this.marginLeft + 85, sigLineY);
     
     this.doc.setFontSize(8);
-    this.doc.text(declarant, this.marginLeft + 10, this.currentY + 55);
-    this.doc.text(position, this.marginLeft + 10, this.currentY + 60);
+    this.doc.setTextColor(60, 60, 60);
+    this.doc.text(declarant, this.marginLeft + 10, sigLineY + 5);
+    this.doc.text(position, this.marginLeft + 10, sigLineY + 10);
     
-    // Date
-    this.doc.text(`Date: ${date}`, this.marginLeft + 120, this.currentY + 55);
+    // Date aligned right within the box (fix #7)
+    this.doc.text(`Date: ${date}`, this.marginLeft + this.contentWidth - 10, sigLineY + 5, { align: 'right' });
     
-    this.currentY += 70;
+    this.currentY += boxHeight + 10;
   }
 
   // Add methodology section
@@ -667,9 +679,9 @@ export class ProfessionalPDFGenerator {
     if (maxValue === 0) return;
 
     const [r, g, b] = hexToRGB(this.branding.primaryColor);
-    // Increase label area to prevent truncation (fix #2)
-    const labelWidth = 70;
-    const valueWidth = 45;
+    // Wider label area to show full category names (fix #3)
+    const labelWidth = 80;
+    const valueWidth = 50;
     const barAreaWidth = width - labelWidth - valueWidth;
     let currentBarY = y;
 
@@ -681,13 +693,13 @@ export class ProfessionalPDFGenerator {
         currentBarY = 30;
       }
 
-      // Label - smaller font to fit, no truncation unless very long (fix #2)
-      this.doc.setFontSize(7.5);
+      // Label — use 7pt font and allow up to 40 chars before truncating (fix #3)
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(60, 60, 60);
-      const maxLabelChars = 30;
+      const maxLabelChars = 40;
       const displayLabel = item.label.length > maxLabelChars 
-        ? item.label.substring(0, maxLabelChars - 1) + '…' 
+        ? item.label.substring(0, maxLabelChars - 1) + '\u2026' 
         : item.label;
       this.doc.text(displayLabel, x, currentBarY + barHeight * 0.6);
 
@@ -707,8 +719,8 @@ export class ProfessionalPDFGenerator {
         this.doc.roundedRect(x + labelWidth, currentBarY, Math.max(barW, 4), barHeight - 2, 2, 2, 'F');
       }
 
-      // Value label (fix #7 - consistent unit)
-      this.doc.setFontSize(7.5);
+      // Value label with consistent unit formatting (fix #6)
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 0, 0);
       this.doc.text(`${item.value.toLocaleString()} tCO\u2082e`, x + labelWidth + barAreaWidth + 3, currentBarY + barHeight * 0.6);
