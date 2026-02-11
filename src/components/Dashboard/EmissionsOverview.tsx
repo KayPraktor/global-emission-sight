@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, BarChart3, CloudRain, Factory, Truck } from 'lucide-react';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+
 import { Sparkline } from './Sparkline';
 import { DataFreshness } from '@/components/ui/data-freshness';
 import { CountUp } from '@/components/ui/count-up';

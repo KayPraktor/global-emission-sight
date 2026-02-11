@@ -22,7 +22,7 @@ import { DataFreshness } from '@/components/ui/data-freshness';
 import DoughnutChart from '@/components/ui/doughnut-chart';
 import { motion } from 'framer-motion';
 import { feedback } from '@/lib/feedback';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+
 
 interface EmissionsChartProps {
   monthlyData: MonthlyEmissions[];

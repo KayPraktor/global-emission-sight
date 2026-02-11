@@ -24,8 +24,6 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { scope3Service, Scope3Summary } from '@/services/scope3Service';
-import { DEMO_SCOPE3_SUMMARY, getDemoHotspots, getDemoScope3Totals } from '@/utils/scope3DemoData';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { HotspotAnalysis } from './HotspotAnalysis';
 import { Scope3SankeyDiagram } from './Scope3SankeyDiagram';
@@ -104,10 +102,7 @@ export function Scope3Dashboard() {
     queryFn: () => scope3Service.getCategories(),
   });
 
-  // Check if using demo data
-  const isUsingDemoData = summary.length > 0 && 
-    summary[0]?.category_name === DEMO_SCOPE3_SUMMARY[0]?.category_name &&
-    summary[0]?.emissions_tco2e === DEMO_SCOPE3_SUMMARY[0]?.emissions_tco2e;
+  const hasData = summary.length > 0 && summary.some(s => s.emissions_tco2e > 0);
 
   const upstreamData = summary.filter(s => s.category_number <= 8);
   const downstreamData = summary.filter(s => s.category_number > 8);
@@ -150,10 +145,23 @@ export function Scope3Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Sample Data Indicator */}
-      {isUsingDemoData && (
-        <SampleDataBadge text="Sample Scope 3 Data" />
-      )}
+      {!hasData ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="rounded-full bg-muted p-4">
+                <BarChart3 className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No Scope 3 Data Yet</h3>
+                <p className="text-muted-foreground mb-4">Start tracking your value chain emissions</p>
+                <Button onClick={() => window.location.href = '/data-entry'}>Add Scope 3 Data</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+      <>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -251,9 +259,9 @@ export function Scope3Dashboard() {
                 supplier_data_percentage: s.supplier_data_percentage || 0,
                 spend_based_percentage: s.spend_based_percentage || 0,
                 industry_average_percentage: s.industry_average_percentage || 0,
-              })) : DEMO_SCOPE3_SUMMARY}
-              hotspots={getDemoHotspots()}
-              totals={totals || getDemoScope3Totals()}
+              })) : []}
+              hotspots={[]}
+              totals={totals || { total: 0, upstream: 0, downstream: 0 }}
             />
           )}
 
@@ -448,6 +456,8 @@ export function Scope3Dashboard() {
           </div>
         </TabsContent>
       </Tabs>
+      </>
+      )}
     </div>
   );
 }

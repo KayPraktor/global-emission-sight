@@ -4,7 +4,7 @@ import EmissionsReport from '@/components/Reports/EmissionsReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportTemplates from '@/components/Reports/ReportTemplates';
 import IndustryReportTemplates from '@/components/Reports/IndustryReportTemplates';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+
 import { MonthlyReportGenerator } from '@/components/Reports/MonthlyReportGenerator';
 import ComprehensiveReportGenerator from '@/components/Reports/ComprehensiveReportGenerator';
 import { CBAMReportGenerator } from '@/components/Reports/CBAMReportGenerator';
@@ -62,10 +62,6 @@ const ReportsPage = () => {
           
           <TabsContent value="data">
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <SampleDataBadge />
-                <span className="text-sm text-muted-foreground">The data shown below is for demonstration purposes</span>
-              </div>
               <EmissionsReport />
             </div>
           </TabsContent>
