@@ -1,10 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  DEMO_SCOPE3_SUMMARY, 
-  getDemoScope3Totals, 
-  getDemoDataQualityScore, 
-  getDemoHotspots 
-} from "@/utils/scope3DemoData";
 
 // All 15 GHG Protocol Scope 3 categories
 export interface Scope3Category {
@@ -167,9 +161,9 @@ class Scope3Service {
       industry_average_percentage: Number(item.industry_average_percentage) || 0
     }));
 
-    // If no real data, return demo data
+    // Return empty array if no real data
     if (realData.length === 0 || realData.every(d => d.emissions_tco2e === 0)) {
-      return DEMO_SCOPE3_SUMMARY;
+      return [];
     }
 
     return realData;
@@ -228,17 +222,8 @@ class Scope3Service {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     const totalEmissions = summary.reduce((sum, cat) => sum + cat.emissions_tco2e, 0);
 
-    // Check if using demo data (by checking if data matches demo)
-    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
-      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
-       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
-
-    if (isUsingDemoData) {
-      return getDemoHotspots();
-    }
-
     if (totalEmissions === 0) {
-      return getDemoHotspots();
+      return [];
     }
 
     // Get suppliers for top contributors
@@ -416,15 +401,6 @@ class Scope3Service {
   ): Promise<{ total: number; upstream: number; downstream: number }> {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     
-    // Check if using demo data
-    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
-      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
-       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
-
-    if (isUsingDemoData) {
-      return getDemoScope3Totals();
-    }
-
     let upstream = 0;
     let downstream = 0;
 
@@ -450,17 +426,8 @@ class Scope3Service {
   ): Promise<{ score: number; breakdown: Record<string, number> }> {
     const summary = await this.getOrganizationScope3Summary(organizationId, year);
     
-    // Check if using demo data
-    const isUsingDemoData = summary === DEMO_SCOPE3_SUMMARY || 
-      (summary.length > 0 && summary[0].category_name === DEMO_SCOPE3_SUMMARY[0].category_name &&
-       summary[0].emissions_tco2e === DEMO_SCOPE3_SUMMARY[0].emissions_tco2e);
-
-    if (isUsingDemoData) {
-      return getDemoDataQualityScore();
-    }
-
     if (summary.length === 0) {
-      return getDemoDataQualityScore();
+      return { score: 0, breakdown: {} };
     }
 
     const qualityWeights: Record<string, number> = {

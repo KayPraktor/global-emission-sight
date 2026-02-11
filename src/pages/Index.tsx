@@ -28,7 +28,7 @@ import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Button } from '@/components/ui/button';
-import { SampleDataBadge } from '@/components/ui/sample-data-badge';
+import { complianceTrackingService, FrameworkStatus, UpcomingDeadline } from '@/services/complianceTrackingService';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
 import SeedDataButton from '@/components/Dashboard/SeedDataButton';
 import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
@@ -83,143 +83,23 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
   { id: 'performance', name: 'Performance Intelligence', description: 'Strategic insights and tracking', icon: <BarChart3 className="w-4 h-4" />, defaultVisible: true },
 ];
 
-// Sample data for the advanced table
-const sampleTableData = [{
-  id: 1,
-  source: 'Electricity',
-  emissions: 1250.5,
-  scope: 'Scope 2',
-  status: 'Verified',
-  lastUpdated: '2025-01-15'
-}, {
-  id: 2,
-  source: 'Natural Gas',
-  emissions: 890.2,
-  scope: 'Scope 1',
-  status: 'Pending',
-  lastUpdated: '2025-01-14'
-}, {
-  id: 3,
-  source: 'Business Travel',
-  emissions: 456.8,
-  scope: 'Scope 3',
-  status: 'Verified',
-  lastUpdated: '2025-01-13'
-}, {
-  id: 4,
-  source: 'Waste',
-  emissions: 123.4,
-  scope: 'Scope 3',
-  status: 'Draft',
-  lastUpdated: '2025-01-12'
-}];
-const tableColumns = [{
-  key: 'source' as keyof typeof sampleTableData[0],
-  label: 'Emission Source',
-  sortable: true
-}, {
-  key: 'emissions' as keyof typeof sampleTableData[0],
-  label: 'Emissions (tCO₂e)',
-  sortable: true,
-  render: (value: number) => <AnimatedCounter value={value} suffix=" tCO₂e" className="font-mono" />
-}, {
-  key: 'scope' as keyof typeof sampleTableData[0],
-  label: 'Scope',
-  filterable: true
-}, {
-  key: 'status' as keyof typeof sampleTableData[0],
-  label: 'Status',
-  render: (value: string) => <span className={`px-2 py-1 rounded-full text-xs font-medium ${value === 'Verified' ? 'bg-green-100 text-green-800' : value === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
-        {value}
-      </span>
-}, {
-  key: 'lastUpdated' as keyof typeof sampleTableData[0],
-  label: 'Last Updated',
-  sortable: true
-}];
-
-// Sample chart data
-const chartData = [{
-  month: 'Jan',
-  scope1: 890,
-  scope2: 1250,
-  scope3: 580
-}, {
-  month: 'Feb',
-  scope1: 920,
-  scope2: 1180,
-  scope3: 620
-}, {
-  month: 'Mar',
-  scope1: 850,
-  scope2: 1320,
-  scope3: 590
-}, {
-  month: 'Apr',
-  scope1: 880,
-  scope2: 1280,
-  scope3: 640
-}, {
-  month: 'May',
-  scope1: 820,
-  scope2: 1200,
-  scope3: 570
-}];
-const chartYKeys = [{
-  key: 'scope1',
-  label: 'Scope 1',
-  color: '#ef4444'
-}, {
-  key: 'scope2',
-  label: 'Scope 2',
-  color: '#3b82f6'
-}, {
-  key: 'scope3',
-  label: 'Scope 3',
-  color: '#10b981'
-}];
-
-// Deadline navigation mapping
-const DEADLINE_ROUTES = {
-  'Q2 Data Collection': '/data-entry',
-  'CDP Submission': '/enterprise', 
-  'Annual Report': '/reports',
-  'SBTi Validation': '/goals'
-} as const;
-
-// Sample deadlines data
-const UPCOMING_DEADLINES = [
-  {
-    task: 'Q2 Data Collection',
-    date: 'June 30, 2025',
-    urgency: 'high' as const,
-    days: 42
-  }, 
-  {
-    task: 'CDP Submission',
-    date: 'July 15, 2025',
-    urgency: 'medium' as const,
-    days: 57
-  }, 
-  {
-    task: 'Annual Report',
-    date: 'Dec 31, 2025',
-    urgency: 'low' as const,
-    days: 226
-  }, 
-  {
-    task: 'SBTi Validation',
-    date: 'Mar 1, 2026',
-    urgency: 'low' as const,
-    days: 287
-  }
-];
+// Deadline route mapping by framework
+const DEADLINE_ROUTES: Record<string, string> = {
+  'cdp': '/enterprise',
+  'tcfd': '/reports',
+  'ghg': '/reports',
+  'csrd': '/compliance',
+  'cbam': '/reports',
+  'sbti': '/goals',
+};
 const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
+  const [frameworkStatuses, setFrameworkStatuses] = useState<FrameworkStatus[]>([]);
+  const [deadlines, setDeadlines] = useState<UpcomingDeadline[]>([]);
   const { addToast } = useAnimatedToast();
   const { startOnboarding } = useOnboarding();
 
@@ -252,6 +132,26 @@ const Index = () => {
         setIsLoading(true);
         const data = await analyticsService.getAnalyticsSummary(6);
         setAnalyticsData(data);
+
+        // Fetch compliance data using org from session
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: membership } = await supabase
+            .from('organization_members')
+            .select('organization_id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (membership?.organization_id) {
+            const [statuses, deadlineData] = await Promise.allSettled([
+              complianceTrackingService.getFrameworkStatuses(membership.organization_id),
+              complianceTrackingService.getUpcomingDeadlines(membership.organization_id),
+            ]);
+            if (statuses.status === 'fulfilled') setFrameworkStatuses(statuses.value);
+            if (deadlineData.status === 'fulfilled') setDeadlines(deadlineData.value);
+          }
+        }
       } catch (error) {
         console.error('Error fetching analytics:', error);
         addToast("Failed to load analytics data", "error");
@@ -305,14 +205,14 @@ const Index = () => {
     addToast(liked ? "Added to favorites" : "Removed from favorites", "info");
   };
 
-  const handleDeadlineClick = (deadline: typeof UPCOMING_DEADLINES[0]) => {
-    const route = DEADLINE_ROUTES[deadline.task as keyof typeof DEADLINE_ROUTES];
-    if (route) {
-      toast.success(`Navigating to ${deadline.task}`, {
-        description: "Opening the relevant section for this deadline.",
-      });
-      navigate(route);
-    }
+  const handleDeadlineClick = (deadline: UpcomingDeadline) => {
+    const route = deadline.linkedRoute || 
+      (deadline.framework ? DEADLINE_ROUTES[deadline.framework.toLowerCase()] : null) || 
+      '/compliance';
+    toast.success(`Navigating to ${deadline.title}`, {
+      description: "Opening the relevant section for this deadline.",
+    });
+    navigate(route);
   };
   return (
     <CelebrationProvider>
@@ -495,17 +395,14 @@ const Index = () => {
               >
                 <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
                   {/* Header with gradient */}
-                  <div className="p-4 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-b">
+                  <div className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 ring-1 ring-inset ring-emerald-500/20">
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-inset ring-primary/20">
+                          <CheckCircle2 className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-foreground">Compliance Status</h4>
-                            <SampleDataBadge />
-                          </div>
+                          <h4 className="font-semibold text-foreground">Compliance Status</h4>
                           <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
                         </div>
                       </div>
@@ -513,72 +410,67 @@ const Index = () => {
                   </div>
                   {/* Content */}
                   <div className="p-4 space-y-2 flex-1">
-                    {[{
-                      name: 'GHG Protocol',
-                      status: 'Compliant',
-                      color: 'emerald',
-                      progress: 100,
-                      icon: CheckCircle2
-                    }, {
-                      name: 'ISO 14064',
-                      status: 'Compliant',
-                      color: 'emerald',
-                      progress: 100,
-                      icon: CheckCircle2
-                    }, {
-                      name: 'CDP Reporting',
-                      status: 'In Progress',
-                      color: 'amber',
-                      progress: 75,
-                      icon: Clock
-                    }, {
-                      name: 'TCFD Alignment',
-                      status: 'Partial',
-                      color: 'amber',
-                      progress: 60,
-                      icon: AlertTriangle
-                    }].map((item, index) => {
-                      const getStyles = (color: string) => {
-                        if (color === 'emerald') return {
-                          border: 'border-l-emerald-500',
-                          bg: 'from-emerald-500/5 to-transparent',
-                          iconBg: 'bg-emerald-500/10',
-                          iconText: 'text-emerald-600',
-                          badge: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    {frameworkStatuses.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Shield className="h-8 w-8 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium mb-1">No compliance data yet</p>
+                        <p className="text-xs text-muted-foreground mb-3">Generate reports to track framework compliance</p>
+                        <Button size="sm" variant="outline" onClick={() => navigate('/reports')}>
+                          Go to Reports
+                        </Button>
+                      </div>
+                    ) : (
+                      frameworkStatuses.map((item, index) => {
+                        const getStyles = (color: string) => {
+                          if (color === 'emerald') return {
+                            border: 'border-l-emerald-500',
+                            bg: 'from-emerald-500/5 to-transparent',
+                            iconBg: 'bg-emerald-500/10',
+                            iconText: 'text-emerald-600',
+                            badge: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                          };
+                          if (color === 'amber') return {
+                            border: 'border-l-amber-500',
+                            bg: 'from-amber-500/5 to-transparent',
+                            iconBg: 'bg-amber-500/10',
+                            iconText: 'text-amber-600',
+                            badge: 'bg-amber-100 text-amber-700 border-amber-200'
+                          };
+                          return {
+                            border: 'border-l-muted',
+                            bg: 'from-muted/5 to-transparent',
+                            iconBg: 'bg-muted/10',
+                            iconText: 'text-muted-foreground',
+                            badge: 'bg-muted text-muted-foreground border-border'
+                          };
                         };
-                        return {
-                          border: 'border-l-amber-500',
-                          bg: 'from-amber-500/5 to-transparent',
-                          iconBg: 'bg-amber-500/10',
-                          iconText: 'text-amber-600',
-                          badge: 'bg-amber-100 text-amber-700 border-amber-200'
-                        };
-                      };
-                      const styles = getStyles(item.color);
-                      return (
-                        <motion.div 
-                          key={index} 
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          whileHover={{ scale: 1.01 }}
-                          className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} transition-all duration-200 hover:shadow-sm cursor-pointer`}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className={`p-1.5 rounded-lg ${styles.iconBg}`}>
-                                <item.icon className={`h-3.5 w-3.5 ${styles.iconText}`} />
+                        const styles = getStyles(item.color);
+                        const IconComp = item.status === 'compliant' ? CheckCircle2 : item.status === 'not_started' ? Info : Clock;
+                        return (
+                          <motion.div 
+                            key={index} 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ scale: 1.01 }}
+                            className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} transition-all duration-200 hover:shadow-sm cursor-pointer`}
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${styles.iconBg}`}>
+                                  <IconComp className={`h-3.5 w-3.5 ${styles.iconText}`} />
+                                </div>
+                                <span className="text-sm font-medium">{item.name}</span>
                               </div>
-                              <span className="text-sm font-medium">{item.name}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${styles.badge}`}>
+                                {item.statusLabel}
+                              </span>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${styles.badge}`}>
-                              {item.status}
-                            </span>
-                          </div>
-                          <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
-                        </motion.div>
-                      );
-                    })}
+                            <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
+                          </motion.div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </DraggableWidget>
@@ -603,7 +495,7 @@ const Index = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
-                            <SampleDataBadge />
+                          </div>
                           </div>
                           <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
                         </div>
@@ -612,69 +504,79 @@ const Index = () => {
                   </div>
                   {/* Content */}
                   <div className="p-4 space-y-2 flex-1">
-                    {UPCOMING_DEADLINES.map((item, index) => {
-                      const getUrgencyStyles = (urgency: string) => {
-                        if (urgency === 'high') return {
-                          border: 'border-l-destructive',
-                          bg: 'from-destructive/5 to-transparent',
-                          dot: 'bg-destructive shadow-destructive/50',
-                          daysBadge: 'bg-destructive/10 text-destructive border-destructive/20'
+                    {deadlines.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Clock className="h-8 w-8 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium mb-1">No upcoming deadlines</p>
+                        <p className="text-xs text-muted-foreground mb-3">Add compliance deadlines to track regulatory submissions</p>
+                        <Button size="sm" variant="outline" onClick={() => navigate('/compliance')}>
+                          Manage Deadlines
+                        </Button>
+                      </div>
+                    ) : (
+                      deadlines.map((item, index) => {
+                        const getUrgencyStyles = (urgency: string) => {
+                          if (urgency === 'high') return {
+                            border: 'border-l-destructive',
+                            bg: 'from-destructive/5 to-transparent',
+                            dot: 'bg-destructive shadow-destructive/50',
+                            daysBadge: 'bg-destructive/10 text-destructive border-destructive/20'
+                          };
+                          if (urgency === 'medium') return {
+                            border: 'border-l-amber-500',
+                            bg: 'from-amber-500/5 to-transparent',
+                            dot: 'bg-amber-500 shadow-amber-500/50',
+                            daysBadge: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                          };
+                          return {
+                            border: 'border-l-emerald-500',
+                            bg: 'from-emerald-500/5 to-transparent',
+                            dot: 'bg-emerald-500 shadow-emerald-500/50',
+                            daysBadge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                          };
                         };
-                        if (urgency === 'medium') return {
-                          border: 'border-l-amber-500',
-                          bg: 'from-amber-500/5 to-transparent',
-                          dot: 'bg-amber-500 shadow-amber-500/50',
-                          daysBadge: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                        };
-                        return {
-                          border: 'border-l-emerald-500',
-                          bg: 'from-emerald-500/5 to-transparent',
-                          dot: 'bg-emerald-500 shadow-emerald-500/50',
-                          daysBadge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                        };
-                      };
-                      const styles = getUrgencyStyles(item.urgency);
-                      return (
-                        <Tooltip key={index} content={`Priority: ${item.urgency} • ${item.days} days remaining`}>
-                          <motion.div 
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            whileHover={{ scale: 1.01 }}
-                            className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} cursor-pointer transition-all duration-200 hover:shadow-sm group`}
-                            onClick={() => handleDeadlineClick(item)}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={`Navigate to ${item.task} deadline details`}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handleDeadlineClick(item);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full ${styles.dot} shadow-sm`} />
-                                <div>
-                                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                                    {item.task}
+                        const styles = getUrgencyStyles(item.urgency);
+                        return (
+                          <Tooltip key={item.id} content={`Priority: ${item.priority} • ${item.daysRemaining} days remaining`}>
+                            <motion.div 
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ scale: 1.01 }}
+                              className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} cursor-pointer transition-all duration-200 hover:shadow-sm group`}
+                              onClick={() => handleDeadlineClick(item)}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Navigate to ${item.title} deadline details`}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleDeadlineClick(item);
+                                }
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-2.5 h-2.5 rounded-full ${styles.dot} shadow-sm`} />
+                                  <div>
+                                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                                      {item.title}
+                                    </span>
+                                    <div className="text-xs text-muted-foreground">{new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium border ${styles.daysBadge}`}>
+                                    {item.daysRemaining}d
                                   </span>
-                                  <div className="text-xs text-muted-foreground">{item.date}</div>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium border ${styles.daysBadge}`}>
-                                  {item.days}d
-                                </span>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                              </div>
-                            </div>
-                          </motion.div>
-                        </Tooltip>
-                      );
-                    })}
-                  </div>
+                            </motion.div>
+                          </Tooltip>
+                        );
+                      })
+                    )}
                 </div>
               </DraggableWidget>
             )}
@@ -781,7 +683,6 @@ const Index = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <SampleDataBadge />
                 <span className="text-sm text-muted-foreground">
                   {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
                 </span>
