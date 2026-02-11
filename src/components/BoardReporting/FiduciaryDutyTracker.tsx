@@ -15,10 +15,13 @@ import {
   Filter,
   SortAsc,
   SortDesc,
-  Loader2
+  Loader2,
+  ClipboardCheck
 } from 'lucide-react';
 import { getFiduciaryDuties, FiduciaryDuty } from '@/services/boardReportingService';
 import { ProfessionalPDFGenerator, BrandingConfig } from '@/services/professionalPDFGenerator';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { format, isPast, isWithinInterval, addDays } from 'date-fns';
 import { toast } from 'sonner';
@@ -103,12 +106,19 @@ const DutyCard: React.FC<{ duty: FiduciaryDuty }> = ({ duty }) => {
 };
 
 export const FiduciaryDutyTracker: React.FC = () => {
-  const duties = getFiduciaryDuties();
+  const { organization } = useAuth();
   const navigate = useNavigate();
+  const orgId = organization?.id;
   const [activeTab, setActiveTab] = useState<string>('all');
   const [isExporting, setIsExporting] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<'priority' | 'date'>('priority');
+
+  const { data: duties = [], isLoading } = useQuery({
+    queryKey: ['fiduciary-duties', orgId],
+    queryFn: () => getFiduciaryDuties(orgId!),
+    enabled: !!orgId,
+  });
 
   const getDutyStatus = (duty: FiduciaryDuty) => {
     if (duty.status === 'completed') return 'completed';
@@ -124,17 +134,14 @@ export const FiduciaryDutyTracker: React.FC = () => {
     overdue: duties.filter(d => getDutyStatus(d) === 'overdue').length,
   };
 
-  const completionRate = (statusCounts.completed / duties.length) * 100;
+  const completionRate = duties.length > 0 ? (statusCounts.completed / duties.length) * 100 : 0;
 
-  // Apply status tab filter
   let filteredDuties = activeTab === 'all' ? duties : duties.filter(d => getDutyStatus(d) === activeTab);
 
-  // Apply category filter
   if (selectedCategories.length > 0) {
     filteredDuties = filteredDuties.filter(d => selectedCategories.includes(d.category));
   }
 
-  // Sort
   const sortedDuties = [...filteredDuties].sort((a, b) => {
     if (sortMode === 'priority') {
       const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -151,6 +158,10 @@ export const FiduciaryDutyTracker: React.FC = () => {
   };
 
   const handleExportReport = () => {
+    if (duties.length === 0) {
+      toast.info('No duties to export');
+      return;
+    }
     setIsExporting(true);
     try {
       const branding: BrandingConfig = {
@@ -190,6 +201,28 @@ export const FiduciaryDutyTracker: React.FC = () => {
       setIsExporting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (duties.length === 0) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <ClipboardCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Fiduciary Duties</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Add board-level climate fiduciary duties to track compliance obligations, risk oversight, and strategic planning tasks.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -242,7 +275,6 @@ export const FiduciaryDutyTracker: React.FC = () => {
               <CardDescription>Board-level climate responsibilities and obligations</CardDescription>
             </div>
             <div className="flex gap-2">
-              {/* Category Filter Popover */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -274,7 +306,6 @@ export const FiduciaryDutyTracker: React.FC = () => {
                 </PopoverContent>
               </Popover>
 
-              {/* Sort Toggle */}
               <Button
                 variant="outline"
                 size="sm"

@@ -10,7 +10,7 @@ import MaterialityMatrix from './MaterialityMatrix';
 import ImpactAnalysis from './ImpactAnalysis';
 import FinancialMateriality from './FinancialMateriality';
 import AssessmentWizard from './AssessmentWizard';
-import { getMockAssessments, getMockStakeholders, getAssessments, getStakeholders, SUSTAINABILITY_TOPICS } from '@/services/materialityService';
+import { getAssessments, getStakeholders, SUSTAINABILITY_TOPICS } from '@/services/materialityService';
 import { MaterialityAssessment, Stakeholder } from '@/types/materiality';
 
 const MaterialityDashboard: React.FC = () => {
@@ -28,11 +28,12 @@ const MaterialityDashboard: React.FC = () => {
         getAssessments(),
         getStakeholders()
       ]);
-      setAssessments(assessmentData.length > 0 ? assessmentData : getMockAssessments());
-      setStakeholders(stakeholderData.length > 0 ? stakeholderData : getMockStakeholders());
-    } catch {
-      setAssessments(getMockAssessments());
-      setStakeholders(getMockStakeholders());
+      setAssessments(assessmentData);
+      setStakeholders(stakeholderData);
+    } catch (error) {
+      console.error('Failed to load materiality data:', error);
+      setAssessments([]);
+      setStakeholders([]);
     }
   };
 

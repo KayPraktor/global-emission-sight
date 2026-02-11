@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { carbonCreditService, CarbonPrice } from '@/services/carbonCreditService';
+import { toast } from 'sonner';
 
 export function CarbonPriceWidget() {
   const [prices, setPrices] = useState<CarbonPrice[]>([]);
@@ -19,6 +19,7 @@ export function CarbonPriceWidget() {
       setPrices(data);
     } catch (error) {
       console.error('Failed to load prices:', error);
+      toast.error('Failed to load carbon prices');
     } finally {
       setLoading(false);
     }
@@ -33,13 +34,7 @@ export function CarbonPriceWidget() {
     }).format(value);
   };
 
-  const getPriceIcon = (priceType: string) => {
-    // Simulated price changes - in a real app, compare with historical data
-    const random = Math.random();
-    if (random > 0.6) return <TrendingUp className="h-4 w-4 text-green-500" />;
-    if (random < 0.4) return <TrendingDown className="h-4 w-4 text-destructive" />;
-    return <Minus className="h-4 w-4 text-muted-foreground" />;
-  };
+  // Trend icon removed — no historical data available for real comparison
 
   const getPriceLabel = (priceType: string): string => {
     const labels: Record<string, string> = {
@@ -75,7 +70,7 @@ export function CarbonPriceWidget() {
         <CardTitle className="text-base flex items-center justify-between">
           Carbon Prices
           <Badge variant="outline" className="font-normal">
-            Live
+            Market Data
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -87,7 +82,6 @@ export function CarbonPriceWidget() {
               className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2">
-                {getPriceIcon(price.price_type)}
                 <div>
                   <p className="font-medium text-sm">{price.price_type}</p>
                   <p className="text-xs text-muted-foreground">{getPriceLabel(price.price_type)}</p>
