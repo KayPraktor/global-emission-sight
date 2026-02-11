@@ -1806,6 +1806,62 @@ export type Database = {
           },
         ]
       }
+      fiduciary_duties: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          linked_regulations: string[] | null
+          organization_id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          linked_regulations?: string[] | null
+          organization_id: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          linked_regulations?: string[] | null
+          organization_id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiduciary_duties_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           baseline_emissions: number | null
@@ -1880,6 +1936,62 @@ export type Database = {
           },
           {
             foreignKeyName: "goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      governance_metrics: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          evidence: string | null
+          id: string
+          last_review_date: string | null
+          max_score: number
+          name: string
+          next_review_date: string | null
+          organization_id: string
+          score: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          evidence?: string | null
+          id?: string
+          last_review_date?: string | null
+          max_score?: number
+          name: string
+          next_review_date?: string | null
+          organization_id: string
+          score?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          evidence?: string | null
+          id?: string
+          last_review_date?: string | null
+          max_score?: number
+          name?: string
+          next_review_date?: string | null
+          organization_id?: string
+          score?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_metrics_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

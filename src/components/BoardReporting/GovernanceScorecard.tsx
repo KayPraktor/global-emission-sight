@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   FileText,
   Users,
-  TrendingUp
+  Loader2
 } from 'lucide-react';
 import { 
   getGovernanceMetrics, 
@@ -21,6 +21,8 @@ import {
   governanceCategories,
   GovernanceMetric 
 } from '@/services/boardReportingService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -77,7 +79,15 @@ const MetricCard: React.FC<{ metric: GovernanceMetric }> = ({ metric }) => {
 };
 
 export const GovernanceScorecard: React.FC = () => {
-  const metrics = getGovernanceMetrics();
+  const { organization } = useAuth();
+  const orgId = organization?.id;
+
+  const { data: metrics = [], isLoading } = useQuery({
+    queryKey: ['governance-metrics', orgId],
+    queryFn: () => getGovernanceMetrics(orgId!),
+    enabled: !!orgId,
+  });
+
   const { overall, byCategory, rating } = calculateGovernanceScore(metrics);
 
   const getRatingColor = (rating: string) => {
@@ -90,6 +100,28 @@ export const GovernanceScorecard: React.FC = () => {
       default: return 'text-muted-foreground';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (metrics.length === 0) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Governance Metrics</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Add governance metrics to track your organization's climate governance performance across oversight, strategy, risk management, disclosure, and engagement categories.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -180,6 +212,11 @@ export const GovernanceScorecard: React.FC = () => {
                     .map(metric => (
                       <MetricCard key={metric.id} metric={metric} />
                     ))}
+                  {metrics.filter(m => m.category === key).length === 0 && (
+                    <p className="text-center py-4 text-muted-foreground">
+                      No metrics in this category yet.
+                    </p>
+                  )}
                 </div>
               </TabsContent>
             ))}

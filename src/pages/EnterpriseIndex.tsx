@@ -23,6 +23,45 @@ import { DashboardTemplate } from '@/utils/dashboardTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+// Dynamic Net Zero Progress component that pulls from KPIs
+function NetZeroProgressContent({ kpis }: { kpis: any[] }) {
+  const netZeroKPI = kpis.find(k => k.title === 'Net Zero Progress');
+  const totalEmissionsKPI = kpis.find(k => k.title === 'Total Emissions');
+  
+  const progress = netZeroKPI ? parseFloat(netZeroKPI.value) : 0;
+  const remaining = 100 - progress;
+  const totalEmissions = totalEmissionsKPI ? `${totalEmissionsKPI.value} ${totalEmissionsKPI.unit}` : '—';
+
+  if (kpis.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No emissions data available yet.</p>
+        <p className="text-sm mt-1">Add emissions entries to track net zero progress.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="text-center p-4 bg-card border border-border rounded-lg">
+          <div className="text-2xl font-bold">{progress.toFixed(0)}%</div>
+          <div className="text-sm text-muted-foreground">Progress to Net Zero</div>
+          <Progress value={progress} className="mt-2 h-2" />
+        </div>
+        <div className="text-center p-4 bg-card border border-border rounded-lg">
+          <div className="text-2xl font-bold">{totalEmissions}</div>
+          <div className="text-sm text-muted-foreground">Current Emissions</div>
+        </div>
+        <div className="text-center p-4 bg-card border border-border rounded-lg">
+          <div className="text-2xl font-bold">{remaining.toFixed(0)}%</div>
+          <div className="text-sm text-muted-foreground">Reduction Required</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const EnterpriseIndex = () => {
   const navigate = useNavigate();
   const { organization } = useAuth();
@@ -399,39 +438,7 @@ const EnterpriseIndex = () => {
                     Net Zero Progress Tracker
                   </h4>
                   
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-4 bg-card border border-border rounded-lg">
-                        <div className="text-2xl font-bold">34%</div>
-                        <div className="text-sm text-muted-foreground">Progress to Net Zero</div>
-                        <Progress value={34} className="mt-2 h-2" />
-                      </div>
-                      
-                      <div className="text-center p-4 bg-card border border-border rounded-lg">
-                        <div className="text-2xl font-bold">2030</div>
-                        <div className="text-sm text-muted-foreground">Target Year</div>
-                        <div className="text-xs mt-1 text-muted-foreground">6 years remaining</div>
-                      </div>
-                      
-                      <div className="text-center p-4 bg-card border border-border rounded-lg">
-                        <div className="text-2xl font-bold">66%</div>
-                        <div className="text-sm text-muted-foreground">Reduction Required</div>
-                        <div className="text-xs mt-1 text-muted-foreground">16,200 tCO₂e</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">2024 Annual Reduction Target</span>
-                        <span className="text-sm text-muted-foreground">2,450 tCO₂e</span>
-                      </div>
-                      <Progress value={68} className="h-3" />
-                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>1,666 tCO₂e achieved</span>
-                        <span>68% complete</span>
-                      </div>
-                    </div>
-                  </div>
+                  <NetZeroProgressContent kpis={kpis} />
                 </GlassmorphismCard>
               </motion.div>
 

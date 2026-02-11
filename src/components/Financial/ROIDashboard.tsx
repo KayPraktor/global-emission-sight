@@ -73,6 +73,7 @@ export function ROIDashboard() {
       setProjectedAnnual(projectedData);
     } catch (error) {
       console.error('Failed to load ROI data:', error);
+      toast.error('Failed to load ROI data', { description: 'Please try refreshing the page.' });
     } finally {
       setLoading(false);
     }

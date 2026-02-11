@@ -8,12 +8,13 @@ import {
   FileText, 
   Shield, 
   ClipboardCheck,
-  Calendar,
   TrendingDown,
   AlertTriangle,
   CheckCircle2,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Loader2,
+  Plus
 } from 'lucide-react';
 import { GovernanceScorecard } from './GovernanceScorecard';
 import { FiduciaryDutyTracker } from './FiduciaryDutyTracker';
@@ -24,53 +25,116 @@ import {
   calculateGovernanceScore,
   getExecutiveSummary 
 } from '@/services/boardReportingService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { isPast } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export const BoardReportDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const metrics = getGovernanceMetrics();
-  const duties = getFiduciaryDuties();
-  const { overall, rating } = calculateGovernanceScore(metrics);
-  const summary = getExecutiveSummary();
+  const { organization } = useAuth();
+  const navigate = useNavigate();
+  const orgId = organization?.id;
 
-  // Calculate duty stats
+  const { data: metrics = [], isLoading: loadingMetrics } = useQuery({
+    queryKey: ['governance-metrics', orgId],
+    queryFn: () => getGovernanceMetrics(orgId!),
+    enabled: !!orgId,
+  });
+
+  const { data: duties = [], isLoading: loadingDuties } = useQuery({
+    queryKey: ['fiduciary-duties', orgId],
+    queryFn: () => getFiduciaryDuties(orgId!),
+    enabled: !!orgId,
+  });
+
+  const { data: summary, isLoading: loadingSummary } = useQuery({
+    queryKey: ['board-executive-summary', orgId],
+    queryFn: () => getExecutiveSummary(orgId!),
+    enabled: !!orgId,
+  });
+
+  const isLoading = loadingMetrics || loadingDuties || loadingSummary;
+
+  const { overall, rating } = calculateGovernanceScore(metrics);
+
   const completedDuties = duties.filter(d => d.status === 'completed').length;
   const overdueDuties = duties.filter(d => 
     d.status !== 'completed' && isPast(new Date(d.dueDate))
   ).length;
-  const inProgressDuties = duties.filter(d => d.status === 'in_progress').length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const hasMetrics = metrics.length > 0;
+  const hasDuties = duties.length > 0;
+  const hasData = hasMetrics || hasDuties;
+
+  // Empty state
+  if (!hasData) {
+    return (
+      <Card className="text-center py-12">
+        <CardContent>
+          <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Board Reporting Data Yet</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Set up governance metrics and fiduciary duties to start tracking board-level sustainability oversight.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => setActiveTab('governance')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Governance Metrics
+            </Button>
+            <Button variant="outline" onClick={() => setActiveTab('duties')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Fiduciary Duties
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const quickStats = [
     {
       title: 'Governance Score',
-      value: `${Math.round(overall)}%`,
-      subtitle: rating,
+      value: hasMetrics ? `${Math.round(overall)}%` : '—',
+      subtitle: hasMetrics ? rating : 'No metrics',
       icon: Shield,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
       title: 'Total Emissions',
-      value: `${(summary.currentEmissions.total / 1000).toFixed(1)}k`,
-      subtitle: `${summary.currentEmissions.change}% YoY`,
+      value: summary?.currentEmissions.total 
+        ? `${(summary.currentEmissions.total / 1000).toFixed(1)}k`
+        : '—',
+      subtitle: summary?.currentEmissions.change 
+        ? `${summary.currentEmissions.change}% YoY`
+        : 'No data',
       icon: TrendingDown,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/30',
     },
     {
       title: 'Fiduciary Duties',
-      value: `${completedDuties}/${duties.length}`,
-      subtitle: `${overdueDuties} overdue`,
+      value: hasDuties ? `${completedDuties}/${duties.length}` : '—',
+      subtitle: overdueDuties > 0 ? `${overdueDuties} overdue` : 'On track',
       icon: ClipboardCheck,
       color: overdueDuties > 0 ? 'text-amber-600' : 'text-green-600',
       bgColor: overdueDuties > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-green-100 dark:bg-green-900/30',
     },
     {
-      title: 'Next Board Meeting',
-      value: 'Apr 15',
-      subtitle: '12 days away',
-      icon: Calendar,
+      title: 'Recent Reports',
+      value: summary?.recentReports?.length?.toString() || '0',
+      subtitle: 'Board reports',
+      icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     },
@@ -159,21 +223,26 @@ export const BoardReportDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { title: 'Q4 2024 Sustainability Report', date: 'Mar 15, 2024', status: 'Presented' },
-                    { title: 'Q3 2024 Sustainability Report', date: 'Dec 10, 2023', status: 'Presented' },
-                    { title: 'Annual Climate Report 2023', date: 'Jan 20, 2024', status: 'Approved' },
-                  ].map((report, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div>
-                        <p className="font-medium text-sm">{report.title}</p>
-                        <p className="text-xs text-muted-foreground">{report.date}</p>
+                {summary?.recentReports && summary.recentReports.length > 0 ? (
+                  <div className="space-y-3">
+                    {summary.recentReports.map((report, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div>
+                          <p className="font-medium text-sm">{report.title}</p>
+                          <p className="text-xs text-muted-foreground">{report.date}</p>
+                        </div>
+                        <Badge variant="outline">{report.status}</Badge>
                       </div>
-                      <Badge variant="outline">{report.status}</Badge>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No reports generated yet.</p>
+                    <Button variant="link" size="sm" onClick={() => navigate('/reports')}>
+                      Go to Reports →
+                    </Button>
+                  </div>
+                )}
                 <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setActiveTab('reports')}>
                   View All Reports
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -190,26 +259,32 @@ export const BoardReportDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {metrics.slice(0, 4).map((metric, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
-                      {metric.status === 'met' ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      ) : metric.status === 'partial' ? (
-                        <Clock className="h-4 w-4 text-amber-600" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{metric.name}</p>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                {hasMetrics ? (
+                  <div className="space-y-3">
+                    {metrics.slice(0, 4).map((metric, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+                        {metric.status === 'met' ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : metric.status === 'partial' ? (
+                          <Clock className="h-4 w-4 text-amber-600" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{metric.name}</p>
+                          <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </div>
+                        <Badge variant="outline">
+                          {metric.score}/{metric.maxScore}
+                        </Badge>
                       </div>
-                      <Badge variant="outline">
-                        {metric.score}/{metric.maxScore}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No governance metrics configured yet.
+                  </div>
+                )}
                 <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setActiveTab('governance')}>
                   View Full Scorecard
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -229,43 +304,49 @@ export const BoardReportDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {duties
-                    .filter(d => d.status !== 'completed')
-                    .slice(0, 6)
-                    .map((duty, i) => (
-                      <div 
-                        key={i} 
-                        className={`p-4 border rounded-lg ${
-                          duty.priority === 'critical' 
-                            ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' 
-                            : duty.priority === 'high'
-                            ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <Badge 
-                            variant="outline" 
-                            className={
-                              duty.priority === 'critical' ? 'border-red-300 text-red-700' :
-                              duty.priority === 'high' ? 'border-amber-300 text-amber-700' :
-                              ''
-                            }
-                          >
-                            {duty.priority}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            Due: {new Date(duty.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
+                {hasDuties ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {duties
+                      .filter(d => d.status !== 'completed')
+                      .slice(0, 6)
+                      .map((duty, i) => (
+                        <div 
+                          key={i} 
+                          className={`p-4 border rounded-lg ${
+                            duty.priority === 'critical' 
+                              ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' 
+                              : duty.priority === 'high'
+                              ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                duty.priority === 'critical' ? 'border-red-300 text-red-700' :
+                                duty.priority === 'high' ? 'border-amber-300 text-amber-700' :
+                                ''
+                              }
+                            >
+                              {duty.priority}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Due: {new Date(duty.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          <h5 className="font-medium text-sm mb-1">{duty.title}</h5>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {duty.description}
+                          </p>
                         </div>
-                        <h5 className="font-medium text-sm mb-1">{duty.title}</h5>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {duty.description}
-                        </p>
-                      </div>
-                    ))}
-                </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No fiduciary duties configured yet.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

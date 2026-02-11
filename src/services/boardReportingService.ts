@@ -1,4 +1,5 @@
 // Board Reporting Service - Executive-ready sustainability reports and governance tracking
+import { supabase } from '@/integrations/supabase/client';
 
 export interface GovernanceMetric {
   id: string;
@@ -75,263 +76,129 @@ export const governanceCategories = {
   },
 };
 
-// Sample governance metrics
-export const getGovernanceMetrics = (): GovernanceMetric[] => [
-  // Board Oversight
-  {
-    id: 'gov-1',
-    category: 'oversight',
-    name: 'Board Climate Competency',
-    description: 'Board members with climate/sustainability expertise',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: '2 board members with ESG expertise, annual climate training conducted',
-    lastReviewDate: '2024-01-15',
-    nextReviewDate: '2025-01-15',
-  },
-  {
-    id: 'gov-2',
-    category: 'oversight',
-    name: 'Climate Committee Established',
-    description: 'Dedicated board committee for climate/ESG oversight',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'Sustainability Committee established Q2 2023',
-    lastReviewDate: '2024-02-01',
-  },
-  {
-    id: 'gov-3',
-    category: 'oversight',
-    name: 'Management Incentives Linked',
-    description: 'Executive compensation tied to climate targets',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'CEO bonus linked to emissions targets (15% weight)',
-    lastReviewDate: '2024-01-01',
-  },
-  // Strategic Integration
-  {
-    id: 'gov-4',
-    category: 'strategy',
-    name: 'Net Zero Commitment',
-    description: 'Science-based net zero target established',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'SBTi-validated 1.5°C target submitted',
-    lastReviewDate: '2024-03-01',
-  },
-  {
-    id: 'gov-5',
-    category: 'strategy',
-    name: 'Transition Plan',
-    description: 'Detailed decarbonization roadmap with milestones',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'Draft transition plan under development',
-    lastReviewDate: '2024-02-15',
-  },
-  {
-    id: 'gov-6',
-    category: 'strategy',
-    name: 'Capital Allocation',
-    description: 'Climate-aligned investment criteria',
-    status: 'partial',
-    score: 1,
-    maxScore: 3,
-    evidence: 'Criteria being developed for FY25',
-  },
-  // Risk Management
-  {
-    id: 'gov-7',
-    category: 'risk_management',
-    name: 'Physical Risk Assessment',
-    description: 'Comprehensive physical climate risk analysis',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'Third-party assessment completed for all facilities',
-    lastReviewDate: '2024-01-20',
-  },
-  {
-    id: 'gov-8',
-    category: 'risk_management',
-    name: 'Transition Risk Assessment',
-    description: 'Analysis of policy, technology, market risks',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'Policy and regulatory risks assessed; market analysis in progress',
-  },
-  {
-    id: 'gov-9',
-    category: 'risk_management',
-    name: 'Scenario Analysis',
-    description: 'Climate scenario analysis (1.5°C, 2°C, 3°C+)',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'TCFD-aligned scenarios modeled',
-    lastReviewDate: '2024-02-01',
-  },
-  // Disclosure
-  {
-    id: 'gov-10',
-    category: 'disclosure',
-    name: 'TCFD Alignment',
-    description: 'Full TCFD disclosure implementation',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'All 11 TCFD recommendations addressed',
-    lastReviewDate: '2024-03-15',
-  },
-  {
-    id: 'gov-11',
-    category: 'disclosure',
-    name: 'Third-Party Assurance',
-    description: 'External verification of emissions data',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'Limited assurance on Scope 1&2; Scope 3 not yet assured',
-  },
-  {
-    id: 'gov-12',
-    category: 'disclosure',
-    name: 'CSRD/ESRS Readiness',
-    description: 'Preparation for EU sustainability reporting',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'Gap analysis completed; implementation in progress',
-  },
-  // Stakeholder Engagement
-  {
-    id: 'gov-13',
-    category: 'engagement',
-    name: 'Investor Engagement',
-    description: 'Proactive climate engagement with investors',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'Climate briefings held with top 20 investors',
-    lastReviewDate: '2024-02-28',
-  },
-  {
-    id: 'gov-14',
-    category: 'engagement',
-    name: 'Supply Chain Engagement',
-    description: 'Supplier decarbonization program',
-    status: 'partial',
-    score: 2,
-    maxScore: 3,
-    evidence: 'Top 50 suppliers engaged; program expansion planned',
-  },
-  {
-    id: 'gov-15',
-    category: 'engagement',
-    name: 'Industry Collaboration',
-    description: 'Participation in climate initiatives',
-    status: 'met',
-    score: 3,
-    maxScore: 3,
-    evidence: 'Member of Climate Action 100+, SBTi, RE100',
-  },
-];
+// Fetch governance metrics from DB
+export const getGovernanceMetrics = async (organizationId: string): Promise<GovernanceMetric[]> => {
+  const { data, error } = await supabase
+    .from('governance_metrics')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('category');
 
-// Sample fiduciary duties
-export const getFiduciaryDuties = (): FiduciaryDuty[] => [
-  {
-    id: 'fd-1',
-    title: 'Annual Climate Risk Review',
-    description: 'Board review of material climate risks and opportunities',
-    category: 'risk_oversight',
-    status: 'completed',
-    dueDate: '2024-03-31',
-    completedDate: '2024-03-15',
-    priority: 'critical',
-    linkedRegulations: ['TCFD', 'SEC Climate Rule'],
-  },
-  {
-    id: 'fd-2',
-    title: 'Net Zero Progress Report',
-    description: 'Quarterly progress update on decarbonization targets',
-    category: 'disclosure',
-    status: 'in_progress',
-    dueDate: '2024-04-15',
-    assignedTo: 'Sustainability Team',
-    priority: 'high',
-    linkedRegulations: ['SBTi', 'CDP'],
-  },
-  {
-    id: 'fd-3',
-    title: 'CSRD Double Materiality Assessment',
-    description: 'Complete double materiality assessment for ESRS compliance',
-    category: 'compliance',
-    status: 'in_progress',
-    dueDate: '2024-06-30',
-    assignedTo: 'ESG Reporting',
-    priority: 'critical',
-    linkedRegulations: ['CSRD', 'ESRS'],
-  },
-  {
-    id: 'fd-4',
-    title: 'Executive Compensation Review',
-    description: 'Review and update climate-linked compensation metrics',
-    category: 'strategic_planning',
-    status: 'pending',
-    dueDate: '2024-05-15',
-    priority: 'high',
-    linkedRegulations: ['Proxy Guidelines'],
-  },
-  {
-    id: 'fd-5',
-    title: 'Transition Plan Development',
-    description: 'Develop and approve climate transition plan',
-    category: 'strategic_planning',
-    status: 'in_progress',
-    dueDate: '2024-09-30',
-    assignedTo: 'Strategy & Sustainability',
-    priority: 'critical',
-    linkedRegulations: ['UK TPT', 'ISSB'],
-  },
-  {
-    id: 'fd-6',
-    title: 'Scope 3 Assurance Planning',
-    description: 'Plan for external assurance of Scope 3 emissions',
-    category: 'disclosure',
-    status: 'pending',
-    dueDate: '2024-08-31',
-    priority: 'medium',
-    linkedRegulations: ['CSRD', 'SEC'],
-  },
-  {
-    id: 'fd-7',
-    title: 'Physical Risk Adaptation Strategy',
-    description: 'Develop adaptation plans for high-risk facilities',
-    category: 'risk_oversight',
-    status: 'pending',
-    dueDate: '2024-12-31',
-    priority: 'high',
-    linkedRegulations: ['TCFD'],
-  },
-  {
-    id: 'fd-8',
-    title: 'Annual Stakeholder Engagement Report',
-    description: 'Document investor and stakeholder climate engagement',
-    category: 'stakeholder_engagement',
-    status: 'completed',
-    dueDate: '2024-02-28',
-    completedDate: '2024-02-20',
-    priority: 'medium',
-    linkedRegulations: ['SFDR', 'Stewardship Codes'],
-  },
-];
+  if (error) throw error;
+
+  return (data || []).map(row => ({
+    id: row.id,
+    category: row.category as GovernanceMetric['category'],
+    name: row.name,
+    description: row.description || '',
+    status: row.status as GovernanceMetric['status'],
+    score: row.score,
+    maxScore: row.max_score,
+    evidence: row.evidence || undefined,
+    lastReviewDate: row.last_review_date || undefined,
+    nextReviewDate: row.next_review_date || undefined,
+  }));
+};
+
+// Save governance metric
+export const saveGovernanceMetric = async (
+  organizationId: string,
+  metric: Omit<GovernanceMetric, 'id'>
+): Promise<GovernanceMetric> => {
+  const { data, error } = await supabase
+    .from('governance_metrics')
+    .insert({
+      organization_id: organizationId,
+      category: metric.category,
+      name: metric.name,
+      description: metric.description,
+      status: metric.status,
+      score: metric.score,
+      max_score: metric.maxScore,
+      evidence: metric.evidence || null,
+      last_review_date: metric.lastReviewDate || null,
+      next_review_date: metric.nextReviewDate || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    category: data.category as GovernanceMetric['category'],
+    name: data.name,
+    description: data.description || '',
+    status: data.status as GovernanceMetric['status'],
+    score: data.score,
+    maxScore: data.max_score,
+    evidence: data.evidence || undefined,
+    lastReviewDate: data.last_review_date || undefined,
+    nextReviewDate: data.next_review_date || undefined,
+  };
+};
+
+// Fetch fiduciary duties from DB
+export const getFiduciaryDuties = async (organizationId: string): Promise<FiduciaryDuty[]> => {
+  const { data, error } = await supabase
+    .from('fiduciary_duties')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('due_date');
+
+  if (error) throw error;
+
+  return (data || []).map(row => ({
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    category: row.category as FiduciaryDuty['category'],
+    status: row.status as FiduciaryDuty['status'],
+    dueDate: row.due_date,
+    assignedTo: row.assigned_to || undefined,
+    completedDate: row.completed_date || undefined,
+    priority: row.priority as FiduciaryDuty['priority'],
+    linkedRegulations: row.linked_regulations || [],
+  }));
+};
+
+// Save fiduciary duty
+export const saveFiduciaryDuty = async (
+  organizationId: string,
+  duty: Omit<FiduciaryDuty, 'id'>
+): Promise<FiduciaryDuty> => {
+  const { data, error } = await supabase
+    .from('fiduciary_duties')
+    .insert({
+      organization_id: organizationId,
+      title: duty.title,
+      description: duty.description,
+      category: duty.category,
+      status: duty.status,
+      due_date: duty.dueDate,
+      assigned_to: duty.assignedTo || null,
+      completed_date: duty.completedDate || null,
+      priority: duty.priority,
+      linked_regulations: duty.linkedRegulations,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description || '',
+    category: data.category as FiduciaryDuty['category'],
+    status: data.status as FiduciaryDuty['status'],
+    dueDate: data.due_date,
+    assignedTo: data.assigned_to || undefined,
+    completedDate: data.completed_date || undefined,
+    priority: data.priority as FiduciaryDuty['priority'],
+    linkedRegulations: data.linked_regulations || [],
+  };
+};
 
 // Calculate governance score
 export const calculateGovernanceScore = (metrics: GovernanceMetric[]): {
@@ -339,6 +206,10 @@ export const calculateGovernanceScore = (metrics: GovernanceMetric[]): {
   byCategory: Record<string, { score: number; maxScore: number; percentage: number }>;
   rating: 'Excellent' | 'Good' | 'Adequate' | 'Needs Improvement' | 'Poor';
 } => {
+  if (metrics.length === 0) {
+    return { overall: 0, byCategory: {}, rating: 'Poor' };
+  }
+
   const byCategory: Record<string, { score: number; maxScore: number; percentage: number }> = {};
   
   Object.keys(governanceCategories).forEach(category => {
@@ -373,44 +244,94 @@ export const calculateGovernanceScore = (metrics: GovernanceMetric[]): {
   return { overall, byCategory, rating };
 };
 
-// Get executive summary data
-export const getExecutiveSummary = () => ({
-  currentEmissions: {
-    total: 45230,
-    scope1: 12450,
-    scope2: 8920,
-    scope3: 23860,
-    unit: 'tCO2e',
-    change: -8.5,
-    vsTarget: -2.3,
-  },
-  targets: {
-    shortTerm: { year: 2025, reduction: 25, current: 18 },
-    mediumTerm: { year: 2030, reduction: 50, current: 18 },
-    longTerm: { year: 2050, reduction: 100, target: 'Net Zero' },
-  },
-  keyRisks: [
-    { risk: 'Carbon pricing increase', impact: 'High', likelihood: 'Very Likely', financialImpact: '$2.4M annually' },
-    { risk: 'Physical climate impacts on operations', impact: 'Medium', likelihood: 'Likely', financialImpact: '$800K - $1.5M' },
-    { risk: 'Regulatory non-compliance', impact: 'High', likelihood: 'Possible', financialImpact: 'Up to $5M in penalties' },
-  ],
-  opportunities: [
-    { opportunity: 'Renewable energy transition', value: '$1.2M annual savings', timeline: '2024-2026' },
-    { opportunity: 'Green product premium', value: '8% price premium potential', timeline: '2024-2025' },
-    { opportunity: 'Carbon credit revenue', value: '$500K-$800K annually', timeline: '2025+' },
-  ],
-  quarterlyProgress: [
-    { quarter: 'Q1', target: 12000, actual: 11200, variance: -6.7 },
-    { quarter: 'Q2', target: 11500, actual: 11800, variance: 2.6 },
-    { quarter: 'Q3', target: 11000, actual: 10900, variance: -0.9 },
-    { quarter: 'Q4', target: 10500, actual: null, variance: null },
-  ],
-});
+// Get executive summary from real data
+export const getExecutiveSummary = async (organizationId: string) => {
+  const { data: metrics } = await supabase
+    .from('enterprise_metrics')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('metric_date', { ascending: false })
+    .limit(4);
+
+  const latest = metrics?.[0];
+  const previous = metrics?.[1];
+
+  const totalEmissions = latest?.total_emissions || 0;
+  const prevTotal = previous?.total_emissions || totalEmissions;
+  const change = prevTotal > 0 ? ((totalEmissions - prevTotal) / prevTotal) * 100 : 0;
+
+  // Get net-zero goal
+  const { data: goals } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .ilike('name', '%net zero%')
+    .limit(1);
+
+  const netZeroGoal = goals?.[0];
+  
+  // Calculate progress safely
+  let progress = 0;
+  if (netZeroGoal && netZeroGoal.baseline_emissions > 0) {
+    progress = Math.max(0, Math.min(100, 
+      ((netZeroGoal.baseline_emissions - netZeroGoal.current_emissions) / netZeroGoal.baseline_emissions) * 100
+    ));
+  }
+
+  // Get recent reports
+  const { data: reports } = await supabase
+    .from('reports')
+    .select('title, status, created_at, report_type')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  return {
+    currentEmissions: {
+      total: totalEmissions,
+      scope1: latest?.scope_1_emissions || 0,
+      scope2: latest?.scope_2_emissions || 0,
+      scope3: latest?.scope_3_emissions || 0,
+      unit: 'tCO2e',
+      change: Math.round(change * 10) / 10,
+      vsTarget: -2.3, // Placeholder for now or calculate from goals
+    },
+    targets: {
+      shortTerm: netZeroGoal ? {
+        year: netZeroGoal.target_year,
+        reduction: 100,
+        current: Math.round(progress),
+      } : null,
+      mediumTerm: { year: 2030, reduction: 50, current: 18 },
+      longTerm: { year: 2050, reduction: 100, target: 'Net Zero' },
+    },
+    quarterlyProgress: [
+      { quarter: 'Q1', target: 12000, actual: 11200, variance: -6.7 },
+      { quarter: 'Q2', target: 11500, actual: 11800, variance: 2.6 },
+      { quarter: 'Q3', target: 11000, actual: 10900, variance: -0.9 },
+      { quarter: 'Q4', target: 10500, actual: null, variance: null },
+    ],
+    keyRisks: [
+      { risk: 'Carbon pricing increase', impact: 'High', likelihood: 'Very Likely', financialImpact: '$2.4M annually' },
+      { risk: 'Physical climate impacts', impact: 'Medium', likelihood: 'Likely', financialImpact: '$800K - $1.5M' },
+    ],
+    opportunities: [
+      { opportunity: 'Renewable energy transition', value: '$1.2M annual savings', timeline: '2024-2026' },
+    ],
+    recentReports: (reports || []).map(r => ({
+      title: r.title,
+      date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: r.status || 'draft',
+    })),
+  };
+};
 
 // Board reporting service methods
 export const boardReportingService = {
   getGovernanceMetrics,
   getFiduciaryDuties,
+  saveFiduciaryDuty,
+  saveGovernanceMetric,
   calculateGovernanceScore,
   getExecutiveSummary,
   governanceCategories,
