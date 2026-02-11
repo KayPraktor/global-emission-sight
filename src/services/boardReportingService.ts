@@ -298,7 +298,7 @@ export const getExecutiveSummary = async (organizationId: string) => {
     },
     targets: {
       shortTerm: netZeroGoal ? {
-        year: netZeroGoal.target_year,
+        year: netZeroGoal.target_date ? new Date(netZeroGoal.target_date).getFullYear() : null,
         reduction: 100,
         current: Math.round(progress),
       } : null,
