@@ -2,6 +2,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ProfessionalPDFGenerator, BrandingConfig } from './professionalPDFGenerator';
 
+export interface CBAMPrecursor {
+  name: string;
+  quantity: number; // tonnes
+  emissionFactor: number; // tCO2e per tonne
+  totalEmissions: number;
+}
+
 export interface CBAMProduct {
   id: string;
   cnCode: string;
@@ -11,12 +18,17 @@ export interface CBAMProduct {
   installationId?: string;
   quantityImported: number;
   quantityUnit: string;
+  netMass: number; // tonnes of product
   embeddedEmissionsDirect: number;
   embeddedEmissionsIndirect: number;
+  electricityConsumption: number; // MWh
+  gridEmissionFactor: number; // tCO2e/MWh
+  precursors: CBAMPrecursor[];
   totalEmbeddedEmissions: number;
   specificEmbeddedEmissions: number;
   carbonPricePaid: number;
   carbonPriceCurrency: string;
+  dataSource: 'actual' | 'default';
 }
 
 export interface CBAMReportData {
@@ -32,6 +44,60 @@ export interface CBAMReportData {
   totalEmissions: number;
   totalCarbonPricePaid: number;
   methodology: string;
+}
+
+// EU default grid emission factors by country (tCO2e/MWh) - based on EEA/IEA 2023 data
+export const COUNTRY_GRID_FACTORS: Record<string, { factor: number; source: string }> = {
+  'Turkey': { factor: 0.478, source: 'IEA 2023' },
+  'China': { factor: 0.555, source: 'IEA 2023' },
+  'India': { factor: 0.708, source: 'IEA 2023' },
+  'Russia': { factor: 0.476, source: 'IEA 2023' },
+  'Ukraine': { factor: 0.364, source: 'IEA 2023' },
+  'Egypt': { factor: 0.462, source: 'IEA 2023' },
+  'South Korea': { factor: 0.415, source: 'IEA 2023' },
+  'Japan': { factor: 0.457, source: 'IEA 2023' },
+  'United States': { factor: 0.379, source: 'EPA 2023' },
+  'Brazil': { factor: 0.074, source: 'IEA 2023' },
+  'Indonesia': { factor: 0.721, source: 'IEA 2023' },
+  'South Africa': { factor: 0.928, source: 'IEA 2023' },
+  'Vietnam': { factor: 0.576, source: 'IEA 2023' },
+  'Thailand': { factor: 0.443, source: 'IEA 2023' },
+  'Mexico': { factor: 0.407, source: 'IEA 2023' },
+};
+
+// EU default emission values by CBAM product category (tCO2e per tonne)
+export const EU_DEFAULT_EMISSION_VALUES: Record<string, { direct: number; indirect: number }> = {
+  'Cement': { direct: 0.766, indirect: 0.048 },
+  'Iron & Steel': { direct: 1.85, indirect: 0.32 },
+  'Aluminium': { direct: 1.60, indirect: 6.80 },
+  'Fertilizers': { direct: 2.90, indirect: 0.15 },
+  'Hydrogen': { direct: 9.00, indirect: 1.50 },
+  'Electricity': { direct: 0.00, indirect: 0.00 },
+};
+
+/**
+ * Calculate specific embedded emissions per EU CBAM Regulation 2023/956:
+ * SEE = (DirectEmissions + IndirectEmissions + PrecursorEmissions) / NetMass
+ */
+export function calculateSpecificEmbeddedEmissions(product: {
+  embeddedEmissionsDirect: number;
+  electricityConsumption: number;
+  gridEmissionFactor: number;
+  precursors: CBAMPrecursor[];
+  netMass: number;
+}): { indirect: number; precursorTotal: number; total: number; specific: number } {
+  const indirect = product.electricityConsumption * product.gridEmissionFactor;
+  const precursorTotal = product.precursors.reduce(
+    (acc, p) => acc + p.quantity * p.emissionFactor, 0
+  );
+  const total = product.embeddedEmissionsDirect + indirect + precursorTotal;
+  const specific = product.netMass > 0 ? total / product.netMass : 0;
+  return { indirect, precursorTotal, total, specific };
+}
+
+/** Validate EORI format: 2 letter country code + up to 15 alphanumeric chars */
+export function validateEORI(eori: string): boolean {
+  return /^[A-Z]{2}[A-Za-z0-9]{1,15}$/.test(eori);
 }
 
 // CBAM CN Codes (Carbon Border Adjustment Mechanism covered products)
@@ -125,12 +191,19 @@ class CBAMReportService {
           installationId: 'TR-001-ERDEMIR',
           quantityImported: 5000,
           quantityUnit: 'tonnes',
+          netMass: 5000,
           embeddedEmissionsDirect: 8500,
           embeddedEmissionsIndirect: 1200,
-          totalEmbeddedEmissions: 9700,
-          specificEmbeddedEmissions: 1.94,
+          electricityConsumption: 2500,
+          gridEmissionFactor: 0.478,
+          precursors: [
+            { name: 'Iron Ore Pellets', quantity: 6000, emissionFactor: 0.05, totalEmissions: 300 }
+          ],
+          totalEmbeddedEmissions: 10000,
+          specificEmbeddedEmissions: 2.0,
           carbonPricePaid: 25000,
-          carbonPriceCurrency: 'EUR'
+          carbonPriceCurrency: 'EUR',
+          dataSource: 'actual',
         },
         {
           id: '2',
@@ -141,12 +214,17 @@ class CBAMReportService {
           installationId: 'RU-002-KRAZ',
           quantityImported: 2000,
           quantityUnit: 'tonnes',
+          netMass: 2000,
           embeddedEmissionsDirect: 2800,
           embeddedEmissionsIndirect: 28000,
+          electricityConsumption: 30000,
+          gridEmissionFactor: 0.476,
+          precursors: [],
           totalEmbeddedEmissions: 30800,
           specificEmbeddedEmissions: 15.4,
           carbonPricePaid: 0,
-          carbonPriceCurrency: 'EUR'
+          carbonPriceCurrency: 'EUR',
+          dataSource: 'actual',
         },
         {
           id: '3',
@@ -157,12 +235,17 @@ class CBAMReportService {
           installationId: 'EG-003-SUEZ',
           quantityImported: 10000,
           quantityUnit: 'tonnes',
+          netMass: 10000,
           embeddedEmissionsDirect: 7500,
           embeddedEmissionsIndirect: 500,
+          electricityConsumption: 1000,
+          gridEmissionFactor: 0.462,
+          precursors: [],
           totalEmbeddedEmissions: 8000,
           specificEmbeddedEmissions: 0.8,
           carbonPricePaid: 0,
-          carbonPriceCurrency: 'EUR'
+          carbonPriceCurrency: 'EUR',
+          dataSource: 'default',
         }
       ],
       totalEmissions: 48500,
