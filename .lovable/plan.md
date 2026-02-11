@@ -1,199 +1,194 @@
 
 
-# From Static UI to Real Product Logic -- Phased Roadmap
-
-## Current State Assessment
-
-The codebase has a mix of real and static logic:
-
-**Already Real (DB-wired):**
-- Emissions data entry (EmissionsService) -- saves to DB with validation
-- Dashboard overview (AnalyticsService) -- reads real emissions_entries + calculations
-- Goals CRUD (GoalsService) -- with real progress tracking against emissions
-- Facilities CRUD (FacilityService) -- organization-scoped
-- Insights panel (InsightsNextActions) -- fetches from DB
-- Top Drivers (TopDrivers) -- uses real categoryBreakdown from analytics
-
-**Still Static/Hardcoded:**
-- Compliance Status widget -- hardcoded GHG Protocol, ISO 14064, CDP, TCFD statuses
-- Upcoming Deadlines widget -- hardcoded dates and tasks
-- Sample table data in Index.tsx (sampleTableData, chartData)
-- CBAM calculator -- form exists but no embedded emissions calculation logic
-- Scope 3 dashboard -- falls back to demo data (scope3DemoData.ts)
-- dummyData.ts -- still imported in some places
-- EmissionsReport component uses static dummyData
-- Multiple "SampleDataBadge" markers across dashboard, reports, scope3
-
-## Phased Implementation
-
-This is too large for a single change. Here is a 4-phase plan, each phase self-contained and testable.
+# Comprehensive Codebase Audit: Ghost Logic, Data Flow, Cascading Effects, and Error Handling
 
 ---
 
-### Phase 1: Dashboard Truth Layer (Remove all hardcoded dashboard data)
+## 1. GHOST LOGIC AUDIT (UI with no real data)
 
-**Goal:** The dashboard shows ONLY real data or meaningful empty states. No fake numbers.
+The following sidebar tabs have logic that is partially or fully disconnected from the database:
 
-**Changes:**
+### CRITICAL -- Fully Static (Hardcoded data, no DB connection)
 
-1. **Remove hardcoded compliance widget** in `Index.tsx` (lines 516-581). Replace with a service that checks which reports exist in the `reports` table and what frameworks they cover. If a GHG Protocol report is `published`, status = "Compliant". If `draft`, status = "In Progress". If no report exists, status = "Not Started".
+| Tab | Component | Issue |
+|-----|-----------|-------|
+| **Board Reporting** | `boardReportingService.ts` | `getGovernanceMetrics()`, `getFiduciaryDuties()`, and `getExecutiveSummary()` all return **hardcoded arrays**. No database table exists for governance metrics or fiduciary duties. The "Recent Board Reports" list on the overview tab is a hardcoded array of 3 items. "Next Board Meeting: Apr 15 / 12 days away" is hardcoded. |
+| **Enterprise** (Net Zero Progress tab) | `EnterpriseIndex.tsx` lines 404-433 | "34% Progress to Net Zero", "2030 Target Year", "66% Reduction Required", "2,450 tCO2e", "68% complete" are all **hardcoded numbers** in JSX. |
+| **Financial > Market Prices** | `CarbonPriceWidget.tsx` line 39 | The trend icon (up/down/flat) is determined by `Math.random()`, not real historical comparison. The "Live" badge is misleading. |
+| **Benchmarking** | `benchmarkingService.ts` | `loadBenchmarkData()` uses 2 hardcoded industry objects instead of querying the `industry_benchmarks` table that already exists in the database. |
 
-2. **Remove hardcoded deadlines** (UPCOMING_DEADLINES constant). Create a `compliance_deadlines` table in the database to store organization-specific regulatory deadlines. The dashboard reads from this table. Provide seed data during onboarding based on the organization's industry.
+### MODERATE -- Falls back to mock data when no real data exists
 
-3. **Remove sampleTableData and chartData** constants from Index.tsx. The advanced table and chart sections already have real data paths via analyticsData -- just wire them through properly or hide the sections when no data exists.
+| Tab | Component | Issue |
+|-----|-----------|-------|
+| **Materiality** (all sub-tabs) | `MaterialityDashboard`, `MaterialityMatrix`, `TopicAssessment`, `FinancialMateriality`, `ImpactAnalysis`, `StakeholderMapping` | All 6 components follow pattern: try real DB query, if empty or error -> fall back to `getMockAssessments()` / `getMockStakeholders()`. This means the UI shows **fake demo data** instead of empty states. Users cannot tell what is real vs. fake. |
+| **Scope 3 > Sankey Diagram** | `Scope3SankeyDiagram.tsx` | Still imports and uses `getDemoScope3Totals` from `scope3DemoData.ts`. Even though `Scope3Dashboard` was cleaned up, this sub-component wasn't. |
 
-4. **Remove all SampleDataBadge** instances from dashboard components. Replace with conditional rendering: show empty states with CTAs ("Add your first emission entry") when no data exists.
+### LOW -- Minor ghost elements
 
-**Files modified:**
-- `src/pages/Index.tsx` -- remove hardcoded arrays, wire compliance + deadlines to DB
-- New service: `src/services/complianceTrackingService.ts` -- query reports table for framework coverage
-- DB migration: create `compliance_deadlines` table
-
----
-
-### Phase 2: Emissions Calculation Engine (Make the math real)
-
-**Goal:** When a user enters activity data, the system automatically calculates tCO2e using the correct emission factor and stores the result.
-
-**Current gap:** The `calculations` table exists and `emissions_entries` references it, but the auto-calculation trigger may not be working end-to-end for all entry paths.
-
-**Changes:**
-
-1. **Verify/fix the calculation trigger** -- ensure that when an `emissions_entry` is inserted, a corresponding `calculations` row is created with `calculated_emissions = quantity * factor_value`. Check the DB trigger or create one if missing.
-
-2. **Wire Scope 3 to real data** -- Replace demo data fallback in `scope3Service.ts` with queries to `organization_scope3_summary` table. Show empty state instead of fake data when no Scope 3 data exists.
-
-3. **Remove dummyData.ts** -- Find all imports and replace with real service calls or empty states.
-
-4. **Fix EmissionsReport** -- Wire it to `analyticsService` instead of static `dummyData`.
-
-**Files modified:**
-- `src/services/scope3Service.ts` -- remove demo data imports, query real tables
-- `src/components/Reports/EmissionsReport.tsx` -- use analyticsService
-- `src/utils/dummyData.ts` -- delete file
-- DB migration: verify/create calculation trigger
+| Tab | Component | Issue |
+|-----|-----------|-------|
+| **CBAM Report** | `cbamReportService.ts` | `generateSampleCBAMReport()` method creates a hardcoded "Sample Corporation" report. OK for testing but should be removed or hidden in production. |
+| **ISO 14064 Report** | `iso14064ReportService.ts` | Same pattern: `generateSampleReport()` with hardcoded "Sample Corporation" data. |
 
 ---
 
-### Phase 3: CBAM Embedded Emissions Logic
+## 2. DATA-TO-CHART SYNC AUDIT (Calculation Engine)
 
-**Goal:** The EU CBAM generator performs real calculations per EU 2023/956.
+### Calculation Trigger: WORKING
 
-**Changes:**
+A database trigger `auto_calculate_emissions` fires on INSERT to `emissions_entries`. The function `calculate_emissions_on_entry` correctly:
+- Looks up `factor_value` from `emission_factors`
+- Computes `calculated_co2e = (quantity * factor_value) / 1000`
+- Inserts into `calculations` table
 
-1. **Add calculation logic to `cbamReportService.ts`:**
-   - Specific Embedded Emissions = (Direct + Indirect + Precursor) / Net Mass
-   - Country grid emission factor lookup table
-   - EU default emission factors by product category
+### Analytics Pipeline: WORKING
 
-2. **Enhance `CBAMReportGenerator.tsx`:**
-   - Add electricity consumption and grid factor fields per product
-   - Add precursor sub-form (name, quantity, emission factor)
-   - Country dropdown with auto-populated grid factors
-   - Live summary table showing calculated carbon intensity
-   - EORI validation
+`analyticsService.ts` queries `emissions_entries` joined with `calculations(calculated_emissions)` and `facilities(name)`. Charts in the Dashboard and Analytics pages pull from this real pipeline.
 
-3. **Updated PDF output** -- include precursor breakdown and data source flags
+### Template Renderers: FIXED (Phase 4)
 
-**Files modified:**
-- `src/services/cbamReportService.ts`
-- `src/components/Reports/CBAMReportGenerator.tsx`
+`templateService.ts` now uses `fetchRealTemplateData()` which queries real entries. All 5 report template renderers (GHG, CDP, TCFD, Scope 3, Executive Summary) pull from this.
+
+### GAP: No recalculation on emission factor UPDATE
+
+The trigger only fires on `INSERT` to `emissions_entries`. If an emission factor's `factor_value` is changed, **existing calculations are NOT recalculated**. There is no trigger on `emission_factors` for this.
 
 ---
 
-### Phase 4: Report Intelligence (Reports use real data)
+## 3. CASCADING DELETIONS AND UPDATES AUDIT
 
-**Goal:** All report generators pull from real DB data, not static values.
+### Foreign Key Behavior (from DB constraints)
 
-**Changes:**
+| Parent Deleted | Child Table | FK Behavior | Impact |
+|---|---|---|---|
+| Facility deleted | `emissions_entries.facility_id` | `ON DELETE SET NULL` | Entries remain but lose facility link. Dashboard/analytics still include them. |
+| Facility deleted | `goals.facility_id` | `ON DELETE SET NULL` | Goals remain but lose facility scope. |
+| Emission Factor deleted | `emissions_entries.emission_factor_id` | `ON DELETE SET NULL` | Entries remain but lose factor link. |
+| Emission Factor deleted | `calculations.emission_factor_id` | `ON DELETE RESTRICT` | **BLOCKS deletion** if any calculations reference it. This is good for data integrity but the UI does not explain this to the user. |
 
-1. **MonthlyReportGenerator** -- verify it queries `analyticsService` for the selected month
-2. **ComprehensiveReportGenerator** -- verify it aggregates real quarterly/annual data
-3. **Template renderers** (GHG, CDP, TCFD, Scope3) -- ensure they pull from the correct DB tables (emissions_entries, goals, materiality_assessments, suppliers)
-4. **Remove the "Data Reports" tab** with SampleDataBadge if EmissionsReport is now real
+### Critical Missing Behavior
 
-**Files modified:**
-- `src/components/Reports/MonthlyReportGenerator.tsx`
-- `src/components/Reports/ComprehensiveReportGenerator.tsx`
-- `src/services/reportRenderers/*.ts`
-- `src/pages/ReportsPage.tsx`
+1. **No cascade recalculation**: When an emission factor value is updated, existing `calculations` rows keep the OLD calculated value. The dashboard, reports, and Scope 3 will show stale numbers until entries are manually re-submitted.
+
+2. **No real-time refresh**: Dashboard and Analytics use `useQuery` with default caching. After a deletion, the user must refresh or navigate away and back to see updated totals.
+
+3. **Facility deletion UI warning is misleading**: The delete dialog says "All associated emissions entries will remain but will no longer be linked to this facility." This is technically correct (SET NULL), but doesn't mention that **deletion will fail silently if calculations reference the facility's emission factors** (RESTRICT on calculations table).
 
 ---
 
-## Recommended Starting Point
+## 4. ERROR HANDLING AUDIT
 
-**Phase 1** (Dashboard Truth Layer) is the highest-impact, lowest-risk change. It immediately makes the product feel real by removing fake data from the first screen users see. It also establishes the pattern (query DB, show empty state if nothing) that all subsequent phases follow.
+### Services: Generally Good
 
-## Technical Details
+Most services follow a consistent pattern:
+- `try/catch` with `console.error` + return `{ error: string }` or `throw`
+- `facilityService`: Returns `{ data, error }` tuples -- UI shows toast on error
+- `emissionsService`: Returns `{ success, error }` -- UI shows error message
+- `carbonCreditService`: Returns `null` or `false` on failure -- UI shows toast
+- `roiTrackingService`: Returns `null` or empty array on failure -- UI shows nothing (silent)
 
-### Compliance Tracking Service Pattern
+### Components with Silent Failures
 
-```typescript
-// complianceTrackingService.ts
-class ComplianceTrackingService {
-  async getFrameworkStatus(organizationId: string): Promise<FrameworkStatus[]> {
-    // Query reports table grouped by report_type
-    // Map report status to compliance status
-    const { data: reports } = await supabase
-      .from('reports')
-      .select('report_type, status')
-      .eq('organization_id', organizationId);
-    
-    return FRAMEWORKS.map(fw => {
-      const report = reports?.find(r => r.report_type === fw.key);
-      return {
-        name: fw.name,
-        status: report ? mapStatus(report.status) : 'not_started',
-        progress: calculateProgress(report)
-      };
-    });
-  }
-}
-```
+| Component | Issue |
+|---|---|
+| `ROIDashboard.tsx` line 74-76 | `catch (error) { console.error(...) }` -- no toast, no user feedback. Loading skeleton just disappears. |
+| `CarbonPriceWidget.tsx` line 21 | `catch (error) { console.error(...) }` -- fails silently, shows empty state but no error message. |
+| All 6 Materiality components | On error, silently fall back to mock data. User sees fake numbers with no indication anything went wrong. |
+| `Scope3SankeyDiagram` | Falls back to demo data on error with no indication. |
+| `enterpriseKPIService.ts` line 210 | Returns empty array on error -- Executive dashboard shows "no data" instead of "error loading". |
+| `scenarioModelingService.ts` line 189 | Returns empty array on error -- Scenario Planning shows empty state, not error. |
+| `enterpriseComplianceService.ts` lines 193, 221 | Returns empty array on error -- compliance widgets show nothing. |
 
-### compliance_deadlines Table Schema
+### Forms with Good Error Handling
 
+- `EmissionsWizard` / `EmissionsForm`: Shows validation errors + toast on DB failure
+- `FacilityForm`: Shows toast on create/update/delete failure
+- `GoalForm`: Shows toast on save failure
+- `CarbonCreditPortfolio`: Shows toast on add/retire/delete failure with double-submit prevention
+- `StakeholderMapping`: Shows toast on save/delete failure
+
+---
+
+## Implementation Plan
+
+### Phase A: Kill All Ghost Logic
+
+**A1. Board Reporting Service** (Highest priority ghost)
+- Create `governance_metrics` and `fiduciary_duties` tables in the database
+- Rewrite `getGovernanceMetrics()` and `getFiduciaryDuties()` to query DB
+- Rewrite `getExecutiveSummary()` to pull from `emissions_entries` + `goals` + `reports`
+- Replace hardcoded "Recent Board Reports" with query to `reports` table
+- Remove hardcoded "Next Board Meeting" and add a `board_meetings` field to `compliance_deadlines` or a simple `organization_events` table
+
+**A2. Enterprise Net Zero Progress**
+- Replace hardcoded 34%, 2030, 66%, etc. with data from `goals` table (find net-zero goal) and `enterprise_metrics`
+- Calculate progress dynamically: current emissions vs. baseline
+
+**A3. Materiality Mock Fallback Removal**
+- Remove `getMockAssessments()` and `getMockStakeholders()` functions entirely
+- Replace all 6 component fallbacks with empty state UI + CTA to "Start your materiality assessment"
+
+**A4. Benchmarking Service**
+- Wire `loadBenchmarkData()` to query the existing `industry_benchmarks` table instead of hardcoded arrays
+
+**A5. Scope 3 Sankey Cleanup**
+- Remove demo data import from `Scope3SankeyDiagram.tsx`
+- Wire to real `organization_scope3_summary` data or show empty state
+
+**A6. Carbon Price Widget**
+- Remove `Math.random()` trend logic
+- Either store historical prices for real comparison or remove the trend icon entirely
+
+### Phase B: Cascading Recalculation
+
+**B1. Emission Factor Update Trigger**
+- Create a database trigger on `emission_factors` UPDATE that recalculates all related `calculations` rows:
 ```sql
-CREATE TABLE compliance_deadlines (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  organization_id UUID NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT,
-  due_date DATE NOT NULL,
-  framework TEXT,          -- 'GHG', 'CDP', 'TCFD', 'CBAM', etc.
-  urgency TEXT DEFAULT 'medium',
-  status TEXT DEFAULT 'pending',
-  linked_route TEXT,       -- app route to navigate to
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
--- RLS: org members can CRUD their org's deadlines
-```
-
-### Calculation Trigger (if missing)
-
-```sql
-CREATE OR REPLACE FUNCTION calculate_emissions_on_insert()
+CREATE OR REPLACE FUNCTION recalculate_on_factor_update()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO calculations (
-    entry_id, calculated_emissions, calculation_date
-  )
-  SELECT 
-    NEW.id,
-    NEW.quantity * ef.factor_value,
-    NOW()
-  FROM emission_factors ef
-  WHERE ef.id = NEW.emission_factor_id;
+  IF OLD.factor_value IS DISTINCT FROM NEW.factor_value THEN
+    UPDATE calculations
+    SET calculated_emissions = (
+      SELECT (ee.quantity * NEW.factor_value) / 1000.0
+      FROM emissions_entries ee
+      WHERE ee.id = calculations.emissions_entry_id
+    ),
+    calculation_timestamp = now()
+    WHERE emission_factor_id = NEW.id;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 ```
 
-### Empty State Pattern
+**B2. Query Cache Invalidation**
+- After facility/factor deletion or update, call `queryClient.invalidateQueries()` for relevant keys ('analytics', 'emissions', 'enterprise-kpis') to force UI refresh
 
-Every widget that currently shows hardcoded data will follow this pattern:
-- Query DB for real data
-- If data exists: render normally (no SampleDataBadge)
-- If no data: show a clean empty state with a CTA button directing the user to the relevant data entry page
+**B3. Improve Facility Deletion UX**
+- Before deleting, check if any `calculations` reference the facility's factors
+- Show count of affected entries in the confirmation dialog
 
+### Phase C: Error Handling Hardening
+
+**C1. Silent Failure Fixes**
+- `ROIDashboard`: Add toast.error on catch
+- `CarbonPriceWidget`: Add error state with retry button
+- `enterpriseKPIService`, `scenarioModelingService`, `enterpriseComplianceService`: Throw errors instead of returning empty arrays, let React Query's `isError` state show error UI
+
+**C2. Materiality Error Handling**
+- After removing mock fallbacks (Phase A3), add proper error state with retry button in each Materiality component
+
+**C3. Consistent Error Pattern**
+- Establish a standard: services either throw (letting React Query handle it) or return `{ data, error }` tuples. Currently it's a mix of both patterns.
+
+---
+
+## Priority Order
+
+1. **Phase A1-A3** (Ghost Logic) -- highest user-facing impact
+2. **Phase B1** (Recalculation trigger) -- data integrity
+3. **Phase C1-C2** (Error handling) -- reliability
+4. **Phase A4-A6** (Minor ghost items) -- polish
+5. **Phase B2-B3** (Cache invalidation, UX) -- polish
