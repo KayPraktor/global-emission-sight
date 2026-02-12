@@ -1,23 +1,20 @@
+import { supabase } from '@/integrations/supabase/client';
 
 interface BenchmarkData {
   industry: string;
   naicsCode: string;
-  metrics: {
-    emissionsPerRevenue: number; // tCO2e per $M revenue
-    emissionsPerEmployee: number; // tCO2e per employee
-    emissionsPerSqFt: number; // tCO2e per sq ft
-    scope1Percentage: number;
-    scope2Percentage: number;
-    scope3Percentage: number;
-  };
+  metricType: string;
+  unit: string;
   percentiles: {
+    p10?: number;
     p25: number;
-    p50: number; // median
+    p50: number;
     p75: number;
-    p90: number;
+    p90?: number;
   };
   sampleSize: number;
   lastUpdated: string;
+  source?: string;
 }
 
 interface PeerComparison {
@@ -30,72 +27,61 @@ interface PeerComparison {
 }
 
 class BenchmarkingService {
-  private benchmarkData: Map<string, BenchmarkData> = new Map();
+  private benchmarkData: Map<string, BenchmarkData[]> = new Map();
 
   async loadBenchmarkData(): Promise<void> {
-    // In a real implementation, this would load from a comprehensive database
-    const industries: BenchmarkData[] = [
-      {
-        industry: 'Manufacturing - Automotive',
-        naicsCode: '3361',
-        metrics: {
-          emissionsPerRevenue: 45.2,
-          emissionsPerEmployee: 12.8,
-          emissionsPerSqFt: 0.089,
-          scope1Percentage: 35,
-          scope2Percentage: 45,
-          scope3Percentage: 20
-        },
-        percentiles: {
-          p25: 28.1,
-          p50: 45.2,
-          p75: 62.8,
-          p90: 89.5
-        },
-        sampleSize: 156,
-        lastUpdated: '2024-03-01'
-      },
-      {
-        industry: 'Technology - Software',
-        naicsCode: '5415',
-        metrics: {
-          emissionsPerRevenue: 2.1,
-          emissionsPerEmployee: 3.2,
-          emissionsPerSqFt: 0.015,
-          scope1Percentage: 5,
-          scope2Percentage: 25,
-          scope3Percentage: 70
-        },
-        percentiles: {
-          p25: 1.2,
-          p50: 2.1,
-          p75: 3.8,
-          p90: 6.2
-        },
-        sampleSize: 89,
-        lastUpdated: '2024-02-15'
-      }
-    ];
+    const { data, error } = await supabase
+      .from('industry_benchmarks')
+      .select('*')
+      .order('year', { ascending: false });
 
-    industries.forEach(industry => {
-      this.benchmarkData.set(industry.naicsCode, industry);
+    if (error) {
+      throw new Error(`Failed to load benchmark data: ${error.message}`);
+    }
+
+    this.benchmarkData.clear();
+
+    (data || []).forEach(row => {
+      const entry: BenchmarkData = {
+        industry: row.industry,
+        naicsCode: row.naics_code,
+        metricType: row.metric_type,
+        unit: row.unit,
+        percentiles: {
+          p10: row.p10 ?? undefined,
+          p25: row.p25 ?? 0,
+          p50: row.p50 ?? 0,
+          p75: row.p75 ?? 0,
+          p90: row.p90 ?? undefined,
+        },
+        sampleSize: row.sample_size ?? 0,
+        lastUpdated: row.last_updated ?? '',
+        source: row.source ?? undefined,
+      };
+
+      const existing = this.benchmarkData.get(row.naics_code) || [];
+      existing.push(entry);
+      this.benchmarkData.set(row.naics_code, existing);
     });
   }
 
   compareToIndustry(
     naicsCode: string,
     yourEmissions: number,
-    metric: 'emissionsPerRevenue' | 'emissionsPerEmployee' | 'emissionsPerSqFt'
+    metric: string
   ): PeerComparison | null {
-    const benchmark = this.benchmarkData.get(naicsCode);
+    const benchmarks = this.benchmarkData.get(naicsCode);
+    if (!benchmarks) return null;
+
+    const benchmark = benchmarks.find(b => b.metricType === metric);
     if (!benchmark) return null;
 
-    const industryMedian = benchmark.metrics[metric];
     const percentiles = benchmark.percentiles;
-    
+    const industryMedian = percentiles.p50;
+
     let percentileRank = 50;
     let performance: PeerComparison['performance'] = 'below-average';
-    
+
     if (yourEmissions <= percentiles.p25) {
       percentileRank = 25;
       performance = 'top-quartile';
@@ -111,13 +97,13 @@ class BenchmarkingService {
     }
 
     const gapToMedian = yourEmissions - industryMedian;
-    const gapPercentage = (gapToMedian / industryMedian) * 100;
-    
-    const gapAnalysis = gapToMedian > 0 
+    const gapPercentage = industryMedian > 0 ? (gapToMedian / industryMedian) * 100 : 0;
+
+    const gapAnalysis = gapToMedian > 0
       ? `${gapPercentage.toFixed(1)}% above industry median`
       : `${Math.abs(gapPercentage).toFixed(1)}% below industry median`;
 
-    const opportunities = this.generateOpportunities(performance, benchmark);
+    const opportunities = this.generateOpportunities(performance);
 
     return {
       yourValue: yourEmissions,
@@ -129,24 +115,14 @@ class BenchmarkingService {
     };
   }
 
-  private generateOpportunities(
-    performance: PeerComparison['performance'],
-    benchmark: BenchmarkData
-  ): string[] {
+  private generateOpportunities(performance: PeerComparison['performance']): string[] {
     const opportunities = [];
 
     if (performance === 'bottom-quartile' || performance === 'below-average') {
       opportunities.push('Implement energy management system (ISO 50001)');
       opportunities.push('Conduct energy audit to identify efficiency opportunities');
-      
-      if (benchmark.metrics.scope2Percentage > 30) {
-        opportunities.push('Transition to renewable energy sources');
-      }
-      
-      if (benchmark.metrics.scope3Percentage > 50) {
-        opportunities.push('Engage suppliers on emission reduction initiatives');
-        opportunities.push('Optimize supply chain and logistics');
-      }
+      opportunities.push('Transition to renewable energy sources');
+      opportunities.push('Engage suppliers on emission reduction initiatives');
     }
 
     if (performance === 'top-quartile') {
@@ -158,17 +134,12 @@ class BenchmarkingService {
     return opportunities;
   }
 
-  getIndustryTrends(naicsCode: string): {
-    trend: 'improving' | 'stable' | 'worsening';
-    annualChange: number;
-    description: string;
-  } {
-    // This would analyze historical benchmark data
-    return {
-      trend: 'improving',
-      annualChange: -3.2, // 3.2% annual improvement
-      description: 'Industry emissions intensity has improved by 3.2% annually over the past 3 years'
-    };
+  getAvailableNaicsCodes(): string[] {
+    return Array.from(this.benchmarkData.keys());
+  }
+
+  getBenchmarksForIndustry(naicsCode: string): BenchmarkData[] {
+    return this.benchmarkData.get(naicsCode) || [];
   }
 
   generateBenchmarkReport(
@@ -193,8 +164,11 @@ class BenchmarkingService {
     );
 
     if (!revenueComparison || !employeeComparison) {
-      return 'Benchmark data not available for this industry.';
+      return 'Benchmark data not available for this industry. Please add benchmark data first.';
     }
+
+    const benchmarks = this.benchmarkData.get(naicsCode);
+    const sampleSize = benchmarks?.[0]?.sampleSize || 0;
 
     return `
 Industry Benchmark Report
@@ -210,7 +184,7 @@ Key Opportunities:
 ${revenueComparison.opportunities.map(o => `• ${o}`).join('\n')}
 
 Industry Context:
-This analysis is based on ${this.benchmarkData.get(naicsCode)?.sampleSize} peer companies in your industry.
+This analysis is based on ${sampleSize} peer companies in your industry.
     `.trim();
   }
 }

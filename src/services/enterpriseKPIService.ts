@@ -208,7 +208,7 @@ export class EnterpriseKPIService {
       return kpis;
     } catch (error) {
       console.error('Error calculating KPIs:', error);
-      return [];
+      throw error;
     }
   }
 

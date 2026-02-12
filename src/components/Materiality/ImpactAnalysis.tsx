@@ -5,7 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { TrendingUp, AlertTriangle, Target, Leaf, Users, Building } from 'lucide-react';
 import { MaterialityAssessment, TopicCategory } from '@/types/materiality';
-import { getMockAssessments, getAssessments, SUSTAINABILITY_TOPICS } from '@/services/materialityService';
+import { getAssessments, SUSTAINABILITY_TOPICS } from '@/services/materialityService';
+import { toast } from 'sonner';
 
 const ImpactAnalysis: React.FC = () => {
   const [assessments, setAssessments] = useState<MaterialityAssessment[]>([]);
@@ -17,13 +18,11 @@ const ImpactAnalysis: React.FC = () => {
   const loadAssessments = async () => {
     try {
       const data = await getAssessments();
-      if (data.length === 0) {
-        setAssessments(getMockAssessments());
-      } else {
-        setAssessments(data);
-      }
-    } catch {
-      setAssessments(getMockAssessments());
+      setAssessments(data);
+    } catch (error) {
+      console.error('Error loading assessments:', error);
+      toast.error('Failed to load impact analysis data.');
+      setAssessments([]);
     }
   };
 

@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Users, Plus, Edit2, Trash2, Calendar, Loader2 } from 'lucide-react';
 import { Stakeholder, InfluenceLevel, StakeholderCategory } from '@/types/materiality';
 import { 
-  getMockStakeholders, 
   STAKEHOLDER_CATEGORIES, 
   ENGAGEMENT_METHODS,
   saveStakeholder,
@@ -52,13 +51,11 @@ const StakeholderMapping: React.FC = () => {
   const loadStakeholders = async () => {
     try {
       const data = await getStakeholders();
-      if (data.length === 0) {
-        setStakeholders(getMockStakeholders());
-      } else {
-        setStakeholders(data);
-      }
-    } catch {
-      setStakeholders(getMockStakeholders());
+      setStakeholders(data);
+    } catch (error) {
+      console.error('Error loading stakeholders:', error);
+      toast.error('Failed to load stakeholders. Please try again.');
+      setStakeholders([]);
     }
   };
 

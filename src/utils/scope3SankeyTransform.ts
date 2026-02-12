@@ -1,6 +1,6 @@
 // Data transformation utilities for Scope 3 Sankey diagram visualization
 
-import { DemoScope3Summary, DemoScope3Hotspot } from './scope3DemoData';
+import type { Scope3Summary as DemoScope3Summary, Scope3Hotspot as DemoScope3Hotspot } from '@/services/scope3Service';
 
 export interface SankeyNode {
   name: string;
