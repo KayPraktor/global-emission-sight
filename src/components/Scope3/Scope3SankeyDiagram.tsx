@@ -24,11 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { 
-  DemoScope3Summary, 
-  DemoScope3Hotspot,
-  getDemoScope3Totals 
-} from '@/utils/scope3DemoData';
+import type { Scope3Summary as DemoScope3Summary, Scope3Hotspot as DemoScope3Hotspot } from '@/services/scope3Service';
 import { 
   transformToSankeyData, 
   SankeyNode,

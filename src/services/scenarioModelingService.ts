@@ -186,7 +186,7 @@ export class ScenarioModelingService {
       return scenarios;
     } catch (error) {
       console.error('Error generating scenarios:', error);
-      return [];
+      throw error;
     }
   }
 

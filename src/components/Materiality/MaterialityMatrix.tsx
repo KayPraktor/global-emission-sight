@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Download, Settings, Leaf, Users, Building } from 'lucide-react';
 import { MaterialityAssessment, MaterialityMatrixPoint, TopicCategory } from '@/types/materiality';
-import { getMockAssessments, getAssessments } from '@/services/materialityService';
+import { getAssessments } from '@/services/materialityService';
+import { toast } from 'sonner';
 
 const MaterialityMatrix: React.FC = () => {
   const [assessments, setAssessments] = useState<MaterialityAssessment[]>([]);
@@ -22,13 +23,11 @@ const MaterialityMatrix: React.FC = () => {
   const loadAssessments = async () => {
     try {
       const data = await getAssessments();
-      if (data.length === 0) {
-        setAssessments(getMockAssessments());
-      } else {
-        setAssessments(data);
-      }
-    } catch {
-      setAssessments(getMockAssessments());
+      setAssessments(data);
+    } catch (error) {
+      console.error('Error loading assessments:', error);
+      toast.error('Failed to load materiality matrix data.');
+      setAssessments([]);
     }
   };
 

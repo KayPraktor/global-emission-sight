@@ -5,7 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
 import { MaterialityAssessment, TimeHorizon } from '@/types/materiality';
-import { getMockAssessments, getAssessments } from '@/services/materialityService';
+import { getAssessments } from '@/services/materialityService';
+import { toast } from 'sonner';
 
 const FinancialMateriality: React.FC = () => {
   const [assessments, setAssessments] = useState<MaterialityAssessment[]>([]);
@@ -17,13 +18,11 @@ const FinancialMateriality: React.FC = () => {
   const loadAssessments = async () => {
     try {
       const data = await getAssessments();
-      if (data.length === 0) {
-        setAssessments(getMockAssessments());
-      } else {
-        setAssessments(data);
-      }
-    } catch {
-      setAssessments(getMockAssessments());
+      setAssessments(data);
+    } catch (error) {
+      console.error('Error loading assessments:', error);
+      toast.error('Failed to load financial materiality data.');
+      setAssessments([]);
     }
   };
 

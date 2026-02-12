@@ -190,7 +190,7 @@ export class EnterpriseComplianceService {
 
     if (error) {
       console.error('Error fetching frameworks:', error);
-      return [];
+      throw new Error(`Failed to load compliance frameworks: ${error.message}`);
     }
 
     return data?.map(f => ({
@@ -218,7 +218,7 @@ export class EnterpriseComplianceService {
 
     if (error) {
       console.error('Error fetching deadlines:', error);
-      return [];
+      throw new Error(`Failed to load compliance deadlines: ${error.message}`);
     }
 
     return data?.map(d => ({

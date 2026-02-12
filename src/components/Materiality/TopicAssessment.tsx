@@ -15,7 +15,6 @@ import {
   calculateImpactScore, 
   calculateFinancialScore, 
   isMaterialTopic,
-  getMockAssessments,
   saveAssessment,
   getAssessments
 } from '@/services/materialityService';
@@ -47,13 +46,11 @@ const TopicAssessment: React.FC = () => {
   const loadAssessments = async () => {
     try {
       const data = await getAssessments();
-      if (data.length === 0) {
-        setAssessments(getMockAssessments());
-      } else {
-        setAssessments(data);
-      }
-    } catch {
-      setAssessments(getMockAssessments());
+      setAssessments(data);
+    } catch (error) {
+      console.error('Error loading assessments:', error);
+      toast.error('Failed to load assessments. Please try again.');
+      setAssessments([]);
     }
   };
 
