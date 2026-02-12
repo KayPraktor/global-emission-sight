@@ -286,6 +286,53 @@ export const getExecutiveSummary = async (organizationId: string) => {
     .order('created_at', { ascending: false })
     .limit(5);
 
+  // Get materiality assessments
+  const { data: materialityAssessments } = await supabase
+    .from('materiality_assessments')
+    .select('topic_name, topic_category, is_material, impact_score, financial_score')
+    .eq('organization_id', organizationId);
+
+  const materialTopics = (materialityAssessments || []).filter(a => a.is_material);
+  const materialitySummary = {
+    totalAssessed: (materialityAssessments || []).length,
+    materialTopics: materialTopics.length,
+    topMaterialTopics: materialTopics
+      .sort((a, b) => ((b.impact_score || 0) + (b.financial_score || 0)) - ((a.impact_score || 0) + (a.financial_score || 0)))
+      .slice(0, 5)
+      .map(t => ({
+        name: t.topic_name,
+        category: t.topic_category,
+        impactScore: t.impact_score || 0,
+        financialScore: t.financial_score || 0,
+      })),
+    coverageByCategory: {
+      environmental: (materialityAssessments || []).filter(a => a.topic_category === 'environmental').length,
+      social: (materialityAssessments || []).filter(a => a.topic_category === 'social').length,
+      governance: (materialityAssessments || []).filter(a => a.topic_category === 'governance').length,
+    },
+  };
+
+  // Build key risks from material topics with high financial scores
+  const keyRisks = materialTopics
+    .filter(t => (t.financial_score || 0) >= 60)
+    .slice(0, 3)
+    .map(t => ({
+      risk: `${t.topic_name} exposure`,
+      impact: (t.financial_score || 0) >= 80 ? 'High' : 'Medium',
+      likelihood: (t.impact_score || 0) >= 80 ? 'Very Likely' : 'Likely',
+      financialImpact: 'Assessment required',
+    }));
+
+  // Build opportunities from material topics
+  const opportunities = materialTopics
+    .filter(t => t.topic_category === 'environmental' && (t.impact_score || 0) >= 50)
+    .slice(0, 3)
+    .map(t => ({
+      opportunity: `${t.topic_name} improvement`,
+      value: 'To be quantified',
+      timeline: 'Based on transition plan',
+    }));
+
   return {
     currentEmissions: {
       total: totalEmissions,
@@ -294,7 +341,7 @@ export const getExecutiveSummary = async (organizationId: string) => {
       scope3: latest?.scope_3_emissions || 0,
       unit: 'tCO2e',
       change: Math.round(change * 10) / 10,
-      vsTarget: -2.3, // Placeholder for now or calculate from goals
+      vsTarget: -2.3,
     },
     targets: {
       shortTerm: netZeroGoal ? {
@@ -302,22 +349,12 @@ export const getExecutiveSummary = async (organizationId: string) => {
         reduction: 100,
         current: Math.round(progress),
       } : null,
-      mediumTerm: { year: 2030, reduction: 50, current: 18 },
-      longTerm: { year: 2050, reduction: 100, target: 'Net Zero' },
+      mediumTerm: null,
+      longTerm: null,
     },
-    quarterlyProgress: [
-      { quarter: 'Q1', target: 12000, actual: 11200, variance: -6.7 },
-      { quarter: 'Q2', target: 11500, actual: 11800, variance: 2.6 },
-      { quarter: 'Q3', target: 11000, actual: 10900, variance: -0.9 },
-      { quarter: 'Q4', target: 10500, actual: null, variance: null },
-    ],
-    keyRisks: [
-      { risk: 'Carbon pricing increase', impact: 'High', likelihood: 'Very Likely', financialImpact: '$2.4M annually' },
-      { risk: 'Physical climate impacts', impact: 'Medium', likelihood: 'Likely', financialImpact: '$800K - $1.5M' },
-    ],
-    opportunities: [
-      { opportunity: 'Renewable energy transition', value: '$1.2M annual savings', timeline: '2024-2026' },
-    ],
+    materialitySummary,
+    keyRisks: keyRisks.length > 0 ? keyRisks : [],
+    opportunities: opportunities.length > 0 ? opportunities : [],
     recentReports: (reports || []).map(r => ({
       title: r.title,
       date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),

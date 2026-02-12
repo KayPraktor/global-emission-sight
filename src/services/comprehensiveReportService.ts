@@ -389,6 +389,34 @@ class ComprehensiveReportService {
       );
     }
 
+    // Materiality Assessment Section
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
+      const { data: materialityAssessments } = await supabase
+        .from('materiality_assessments')
+        .select('topic_name, topic_category, is_material, impact_score, financial_score')
+        .eq('user_id', currentUser.id);
+
+      const materialTopics = (materialityAssessments || []).filter(a => a.is_material);
+
+      if (materialTopics.length > 0) {
+        pdf.addSection('Double Materiality Assessment');
+        pdf.addParagraph(`${(materialityAssessments || []).length} sustainability topics assessed. ${materialTopics.length} identified as material.`);
+        pdf.addTable(
+          ['Material Topic', 'Category', 'Impact Score', 'Financial Score'],
+          materialTopics
+            .sort((a, b) => ((b.impact_score || 0) + (b.financial_score || 0)) - ((a.impact_score || 0) + (a.financial_score || 0)))
+            .slice(0, 10)
+            .map(t => [
+              t.topic_name,
+              t.topic_category,
+              `${(t.impact_score || 0).toFixed(0)}`,
+              `${(t.financial_score || 0).toFixed(0)}`,
+            ])
+        );
+      }
+    }
+
     // Carbon Intensity - conditional rendering (fix #5)
     pdf.addSection('Carbon Intensity Metrics');
     pdf.addKeyValueSection([
