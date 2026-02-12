@@ -16,6 +16,7 @@ class CSRDComplianceService {
   async analyzeESRSCompliance(organizationId: string): Promise<{
     disclosures: DisclosureStatus[];
     overallScore: number;
+    materialityScore: number;
   }> {
     const disclosures: DisclosureStatus[] = [];
 
@@ -37,12 +38,19 @@ class CSRDComplianceService {
       .select('*')
       .eq('organization_id', organizationId);
 
+    // Get materiality assessments
+    const { data: materialityAssessments } = await supabase
+      .from('materiality_assessments')
+      .select('*')
+      .eq('organization_id', organizationId);
+
     // Analyze each ESRS E1 disclosure
     for (const disclosure of ESRS_E1_DISCLOSURES) {
       const status = this.assessDisclosureStatus(disclosure.id, {
         emissions,
         goals,
         facilities,
+        materialityAssessments,
       });
       disclosures.push({
         id: disclosure.id,
@@ -56,11 +64,20 @@ class CSRDComplianceService {
       });
     }
 
-    const overallScore = Math.round(
+    // Calculate materiality contribution to overall score
+    const totalAssessments = materialityAssessments?.length || 0;
+    const materialTopics = materialityAssessments?.filter(a => a.is_material) || [];
+    const materialityScore = totalAssessments > 0
+      ? Math.round((totalAssessments / 26) * 100) // 26 = total ESRS topics
+      : 0;
+
+    // Blend: 80% disclosure-based, 20% materiality-based
+    const disclosureScore = Math.round(
       disclosures.reduce((sum, d) => sum + d.completenessScore, 0) / disclosures.length
     );
+    const overallScore = Math.round(disclosureScore * 0.8 + materialityScore * 0.2);
 
-    return { disclosures, overallScore };
+    return { disclosures, overallScore, materialityScore };
   }
 
   /**
@@ -204,6 +221,51 @@ class CSRDComplianceService {
         estimatedEffort: 'low',
         resolutionStatus: 'open',
       });
+    }
+
+    // Check for materiality assessments (ESRS 2 IRO-1 requirement)
+    const { data: materialityAssessments } = await supabase
+      .from('materiality_assessments')
+      .select('id, is_material, topic_category')
+      .eq('organization_id', organizationId);
+
+    if (!materialityAssessments || materialityAssessments.length === 0) {
+      gaps.push({
+        id: 'gap-materiality',
+        disclosureId: 'ESRS2-IRO1',
+        disclosureName: 'Double Materiality Assessment',
+        gapType: 'missing_data',
+        description: 'No double materiality assessment completed — required by ESRS 2 IRO-1',
+        severity: 'critical',
+        recommendation: 'Complete a double materiality assessment covering all ESRS topics to identify material sustainability matters',
+        estimatedEffort: 'high',
+        resolutionStatus: 'open',
+      });
+    } else {
+      const materialCount = materialityAssessments.filter(a => a.is_material).length;
+      const envCount = materialityAssessments.filter(a => a.topic_category === 'environmental').length;
+      const socCount = materialityAssessments.filter(a => a.topic_category === 'social').length;
+      const govCount = materialityAssessments.filter(a => a.topic_category === 'governance').length;
+
+      if (envCount === 0 || socCount === 0 || govCount === 0) {
+        const missing = [
+          envCount === 0 ? 'Environmental' : null,
+          socCount === 0 ? 'Social' : null,
+          govCount === 0 ? 'Governance' : null,
+        ].filter(Boolean).join(', ');
+
+        gaps.push({
+          id: 'gap-materiality-coverage',
+          disclosureId: 'ESRS2-IRO1',
+          disclosureName: 'Double Materiality Assessment',
+          gapType: 'coverage_gap',
+          description: `Materiality assessment incomplete — missing: ${missing}`,
+          severity: 'high',
+          recommendation: `Complete assessments for ${missing} topics to ensure full ESRS coverage`,
+          estimatedEffort: 'medium',
+          resolutionStatus: 'open',
+        });
+      }
     }
 
     return gaps;
@@ -435,9 +497,9 @@ class CSRDComplianceService {
   // Private helper methods
   private assessDisclosureStatus(
     disclosureId: string,
-    data: { emissions: any[]; goals: any[]; facilities: any[] }
+    data: { emissions: any[]; goals: any[]; facilities: any[]; materialityAssessments?: any[] }
   ): { status: DisclosureStatus['status']; score: number; quality: number } {
-    const { emissions, goals, facilities } = data;
+    const { emissions, goals, facilities, materialityAssessments } = data;
 
     switch (disclosureId) {
       case 'E1-1': // Transition plan
@@ -481,6 +543,22 @@ class CSRDComplianceService {
           score: hasEnergyData ? 50 : 0,
           quality: hasEnergyData ? 60 : 0,
         };
+
+      case 'E1-2': // IRO-1 / Materiality assessment
+      case 'E1-3': { // Policies — boosted by materiality
+        const assessments = materialityAssessments || [];
+        const envAssessments = assessments.filter((a: any) => a.topic_category === 'environmental');
+        const hasAssessments = envAssessments.length > 0;
+        const materialTopics = envAssessments.filter((a: any) => a.is_material).length;
+        const assessmentScore = hasAssessments
+          ? Math.min(100, Math.round((envAssessments.length / 13) * 60 + (materialTopics > 0 ? 40 : 0)))
+          : 0;
+        return {
+          status: assessmentScore >= 60 ? 'in_progress' : assessmentScore > 0 ? 'draft' : 'not_started',
+          score: assessmentScore,
+          quality: hasAssessments ? Math.min(80, 40 + envAssessments.length * 5) : 0,
+        };
+      }
 
       default:
         return {
