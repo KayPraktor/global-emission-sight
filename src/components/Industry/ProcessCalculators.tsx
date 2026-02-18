@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Calculator, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { Parser } from 'expr-eval';
 
 interface ProcessCalculator {
   id: string;
@@ -157,9 +158,9 @@ export function ProcessCalculators() {
         formula = formula.replace(/baseline_efficiency/g, '45');
       }
 
-      // Evaluate the formula safely
-      // eslint-disable-next-line no-eval
-      const calculatedResult = eval(formula);
+      // Evaluate the formula safely using expr-eval (no eval())
+      const parser = new Parser();
+      const calculatedResult = parser.evaluate(formula);
       setResult(Math.round(calculatedResult * 100) / 100);
     } catch (error) {
       console.error('Calculation error:', error);
