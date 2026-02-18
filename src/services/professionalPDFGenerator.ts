@@ -24,6 +24,23 @@ const hexToRGB = (hex: string): [number, number, number] => {
     : [37, 99, 235]; // Default blue
 };
 
+/**
+ * A branded, multi-page PDF builder wrapping jsPDF + jspdf-autotable.
+ *
+ * @description Provides high-level methods for generating professional
+ * carbon-reporting PDFs: cover pages, sections with automatic page-break
+ * handling, key-value layouts, tables, metric cards, donut charts,
+ * horizontal bar charts, progress bars, glossaries, and signature blocks.
+ *
+ * @example
+ * ```ts
+ * const pdf = new ProfessionalPDFGenerator({ companyName: 'Acme', primaryColor: '#059669', secondaryColor: '#2563eb' });
+ * pdf.createCoverPage('GHG Report', '2025', '2025-01-15', 'Annual');
+ * pdf.addSection('1. Executive Summary');
+ * pdf.addParagraph('Lorem ipsum…');
+ * const blob = new Blob([pdf.getDoc().output('blob')], { type: 'application/pdf' });
+ * ```
+ */
 export class ProfessionalPDFGenerator {
   private doc: jsPDF;
   private branding: BrandingConfig;

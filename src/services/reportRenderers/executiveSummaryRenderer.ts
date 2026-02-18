@@ -1,6 +1,18 @@
 import { Template, TemplateData } from '../templateService';
 import { createPDFWithCover, finalizePDF } from './shared';
 
+/**
+ * Renders an Executive Summary dashboard-style PDF.
+ *
+ * @description Produces a visually-oriented report with KPI metric cards,
+ * a donut chart (emissions by scope), horizontal bar chart of top sources,
+ * net-zero progress bar, carbon intensity metrics, verification details,
+ * methodology notes, and a glossary.
+ *
+ * @param template - Template metadata
+ * @param data     - Hydrated emissions & company data
+ * @returns A Blob containing the generated PDF
+ */
 export const renderExecutiveSummaryPDF = (template: Template, data: TemplateData): Blob => {
   const pdf = createPDFWithCover(template, data);
 

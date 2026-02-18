@@ -11,7 +11,15 @@ import {
 
 class CSRDComplianceService {
   /**
-   * Analyze current data against ESRS E1 requirements
+   * Analyzes organization data against ESRS E1 disclosure requirements.
+   *
+   * @description Fetches emissions, goals, facilities, and materiality
+   * assessments, then evaluates each ESRS E1 disclosure for completeness.
+   * The overall score is a weighted blend of disclosure completeness (80%)
+   * and materiality coverage (20%).
+   *
+   * @param organizationId - UUID of the organization to assess
+   * @returns Disclosure statuses, blended overall score, and materiality score
    */
   async analyzeESRSCompliance(organizationId: string): Promise<{
     disclosures: DisclosureStatus[];
@@ -351,7 +359,12 @@ class CSRDComplianceService {
   }
 
   /**
-   * Calculate overall readiness score
+   * Calculates the overall CSRD readiness score and builds a compliance
+   * roadmap timeline with recommendations.
+   *
+   * @param organizationId - UUID of the organization
+   * @returns {Promise<ComplianceReadiness>} Score, disclosure details,
+   *          critical gaps, timeline milestones, and recommendations
    */
   async calculateReadinessScore(organizationId: string): Promise<ComplianceReadiness> {
     const { disclosures, overallScore } = await this.analyzeESRSCompliance(organizationId);

@@ -3,12 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
-import { ProfessionalPDFGenerator } from './professionalPDFGenerator';
-import { renderExecutiveSummaryPDF } from './reportRenderers/executiveSummaryRenderer';
-import { renderGHGProtocolPDF } from './reportRenderers/ghgProtocolRenderer';
-import { renderCDPQuestionnairePDF } from './reportRenderers/cdpQuestionnaireRenderer';
-import { renderTCFDDisclosurePDF } from './reportRenderers/tcfdDisclosureRenderer';
-import { renderScope3AnalysisPDF } from './reportRenderers/scope3AnalysisRenderer';
+import { templateRegistry, defaultRenderer } from './reportRenderers/templateRegistry';
 
 export interface EmissionSource {
   category: string;
@@ -84,7 +79,17 @@ export interface Template {
   available: boolean;
 }
 
-// Fetch real template data from DB, falling back to minimal defaults when no data exists
+/**
+ * Fetches real emissions, goal, and organization data from the database
+ * to populate report templates with live numbers instead of placeholders.
+ *
+ * @description Queries emissions_entries (with calculations + emission_factors),
+ * organization membership, and goals. Falls back to zeroed-out defaults when
+ * the user has no data or is unauthenticated.
+ *
+ * @returns {Promise<TemplateData>} Hydrated template data object
+ * @throws Never — catches internally and returns empty defaults
+ */
 const fetchRealTemplateData = async (): Promise<TemplateData> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -237,6 +242,15 @@ const fetchRealTemplateData = async (): Promise<TemplateData> => {
   }
 };
 
+/**
+ * Downloads a report template in the requested format (PDF, Excel, Word, or Text).
+ *
+ * @description Fetches live data via {@link fetchRealTemplateData}, renders the
+ * appropriate file format, and triggers a browser download.
+ *
+ * @param template - Template metadata including `fileName` and available formats
+ * @param format   - Optional override for the output format (default: first listed)
+ */
 export const downloadTemplate = async (template: Template, format?: string): Promise<void> => {
   try {
     if (!template.available) {
@@ -345,20 +359,19 @@ const generateExcelContent = async (template: Template, data: TemplateData): Pro
   return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 
+/**
+ * Dispatches PDF generation to the correct renderer via the template registry.
+ *
+ * @description Looks up `template.fileName` in {@link templateRegistry}. If no
+ * match is found, falls back to the executive-summary renderer.
+ *
+ * @param template - Template metadata (the `fileName` key selects the renderer)
+ * @param data     - Hydrated data used by the renderer
+ * @returns A Blob containing the generated PDF
+ */
 const generatePDFContent = (template: Template, data: TemplateData): Blob => {
-  switch (template.fileName) {
-    case 'ghg_protocol_corporate_standard':
-      return renderGHGProtocolPDF(template, data);
-    case 'cdp_climate_change_questionnaire':
-      return renderCDPQuestionnairePDF(template, data);
-    case 'tcfd_financial_disclosure':
-      return renderTCFDDisclosurePDF(template, data);
-    case 'scope3_detailed_analysis':
-      return renderScope3AnalysisPDF(template, data);
-    case 'executive_summary_dashboard':
-    default:
-      return renderExecutiveSummaryPDF(template, data);
-  }
+  const entry = templateRegistry[template.fileName] ?? defaultRenderer;
+  return entry.renderer(template, data);
 };
 
 const generateWordContent = async (template: Template, data: TemplateData): Promise<Blob> => {
