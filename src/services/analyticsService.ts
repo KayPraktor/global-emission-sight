@@ -44,7 +44,16 @@ export interface AnalyticsSummary {
 
 class AnalyticsService {
   /**
-   * Fetch aggregated emissions data for the dashboard
+   * Fetches aggregated emissions data for the dashboard overview.
+   *
+   * @description Queries `emissions_entries` (joined with `calculations` and
+   * `facilities`) for the authenticated user over a rolling window, then
+   * computes monthly totals, scope breakdowns, category breakdowns,
+   * facility breakdowns, and period-over-period change.
+   *
+   * @param monthsBack - Number of months of history to include (default 6)
+   * @returns {Promise<AnalyticsSummary>} Aggregated summary object
+   * @throws {Error} If user is not authenticated or query fails
    */
   async getAnalyticsSummary(monthsBack: number = 6): Promise<AnalyticsSummary> {
     const { data: { user } } = await supabase.auth.getUser();

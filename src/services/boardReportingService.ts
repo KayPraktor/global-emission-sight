@@ -76,7 +76,13 @@ export const governanceCategories = {
   },
 };
 
-// Fetch governance metrics from DB
+/**
+ * Fetches governance scorecard metrics for a given organization.
+ *
+ * @param organizationId - UUID of the organization
+ * @returns {Promise<GovernanceMetric[]>} Array of governance metrics ordered by category
+ * @throws {Error} If the database query fails
+ */
 export const getGovernanceMetrics = async (organizationId: string): Promise<GovernanceMetric[]> => {
   const { data, error } = await supabase
     .from('governance_metrics')
@@ -244,7 +250,18 @@ export const calculateGovernanceScore = (metrics: GovernanceMetric[]): {
   return { overall, byCategory, rating };
 };
 
-// Get executive summary from real data
+/**
+ * Builds a board-ready executive summary from live database data.
+ *
+ * @description Fetches the latest enterprise metrics, net-zero goals,
+ * recent reports, and materiality assessments. Key risks and opportunities
+ * are derived from material topics with high financial / impact scores
+ * rather than being hard-coded.
+ *
+ * @param organizationId - UUID of the organization
+ * @returns Executive summary payload including emissions, targets,
+ *          materiality breakdown, risks, opportunities, and recent reports
+ */
 export const getExecutiveSummary = async (organizationId: string) => {
   const { data: metrics } = await supabase
     .from('enterprise_metrics')

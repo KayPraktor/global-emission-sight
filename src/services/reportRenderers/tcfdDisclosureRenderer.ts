@@ -1,6 +1,17 @@
 import { Template, TemplateData } from '../templateService';
 import { createPDFWithCover, finalizePDF } from './shared';
 
+/**
+ * Renders a TCFD-aligned Climate Financial Disclosure PDF.
+ *
+ * @description Structures the report around the four TCFD pillars:
+ * Governance, Strategy (including scenario analysis), Risk Management,
+ * and Metrics & Targets.
+ *
+ * @param template - Template metadata
+ * @param data     - Hydrated emissions & company data
+ * @returns A Blob containing the generated PDF
+ */
 export const renderTCFDDisclosurePDF = (template: Template, data: TemplateData): Blob => {
   const pdf = createPDFWithCover(template, data);
 

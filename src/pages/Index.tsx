@@ -1,58 +1,51 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { analyticsService, AnalyticsSummary } from '@/services/analyticsService';
 import EmissionsOverview from '@/components/Dashboard/EmissionsOverview';
 import EmissionsChart from '@/components/Dashboard/EmissionsChart';
-import { EnhancedCard as Card, EnhancedCardContent as CardContent, EnhancedCardHeader as CardHeader, EnhancedCardTitle as CardTitle } from '@/components/ui/enhanced-card';
-import { PageHeader, PageHeaderDateFilter } from '@/components/ui/page-header';
-import { CheckCircle2, Info, AlertTriangle, PlusCircle, ChevronRight, ChevronDown, ChevronUp, BarChart3, Target as TargetIcon, Shield, Clock, FileSpreadsheet, Activity, Bell, Zap, TrendingUp } from 'lucide-react';
+import { PageHeaderDateFilter } from '@/components/ui/page-header';
+import { PlusCircle, ChevronDown, ChevronUp, BarChart3, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { StaggeredContainer, HoverScale, FadeIn, AnimatedCounter, LoadingSkeleton } from '@/components/ui/animated-elements';
+import { StaggeredContainer, HoverScale, FadeIn } from '@/components/ui/animated-elements';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
-import { InteractiveChart } from '@/components/ui/interactive-chart';
-import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
-
-// Import new Phase 3 components
-import { InteractiveButton, LikeButton, CopyButton } from '@/components/ui/micro-interactions';
-import { SkeletonCard, StatusIndicator, ProgressBar } from '@/components/ui/loading-states';
+import { InteractiveButton } from '@/components/ui/micro-interactions';
+import { SkeletonCard, ProgressBar } from '@/components/ui/loading-states';
 import { StaggeredList, SlideIn } from '@/components/ui/page-transitions';
-import { Tooltip, EmptyState } from '@/components/ui/feedback-system';
 import { useAnimatedToast, useOnboarding } from '@/hooks/useMicroInteractions';
 import { PerformanceMonitor } from '@/components/ui/performance-monitor';
-import { VirtualList } from '@/components/ui/virtual-list';
 import { useAdvancedCache } from '@/hooks/useAdvancedCache';
 import TopDrivers from '@/components/Dashboard/TopDrivers';
 import InsightsNextActions from '@/components/Dashboard/InsightsNextActions';
 import EnhancedTargetsWidget from '@/components/Dashboard/EnhancedTargetsWidget';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Button } from '@/components/ui/button';
-import { complianceTrackingService, FrameworkStatus, UpcomingDeadline } from '@/services/complianceTrackingService';
 import PersonalizedWelcome from '@/components/Dashboard/PersonalizedWelcome';
 import SeedDataButton from '@/components/Dashboard/SeedDataButton';
 import FirstTimeWelcome from '@/components/onboarding/FirstTimeWelcome';
 import { OrganizationSetupBanner } from '@/components/onboarding/OrganizationSetupBanner';
-import { DashboardCustomizer, WidgetConfig } from '@/components/Dashboard/DashboardCustomizer';
+import { DashboardCustomizer } from '@/components/Dashboard/DashboardCustomizer';
 import { DraggableWidget } from '@/components/Dashboard/DraggableWidget';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { CelebrationProvider } from '@/contexts/CelebrationContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy load heavy dashboard widgets for better initial load performance
+// Extracted config & data hook
+import { WIDGET_CONFIGS } from '@/config/dashboardConfig';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { ComplianceStatusWidget } from '@/components/Dashboard/ComplianceStatusWidget';
+
+// Lazy load heavy dashboard widgets
 const EmissionsTimeline = lazy(() => import('@/components/Dashboard/EmissionsTimeline'));
 const QuickWinsSection = lazy(() => import('@/components/Dashboard/QuickWinsSection'));
 const RealtimeNotificationsPanel = lazy(() => import('@/components/Dashboard/RealtimeNotificationsPanel'));
 const StrategicIntelligencePanel = lazy(() => import('@/components/Dashboard/StrategicIntelligencePanel'));
-const IndustryKPIPanel = lazy(() => 
+const IndustryKPIPanel = lazy(() =>
   import('@/components/Industry/IndustryKPIPanel').then(m => ({ default: m.IndustryKPIPanel }))
 );
-const DataQualityWidget = lazy(() => 
+const DataQualityWidget = lazy(() =>
   import('@/components/Dashboard/DataQualityWidget').then(m => ({ default: m.DataQualityWidget }))
 );
 const ValueTrackingWidget = lazy(() => import('@/components/Dashboard/ValueTrackingWidget'));
 
-// Widget skeleton for Suspense fallbacks
 const WidgetSkeleton: React.FC<{ height?: string }> = ({ height = 'h-48' }) => (
   <div className={`rounded-xl border bg-card p-6 ${height}`}>
     <div className="space-y-4 animate-pulse">
@@ -68,42 +61,15 @@ const WidgetSkeleton: React.FC<{ height?: string }> = ({ height = 'h-48' }) => (
   </div>
 );
 
-
-// Widget configuration for customization
-const WIDGET_CONFIGS: WidgetConfig[] = [
-  { id: 'overview', name: 'Emissions Overview', description: 'Total emissions summary by scope', icon: <Activity className="w-4 h-4" />, defaultVisible: true },
-  { id: 'chart', name: 'Emissions Chart', description: 'Monthly emissions visualization', icon: <BarChart3 className="w-4 h-4" />, defaultVisible: true },
-  { id: 'timeline', name: 'Emissions Timeline', description: 'Historical emissions trend', icon: <TrendingUp className="w-4 h-4" />, defaultVisible: true },
-  { id: 'quickWins', name: 'Quick Wins', description: 'Actionable reduction opportunities', icon: <Zap className="w-4 h-4" />, defaultVisible: true },
-  { id: 'notifications', name: 'Live Activity', description: 'Real-time updates and notifications', icon: <Bell className="w-4 h-4" />, defaultVisible: true },
-  { id: 'compliance', name: 'Compliance Status', description: 'Regulatory framework adherence', icon: <Shield className="w-4 h-4" />, defaultVisible: true },
-  { id: 'deadlines', name: 'Upcoming Deadlines', description: 'Critical submission dates', icon: <Clock className="w-4 h-4" />, defaultVisible: true },
-  { id: 'dataQuality', name: 'Data Quality', description: 'Data completeness metrics', icon: <CheckCircle2 className="w-4 h-4" />, defaultVisible: true },
-  { id: 'industryKPIs', name: 'Industry KPIs', description: 'Sector-specific metrics', icon: <TargetIcon className="w-4 h-4" />, defaultVisible: true },
-  { id: 'performance', name: 'Performance Intelligence', description: 'Strategic insights and tracking', icon: <BarChart3 className="w-4 h-4" />, defaultVisible: true },
-];
-
-// Deadline route mapping by framework
-const DEADLINE_ROUTES: Record<string, string> = {
-  'cdp': '/enterprise',
-  'tcfd': '/reports',
-  'ghg': '/reports',
-  'csrd': '/compliance',
-  'cbam': '/reports',
-  'sbti': '/goals',
-};
 const Index = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null);
-  const [frameworkStatuses, setFrameworkStatuses] = useState<FrameworkStatus[]>([]);
-  const [deadlines, setDeadlines] = useState<UpcomingDeadline[]>([]);
   const { addToast } = useAnimatedToast();
-  const { startOnboarding } = useOnboarding();
 
-  // Dashboard customization hook
+  // Data hook
+  const { isLoading, analyticsData, frameworkStatuses, deadlines } = useDashboardData(6);
+
+  // Dashboard customization
   const {
     layout,
     savedViews,
@@ -119,645 +85,211 @@ const Index = () => {
     toggleWidgetVisibility,
   } = useDashboardLayout();
 
-  // Add performance optimization features
-  const cache = useAdvancedCache<any>({
-    ttl: 10 * 60 * 1000,
-    enableLogging: true
-  });
-
-  // Fetch analytics data on mount with real-time updates
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setIsLoading(true);
-        const data = await analyticsService.getAnalyticsSummary(6);
-        setAnalyticsData(data);
-
-        // Fetch compliance data using org from session
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: membership } = await supabase
-            .from('organization_members')
-            .select('organization_id')
-            .eq('user_id', user.id)
-            .limit(1)
-            .maybeSingle();
-          
-          if (membership?.organization_id) {
-            const [statuses, deadlineData] = await Promise.allSettled([
-              complianceTrackingService.getFrameworkStatuses(membership.organization_id),
-              complianceTrackingService.getUpcomingDeadlines(membership.organization_id),
-            ]);
-            if (statuses.status === 'fulfilled') setFrameworkStatuses(statuses.value);
-            if (deadlineData.status === 'fulfilled') setDeadlines(deadlineData.value);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching analytics:', error);
-        addToast("Failed to load analytics data", "error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-
-    // Set up real-time subscription for emissions changes
-    const channel = supabase
-      .channel('dashboard-emissions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'emissions_entries'
-        },
-        () => {
-          // Refetch analytics when emissions entries change
-          fetchAnalytics();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const cache = useAdvancedCache<any>({ ttl: 10 * 60 * 1000, enableLogging: true });
 
   const handleNewReport = async () => {
-    setIsLoading(true);
     addToast("Creating new report...", "info");
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      addToast("Report created successfully!", "success");
-    }, 2000);
-  };
-  const handleCardLike = (cardId: string, liked: boolean) => {
-    const newLikedCards = new Set(likedCards);
-    if (liked) {
-      newLikedCards.add(cardId);
-    } else {
-      newLikedCards.delete(cardId);
-    }
-    setLikedCards(newLikedCards);
-    addToast(liked ? "Added to favorites" : "Removed from favorites", "info");
+    setTimeout(() => addToast("Report created successfully!", "success"), 2000);
   };
 
-  const handleDeadlineClick = (deadline: UpcomingDeadline) => {
-    const route = deadline.linkedRoute || 
-      (deadline.framework ? DEADLINE_ROUTES[deadline.framework.toLowerCase()] : null) || 
-      '/compliance';
-    toast.success(`Navigating to ${deadline.title}`, {
-      description: "Opening the relevant section for this deadline.",
-    });
-    navigate(route);
-  };
   return (
     <CelebrationProvider>
       <div className="space-y-6">
-      {/* Performance Monitor */}
-      <PerformanceMonitor componentName="Dashboard" />
-      
-      {/* Organization Setup Banner - Show if user has no organization */}
-      <OrganizationSetupBanner />
-      
-      {/* Personalized Welcome Message */}
-      <PersonalizedWelcome />
+        <PerformanceMonitor componentName="Dashboard" />
+        <OrganizationSetupBanner />
+        <PersonalizedWelcome />
 
-      <FadeIn>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-tight">Carbon Emissions Dashboard</h1>
-              <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
-            </div>
+        <FadeIn>
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
-              {/* Dashboard Customizer with View Selector */}
-              <DashboardCustomizer
-                widgets={WIDGET_CONFIGS}
-                currentLayout={layout}
-                onLayoutChange={updateLayout}
-                onSave={saveLayout}
-                isCustomizeMode={isCustomizeMode}
-                onCustomizeModeChange={setIsCustomizeMode}
-                views={savedViews}
-                currentView={currentView}
-                onSelectView={selectView}
-                onDeleteView={deleteView}
-                onSetDefault={setDefaultView}
-              />
-              
-              <PageHeaderDateFilter defaultValue="Jan - May 2025" />
-              <HoverScale>
-                <InteractiveButton onClick={handleNewReport} loading={isLoading} className="bg-primary hover:bg-primary/90">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Creating...' : 'New Report'}
-                </InteractiveButton>
-              </HoverScale>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold tracking-tight">Carbon Emissions Dashboard</h1>
+                <p className="text-muted-foreground mt-1">Track, analyze, and reduce your organization's carbon footprint</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <DashboardCustomizer
+                  widgets={WIDGET_CONFIGS}
+                  currentLayout={layout}
+                  onLayoutChange={updateLayout}
+                  onSave={saveLayout}
+                  isCustomizeMode={isCustomizeMode}
+                  onCustomizeModeChange={setIsCustomizeMode}
+                  views={savedViews}
+                  currentView={currentView}
+                  onSelectView={selectView}
+                  onDeleteView={deleteView}
+                  onSetDefault={setDefaultView}
+                />
+                <PageHeaderDateFilter defaultValue="Jan - May 2025" />
+                <HoverScale>
+                  <InteractiveButton onClick={handleNewReport} loading={isLoading} className="bg-primary hover:bg-primary/90">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Creating...' : 'New Report'}
+                  </InteractiveButton>
+                </HoverScale>
+              </div>
             </div>
           </div>
-        </div>
-      </FadeIn>
-      
-      {/* Emissions Overview Widget */}
-      {isWidgetVisible('overview') && (
-        <DraggableWidget
-          id="overview"
-          title="Emissions Overview"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('overview')}
-          onRemove={() => toggleWidgetVisibility('overview')}
-        >
-          <SlideIn direction="up" delay={0.1}>
-            {isLoading ? (
-              <SkeletonCard />
-            ) : (
-              <EmissionsOverview 
-                totalEmissions={analyticsData?.totalEmissions || 0}
-                scope1Total={analyticsData?.scope1Total || 0}
-                scope2Total={analyticsData?.scope2Total || 0}
-                scope3Total={analyticsData?.scope3Total || 0}
-                previousPeriodTotal={analyticsData?.previousPeriodTotal || 0}
-                changePercentage={analyticsData?.changePercentage || 0}
-                hasData={!!analyticsData && analyticsData.totalEmissions > 0}
-                monthlyData={analyticsData?.monthlyData}
-              />
-            )}
-          </SlideIn>
-        </DraggableWidget>
-      )}
-      
-      {/* Emissions Chart Widget */}
-      {isWidgetVisible('chart') && (
-        <DraggableWidget
-          id="chart"
-          title="Emissions Chart"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('chart')}
-          onRemove={() => toggleWidgetVisibility('chart')}
-        >
-          <SlideIn direction="up" delay={0.2}>
-            {isLoading ? (
-              <SkeletonCard />
-            ) : (
-              <EmissionsChart 
-                monthlyData={analyticsData?.monthlyData || []}
-                categoryBreakdown={analyticsData?.categoryBreakdown || []}
-                hasData={!!analyticsData && analyticsData.totalEmissions > 0}
-              />
-            )}
-          </SlideIn>
-        </DraggableWidget>
-      )}
+        </FadeIn>
 
-      {/* Emissions Timeline Widget */}
-      {isWidgetVisible('timeline') && (
-        <DraggableWidget
-          id="timeline"
-          title="Emissions Timeline"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('timeline')}
-          onRemove={() => toggleWidgetVisibility('timeline')}
-        >
-          <SlideIn direction="up" delay={0.35}>
-            {isLoading ? (
-              <SkeletonCard />
-            ) : (
-              <Suspense fallback={<WidgetSkeleton height="h-24" />}>
-                <EmissionsTimeline 
+        {/* Emissions Overview */}
+        {isWidgetVisible('overview') && (
+          <DraggableWidget id="overview" title="Emissions Overview" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('overview')}>
+            <SlideIn direction="up" delay={0.1}>
+              {isLoading ? <SkeletonCard /> : (
+                <EmissionsOverview
+                  totalEmissions={analyticsData?.totalEmissions || 0}
+                  scope1Total={analyticsData?.scope1Total || 0}
+                  scope2Total={analyticsData?.scope2Total || 0}
+                  scope3Total={analyticsData?.scope3Total || 0}
+                  previousPeriodTotal={analyticsData?.previousPeriodTotal || 0}
+                  changePercentage={analyticsData?.changePercentage || 0}
+                  hasData={!!analyticsData && analyticsData.totalEmissions > 0}
+                  monthlyData={analyticsData?.monthlyData}
+                />
+              )}
+            </SlideIn>
+          </DraggableWidget>
+        )}
+
+        {/* Emissions Chart */}
+        {isWidgetVisible('chart') && (
+          <DraggableWidget id="chart" title="Emissions Chart" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('chart')}>
+            <SlideIn direction="up" delay={0.2}>
+              {isLoading ? <SkeletonCard /> : (
+                <EmissionsChart
                   monthlyData={analyticsData?.monthlyData || []}
+                  categoryBreakdown={analyticsData?.categoryBreakdown || []}
                   hasData={!!analyticsData && analyticsData.totalEmissions > 0}
                 />
-              </Suspense>
-            )}
-          </SlideIn>
-        </DraggableWidget>
-      )}
-
-      {/* Advanced Data Table with loading states */}
-      <SlideIn direction="up" delay={0.4}>
-        <div className="hidden" aria-hidden />
-      </SlideIn>
-      
-      {/* Quick Wins & Live Activity */}
-      {(isWidgetVisible('quickWins') || isWidgetVisible('notifications')) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {isWidgetVisible('quickWins') && (
-            <DraggableWidget
-              id="quickWins"
-              title="Quick Wins"
-              isCustomizeMode={isCustomizeMode}
-              isVisible={isWidgetVisible('quickWins')}
-              onRemove={() => toggleWidgetVisibility('quickWins')}
-            >
-              <Suspense fallback={<WidgetSkeleton height="h-64" />}>
-                <QuickWinsSection />
-              </Suspense>
-            </DraggableWidget>
-          )}
-          {isWidgetVisible('notifications') && (
-            <DraggableWidget
-              id="notifications"
-              title="Live Activity"
-              isCustomizeMode={isCustomizeMode}
-              isVisible={isWidgetVisible('notifications')}
-              onRemove={() => toggleWidgetVisibility('notifications')}
-            >
-              <Suspense fallback={<WidgetSkeleton height="h-64" />}>
-                <RealtimeNotificationsPanel />
-              </Suspense>
-            </DraggableWidget>
-          )}
-        </div>
-      )}
-
-      {/* Primary Actions Section - Compliance & Deadlines */}
-      {(isWidgetVisible('compliance') || isWidgetVisible('deadlines')) && (
-        <>
-          <SectionHeader
-            icon={Shield}
-            title="Primary Actions"
-            subtitle="Critical compliance and deadline management"
-            helpText="Monitor your organization's compliance status and upcoming regulatory deadlines to ensure continuous adherence to carbon reporting standards."
-            lastUpdated="2025-01-15T14:30:00Z"
-          />
-          
-          <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-            {isWidgetVisible('compliance') && (
-              <DraggableWidget
-                id="compliance"
-                title="Compliance Status"
-                isCustomizeMode={isCustomizeMode}
-                isVisible={isWidgetVisible('compliance')}
-                onRemove={() => toggleWidgetVisibility('compliance')}
-              >
-                <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
-                  {/* Header with gradient */}
-                  <div className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-inset ring-primary/20">
-                          <CheckCircle2 className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground">Compliance Status</h4>
-                          <p className="text-xs text-muted-foreground">Regulatory framework adherence</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Content */}
-                  <div className="p-4 space-y-2 flex-1">
-                    {frameworkStatuses.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <Shield className="h-8 w-8 text-muted-foreground mb-3" />
-                        <p className="text-sm font-medium mb-1">No compliance data yet</p>
-                        <p className="text-xs text-muted-foreground mb-3">Generate reports to track framework compliance</p>
-                        <Button size="sm" variant="outline" onClick={() => navigate('/reports')}>
-                          Go to Reports
-                        </Button>
-                      </div>
-                    ) : (
-                      frameworkStatuses.map((item, index) => {
-                        const getStyles = (color: string) => {
-                          if (color === 'emerald') return {
-                            border: 'border-l-emerald-500',
-                            bg: 'from-emerald-500/5 to-transparent',
-                            iconBg: 'bg-emerald-500/10',
-                            iconText: 'text-emerald-600',
-                            badge: 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                          };
-                          if (color === 'amber') return {
-                            border: 'border-l-amber-500',
-                            bg: 'from-amber-500/5 to-transparent',
-                            iconBg: 'bg-amber-500/10',
-                            iconText: 'text-amber-600',
-                            badge: 'bg-amber-100 text-amber-700 border-amber-200'
-                          };
-                          return {
-                            border: 'border-l-muted',
-                            bg: 'from-muted/5 to-transparent',
-                            iconBg: 'bg-muted/10',
-                            iconText: 'text-muted-foreground',
-                            badge: 'bg-muted text-muted-foreground border-border'
-                          };
-                        };
-                        const styles = getStyles(item.color);
-                        const IconComp = item.status === 'compliant' ? CheckCircle2 : item.status === 'not_started' ? Info : Clock;
-                        return (
-                          <motion.div 
-                            key={index} 
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            whileHover={{ scale: 1.01 }}
-                            className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} transition-all duration-200 hover:shadow-sm cursor-pointer`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg ${styles.iconBg}`}>
-                                  <IconComp className={`h-3.5 w-3.5 ${styles.iconText}`} />
-                                </div>
-                                <span className="text-sm font-medium">{item.name}</span>
-                              </div>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${styles.badge}`}>
-                                {item.statusLabel}
-                              </span>
-                            </div>
-                            <ProgressBar value={item.progress} showLabel={false} className="h-1.5" />
-                          </motion.div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              </DraggableWidget>
-            )}
-            
-            {isWidgetVisible('deadlines') && (
-              <DraggableWidget
-                id="deadlines"
-                title="Upcoming Deadlines"
-                isCustomizeMode={isCustomizeMode}
-                isVisible={isWidgetVisible('deadlines')}
-                onRemove={() => toggleWidgetVisibility('deadlines')}
-              >
-                <div className="rounded-xl border bg-card overflow-hidden h-full flex flex-col">
-                  {/* Header with gradient */}
-                  <div className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-inset ring-primary/20">
-                          <Clock className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-foreground">Upcoming Deadlines</h4>
-                          </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground">Critical regulatory submissions</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Content */}
-                  <div className="p-4 space-y-2 flex-1">
-                    {deadlines.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <Clock className="h-8 w-8 text-muted-foreground mb-3" />
-                        <p className="text-sm font-medium mb-1">No upcoming deadlines</p>
-                        <p className="text-xs text-muted-foreground mb-3">Add compliance deadlines to track regulatory submissions</p>
-                        <Button size="sm" variant="outline" onClick={() => navigate('/compliance')}>
-                          Manage Deadlines
-                        </Button>
-                      </div>
-                    ) : (
-                      deadlines.map((item, index) => {
-                        const getUrgencyStyles = (urgency: string) => {
-                          if (urgency === 'high') return {
-                            border: 'border-l-destructive',
-                            bg: 'from-destructive/5 to-transparent',
-                            dot: 'bg-destructive shadow-destructive/50',
-                            daysBadge: 'bg-destructive/10 text-destructive border-destructive/20'
-                          };
-                          if (urgency === 'medium') return {
-                            border: 'border-l-amber-500',
-                            bg: 'from-amber-500/5 to-transparent',
-                            dot: 'bg-amber-500 shadow-amber-500/50',
-                            daysBadge: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                          };
-                          return {
-                            border: 'border-l-emerald-500',
-                            bg: 'from-emerald-500/5 to-transparent',
-                            dot: 'bg-emerald-500 shadow-emerald-500/50',
-                            daysBadge: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                          };
-                        };
-                        const styles = getUrgencyStyles(item.urgency);
-                        return (
-                          <Tooltip key={item.id} content={`Priority: ${item.priority} • ${item.daysRemaining} days remaining`}>
-                            <motion.div 
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              whileHover={{ scale: 1.01 }}
-                              className={`p-3 rounded-xl border border-l-4 ${styles.border} bg-gradient-to-r ${styles.bg} cursor-pointer transition-all duration-200 hover:shadow-sm group`}
-                              onClick={() => handleDeadlineClick(item)}
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`Navigate to ${item.title} deadline details`}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  handleDeadlineClick(item);
-                                }
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-2.5 h-2.5 rounded-full ${styles.dot} shadow-sm`} />
-                                  <div>
-                                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                                      {item.title}
-                                    </span>
-                                    <div className="text-xs text-muted-foreground">{new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium border ${styles.daysBadge}`}>
-                                    {item.daysRemaining}d
-                                  </span>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                              </div>
-                            </motion.div>
-                          </Tooltip>
-                        );
-                      })
-                    )}
-                </div>
-              </DraggableWidget>
-            )}
-          </StaggeredList>
-        </>
-      )}
-
-      {/* Data Quality Section */}
-      {isWidgetVisible('dataQuality') && (
-        <DraggableWidget
-          id="dataQuality"
-          title="Data Quality"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('dataQuality')}
-          onRemove={() => toggleWidgetVisibility('dataQuality')}
-        >
-          <SectionHeader
-            icon={Shield}
-            title="Data Quality Overview"
-            subtitle="Monitor your data completeness and accuracy"
-            helpText="Track high-level data quality metrics."
-            lastUpdated="2025-01-15T14:30:00Z"
-          />
-          <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4" staggerDelay={0.1}>
-            <Suspense fallback={<WidgetSkeleton />}>
-              <DataQualityWidget />
-            </Suspense>
-            <GlassmorphismCard variant="light" className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Detailed Quality Analysis</h3>
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Access comprehensive data quality metrics, validation rules, and improvement recommendations.
-                </p>
-                <Button onClick={() => navigate('/analytics?tab=quality')} className="w-full">
-                  View Full Quality Dashboard
-                </Button>
-              </div>
-            </GlassmorphismCard>
-          </StaggeredList>
-        </DraggableWidget>
-      )}
-
-      {/* Industry-Specific KPIs */}
-      {isWidgetVisible('industryKPIs') && (
-        <DraggableWidget
-          id="industryKPIs"
-          title="Industry KPIs"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('industryKPIs')}
-          onRemove={() => toggleWidgetVisibility('industryKPIs')}
-        >
-          <SectionHeader
-            icon={BarChart3}
-            title="Industry KPIs"
-            subtitle="Performance metrics tailored to your industry"
-            helpText="These KPIs are automatically selected based on your organization's industry."
-            lastUpdated="2025-01-15T14:30:00Z"
-          />
-          <SlideIn direction="up" delay={0.3}>
-            <Suspense fallback={<WidgetSkeleton height="h-64" />}>
-              <IndustryKPIPanel />
-            </Suspense>
-          </SlideIn>
-        </DraggableWidget>
-      )}
-
-      {/* Performance Intelligence Section - Collapsible */}
-      {(isWidgetVisible('performance') || isCustomizeMode) && (
-        <DraggableWidget
-          id="performance"
-          title="Performance Intelligence"
-          isCustomizeMode={isCustomizeMode}
-          isVisible={isWidgetVisible('performance')}
-          onRemove={() => toggleWidgetVisibility('performance')}
-        >
-          <motion.div 
-            initial={false}
-            className="space-y-4"
-          >
-            <div 
-              className="flex items-center justify-between cursor-pointer group p-4 rounded-lg hover:bg-muted/50 transition-colors"
-              onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setShowAdvancedAnalytics(!showAdvancedAnalytics);
-                }
-              }}
-              aria-expanded={showAdvancedAnalytics}
-              aria-controls="performance-intelligence-content"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
-                  <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">
-                  {showAdvancedAnalytics ? 'Collapse' : 'Expand'}
-                </span>
-                {showAdvancedAnalytics ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                )}
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {showAdvancedAnalytics && (
-                <motion.div
-                  id="performance-intelligence-content"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="space-y-6 overflow-hidden"
-                >
-
-                  {/* Value Tracking Widget */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                  >
-                    <Suspense fallback={<WidgetSkeleton />}>
-                      <ValueTrackingWidget />
-                    </Suspense>
-                  </motion.div>
-
-                  {/* Top row: Key Drivers Analysis */}
-                  <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
-                    <TopDrivers categoryBreakdown={analyticsData?.categoryBreakdown || []} />
-                    <InsightsNextActions />
-                  </StaggeredList>
-                  
-                  {/* Enhanced Targets Widget */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                  >
-                    <EnhancedTargetsWidget />
-                  </motion.div>
-
-                  {/* Strategic Intelligence Panel */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.4 }}
-                  >
-                    <Suspense fallback={<WidgetSkeleton height="h-96" />}>
-                      <StrategicIntelligencePanel />
-                    </Suspense>
-                  </motion.div>
-                </motion.div>
               )}
-            </AnimatePresence>
-          </motion.div>
-        </DraggableWidget>
-      )}
+            </SlideIn>
+          </DraggableWidget>
+        )}
 
-      {/* First Time Welcome Modal */}
-      <FirstTimeWelcome />
+        {/* Emissions Timeline */}
+        {isWidgetVisible('timeline') && (
+          <DraggableWidget id="timeline" title="Emissions Timeline" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('timeline')}>
+            <SlideIn direction="up" delay={0.35}>
+              {isLoading ? <SkeletonCard /> : (
+                <Suspense fallback={<WidgetSkeleton height="h-24" />}>
+                  <EmissionsTimeline monthlyData={analyticsData?.monthlyData || []} hasData={!!analyticsData && analyticsData.totalEmissions > 0} />
+                </Suspense>
+              )}
+            </SlideIn>
+          </DraggableWidget>
+        )}
 
-      {/* Empty state - show when no real data exists */}
-      {!isLoading && (!analyticsData || analyticsData.totalEmissions === 0) && (
-        <SlideIn direction="up" delay={0.5}>
-          <SeedDataButton />
-        </SlideIn>
-      )}
-    </div>
+        {/* Quick Wins & Live Activity */}
+        {(isWidgetVisible('quickWins') || isWidgetVisible('notifications')) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {isWidgetVisible('quickWins') && (
+              <DraggableWidget id="quickWins" title="Quick Wins" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('quickWins')}>
+                <Suspense fallback={<WidgetSkeleton height="h-64" />}><QuickWinsSection /></Suspense>
+              </DraggableWidget>
+            )}
+            {isWidgetVisible('notifications') && (
+              <DraggableWidget id="notifications" title="Live Activity" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('notifications')}>
+                <Suspense fallback={<WidgetSkeleton height="h-64" />}><RealtimeNotificationsPanel /></Suspense>
+              </DraggableWidget>
+            )}
+          </div>
+        )}
+
+        {/* Compliance & Deadlines — Extracted Widget */}
+        {(isWidgetVisible('compliance') || isWidgetVisible('deadlines')) && (
+          <ComplianceStatusWidget
+            frameworkStatuses={frameworkStatuses}
+            deadlines={deadlines}
+            isCustomizeMode={isCustomizeMode}
+            isWidgetVisible={isWidgetVisible}
+            toggleWidgetVisibility={toggleWidgetVisibility}
+          />
+        )}
+
+        {/* Data Quality */}
+        {isWidgetVisible('dataQuality') && (
+          <DraggableWidget id="dataQuality" title="Data Quality" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('dataQuality')}>
+            <SectionHeader icon={Shield} title="Data Quality Overview" subtitle="Monitor your data completeness and accuracy" helpText="Track high-level data quality metrics." lastUpdated="2025-01-15T14:30:00Z" />
+            <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4" staggerDelay={0.1}>
+              <Suspense fallback={<WidgetSkeleton />}><DataQualityWidget /></Suspense>
+              <GlassmorphismCard variant="light" className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Detailed Quality Analysis</h3>
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Access comprehensive data quality metrics, validation rules, and improvement recommendations.</p>
+                  <Button onClick={() => navigate('/analytics?tab=quality')} className="w-full">View Full Quality Dashboard</Button>
+                </div>
+              </GlassmorphismCard>
+            </StaggeredList>
+          </DraggableWidget>
+        )}
+
+        {/* Industry KPIs */}
+        {isWidgetVisible('industryKPIs') && (
+          <DraggableWidget id="industryKPIs" title="Industry KPIs" isCustomizeMode={isCustomizeMode} isVisible onRemove={() => toggleWidgetVisibility('industryKPIs')}>
+            <SectionHeader icon={BarChart3} title="Industry KPIs" subtitle="Performance metrics tailored to your industry" helpText="These KPIs are automatically selected based on your organization's industry." lastUpdated="2025-01-15T14:30:00Z" />
+            <SlideIn direction="up" delay={0.3}>
+              <Suspense fallback={<WidgetSkeleton height="h-64" />}><IndustryKPIPanel /></Suspense>
+            </SlideIn>
+          </DraggableWidget>
+        )}
+
+        {/* Performance Intelligence */}
+        {(isWidgetVisible('performance') || isCustomizeMode) && (
+          <DraggableWidget id="performance" title="Performance Intelligence" isCustomizeMode={isCustomizeMode} isVisible={isWidgetVisible('performance')} onRemove={() => toggleWidgetVisibility('performance')}>
+            <motion.div initial={false} className="space-y-4">
+              <div
+                className="flex items-center justify-between cursor-pointer group p-4 rounded-lg hover:bg-muted/50 transition-colors"
+                onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}
+                role="button" tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowAdvancedAnalytics(!showAdvancedAnalytics); } }}
+                aria-expanded={showAdvancedAnalytics} aria-controls="performance-intelligence-content"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10"><BarChart3 className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Performance Intelligence</h3>
+                    <p className="text-sm text-muted-foreground">Value delivery tracking and strategic insights</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">{showAdvancedAnalytics ? 'Collapse' : 'Expand'}</span>
+                  {showAdvancedAnalytics ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {showAdvancedAnalytics && (
+                  <motion.div id="performance-intelligence-content" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }} className="space-y-6 overflow-hidden">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+                      <Suspense fallback={<WidgetSkeleton />}><ValueTrackingWidget /></Suspense>
+                    </motion.div>
+                    <StaggeredList className="grid grid-cols-1 lg:grid-cols-2 gap-6" staggerDelay={0.1}>
+                      <TopDrivers categoryBreakdown={analyticsData?.categoryBreakdown || []} />
+                      <InsightsNextActions />
+                    </StaggeredList>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
+                      <EnhancedTargetsWidget />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
+                      <Suspense fallback={<WidgetSkeleton height="h-96" />}><StrategicIntelligencePanel /></Suspense>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </DraggableWidget>
+        )}
+
+        <FirstTimeWelcome />
+
+        {!isLoading && (!analyticsData || analyticsData.totalEmissions === 0) && (
+          <SlideIn direction="up" delay={0.5}><SeedDataButton /></SlideIn>
+        )}
+      </div>
     </CelebrationProvider>
   );
 };

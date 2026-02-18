@@ -20,6 +20,17 @@ const scope3Categories = [
   { num: 15, name: 'Investments', description: 'Operation of investments not included in Scope 1/2.' },
 ];
 
+/**
+ * Renders a detailed Scope 3 value-chain analysis PDF.
+ *
+ * @description Maps emissions data to all 15 GHG Protocol Scope 3 categories,
+ * identifies hotspots, assesses data quality per category, and recommends
+ * targeted reduction strategies and supplier engagement actions.
+ *
+ * @param template - Template metadata
+ * @param data     - Hydrated emissions & company data
+ * @returns A Blob containing the generated PDF
+ */
 export const renderScope3AnalysisPDF = (template: Template, data: TemplateData): Blob => {
   const pdf = createPDFWithCover(template, data);
 

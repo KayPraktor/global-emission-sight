@@ -1,6 +1,14 @@
 import { ProfessionalPDFGenerator } from '../professionalPDFGenerator';
 import { Template, TemplateData } from '../templateService';
 
+/**
+ * Creates a new {@link ProfessionalPDFGenerator} instance pre-configured with
+ * company branding and a rendered cover page.
+ *
+ * @param template - Template metadata (used for the cover title)
+ * @param data     - Hydrated data (company name, dates, etc.)
+ * @returns A ready-to-use PDF generator instance
+ */
 export const createPDFWithCover = (template: Template, data: TemplateData): ProfessionalPDFGenerator => {
   const branding = {
     companyName: data.companyName,
@@ -22,6 +30,12 @@ export const createPDFWithCover = (template: Template, data: TemplateData): Prof
   return pdf;
 };
 
+/**
+ * Finalizes the PDF document and returns it as a downloadable Blob.
+ *
+ * @param pdf - The generator instance to finalize
+ * @returns A `Blob` with MIME type `application/pdf`
+ */
 export const finalizePDF = (pdf: ProfessionalPDFGenerator): Blob => {
   const doc = pdf.getDoc();
   return new Blob([doc.output('blob')], { type: 'application/pdf' });

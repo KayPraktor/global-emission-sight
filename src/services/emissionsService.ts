@@ -6,7 +6,23 @@ import { trackDataEntry } from '@/services/analyticsTrackingService';
 
 export class EmissionsService {
   /**
-   * Validates and saves emissions data to the database
+   * Validates and saves a complete emissions wizard submission to the database.
+   *
+   * @description Orchestrates a multi-step write:
+   *   1. Authenticates the current user.
+   *   2. Validates the form payload against `fullFormSchema` (Zod).
+   *   3. Creates or retrieves a {@link Facility}.
+   *   4. Creates one {@link EmissionFactor} per source.
+   *   5. Creates one {@link EmissionsEntry} per consumption row.
+   *   6. Tracks each entry via the analytics service.
+   *
+   * All database writes use the shared Supabase client at
+   * `@/integrations/supabase/client`.
+   *
+   * @param formData - The full wizard payload (see {@link EmissionsFormData})
+   * @returns `{ success: true }` on success, or `{ success: false, error }` with
+   *          a human-readable error message on failure
+   * @throws Never — errors are caught and returned in the response object
    */
   static async saveEmissionsData(formData: EmissionsFormData): Promise<{ success: boolean; error?: string }> {
     try {
@@ -220,7 +236,9 @@ export class EmissionsService {
   }
 
   /**
-   * Loads a draft from localStorage
+   * Loads a previously-saved draft from `localStorage`.
+   *
+   * @returns The parsed draft, or `null` if none exists or parsing fails
    */
   static loadDraft(): EmissionsFormData | null {
     try {
@@ -235,7 +253,7 @@ export class EmissionsService {
   }
 
   /**
-   * Clears draft from localStorage
+   * Clears the stored draft from `localStorage`.
    */
   static clearDraft(): void {
     localStorage.removeItem('emissions-form-draft');

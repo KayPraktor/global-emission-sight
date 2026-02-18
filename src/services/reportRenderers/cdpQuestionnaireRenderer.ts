@@ -1,6 +1,17 @@
 import { Template, TemplateData } from '../templateService';
 import { createPDFWithCover, finalizePDF } from './shared';
 
+/**
+ * Renders a CDP Climate Change Questionnaire–style PDF.
+ *
+ * @description Follows the CDP section structure (C0–C7): Introduction,
+ * Governance, Risks & Opportunities, Strategy, Targets, Methodology,
+ * Emissions Data, and Verification.
+ *
+ * @param template - Template metadata
+ * @param data     - Hydrated emissions & company data
+ * @returns A Blob containing the generated PDF
+ */
 export const renderCDPQuestionnairePDF = (template: Template, data: TemplateData): Blob => {
   const pdf = createPDFWithCover(template, data);
 

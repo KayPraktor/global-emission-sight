@@ -1,6 +1,18 @@
 import { Template, TemplateData } from '../templateService';
 import { createPDFWithCover, finalizePDF } from './shared';
 
+/**
+ * Renders a GHG Protocol Corporate Standard–compliant PDF report.
+ *
+ * @description Produces a multi-section document covering executive summary,
+ * organizational boundary, full Scope 1/2/3 inventory tables, monthly trend,
+ * emission-factor sources, methodology notes, verification, glossary, and
+ * declaration of accuracy.
+ *
+ * @param template - Template metadata (title, fileName, etc.)
+ * @param data     - Hydrated emissions & company data
+ * @returns A Blob containing the generated PDF
+ */
 export const renderGHGProtocolPDF = (template: Template, data: TemplateData): Blob => {
   const pdf = createPDFWithCover(template, data);
 
